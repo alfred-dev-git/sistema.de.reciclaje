@@ -1,0 +1,14 @@
+# dependencias
+node_modules/
+
+# entorno y configuración
+.env
+*.log
+
+# base de datos local, si usás SQLite por ejemplo
+*.sqlite
+
+# sistema operativo o editores
+.DS_Store
+.vscode/
+.idea/
