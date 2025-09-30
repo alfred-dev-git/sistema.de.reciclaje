@@ -15,14 +15,19 @@ import { obtenerParadasAgrupadas, RutaCalculada } from "../../api/services/parad
 import { getHistorial } from "../../api/services/historial-service";
 import { getNotificacion } from "../../api/services/notificacion-service"; 
 
+type Notificacion = {
+  fecha: string;
+  tipo_reciclable: string;
+};
+
 const HomeRecolector: React.FC = () => {
   const [rutas, setRutas] = useState<RutaCalculada[]>([]);
   const [historial, setHistorial] = useState<any[]>([]);
-  const [notificacion, setNotificacion] = useState<any | null>(null); 
+  const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
 
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-
+  
   useFocusEffect(
     React.useCallback(() => {
       const cargarDatos = async () => {
@@ -40,10 +45,11 @@ const HomeRecolector: React.FC = () => {
             setHistorial(historialRes.data);
           }
 
-          const notificacionRes = await getNotificacion(); 
-          if (notificacionRes.success && notificacionRes.data.length > 0) {
-            setNotificacion(notificacionRes.data[0]);
-          }
+         const notificacionRes = await getNotificacion();
+        if (notificacionRes.success && Array.isArray(notificacionRes.data)) {
+
+          setNotificaciones(notificacionRes.data);
+        }
         } catch (error) {
           console.warn("Error al cargar rutas/historial/notificación:", error);
         }
@@ -60,7 +66,7 @@ const HomeRecolector: React.FC = () => {
       default: return { label: "Desconocido", color: "gray" };
     }
   };
-
+  
   const renderHeader = () => (
     <View>
       {/* Header */}
@@ -81,19 +87,25 @@ const HomeRecolector: React.FC = () => {
       </View>
 
       {/* Bienvenida */}
-      <View style={styles.bienvenidaContainer}>
-        <Text style={styles.bienvenida}>Bienvenido Recolector 👋</Text>
-         {notificacion && (
-    <Text style={styles.notificacion}>
-      {new Date(notificacion.fecha).toLocaleDateString("es-AR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })}{" "}
-      se recolectará {notificacion.tipo_reciclable}
-    </Text>
-  )}
-      </View>
+        <View style={styles.bienvenidaContainer}>
+      <Text style={styles.bienvenida}>Bienvenido Recolector 👋</Text>
+      {notificaciones.length > 0 && (
+        <View style={{ marginTop: 5 }}>
+          {notificaciones.map((n, idx) => (
+            <View key={idx} style={{ marginBottom: 4, flexDirection: "row", flexWrap: "wrap" }}>
+              <Text style={styles.notificacion}>
+                El {n.fecha} se recolectará:
+              </Text>
+              <Text style={[styles.notificacion, { fontWeight: "bold", marginLeft: 4 }]}>
+                {n.tipo_reciclable}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </View>
+
+
 
       {/* Rutas */}
       <View style={styles.card}>

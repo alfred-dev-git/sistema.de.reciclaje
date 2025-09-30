@@ -1,19 +1,14 @@
-import { RowDataPacket } from "mysql2";
-import { pool } from "../db.js";
+import { Request, Response } from "express";
+import { getNotificacion } from "../models/notificacion-model.js";
 
-export const getNotificacion = async () => {
-  const [rows] = await pool.query<RowDataPacket[]>(
-    `
-    SELECT 
-      fr.fecha,
-      tr.descripcion AS tipo_reciclable
-    FROM fechas_recoleccion fr
-    INNER JOIN tipo_reciclable tr 
-      ON fr.tipo_reciclable_idtipo_reciclable = tr.idtipo_reciclable
-    WHERE fr.estado = 1
-    ORDER BY fr.fecha ASC
-    LIMIT 10;
-    `
-  );
-  return rows;
+export const notificacionRes = async (req: Request, res: Response): Promise<void> => {
+  try {
+
+    const notificacion = await getNotificacion();
+
+    res.json(notificacion);
+  } catch (error: any) {
+    console.error("❌ Error al obtener notificaciones:", error.message);
+    res.status(500).json({ message: "Error interno del servidor" });
+  }
 };
