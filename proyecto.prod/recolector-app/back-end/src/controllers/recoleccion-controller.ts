@@ -33,13 +33,11 @@ const calcularTotalPuntos = async (idpedidos: number, cant_bolson: number): Prom
 };
 
 
-
 /**
- *  Marcar pedido como completado
+ * 🔹 Marcar pedido como completado
  */
 export const postMarcarCompletado = async (req: Request, res: Response) => {
   const { idpedidos, estado, cant_bolson, observaciones } = req.body;
-  const idRecolector = req.user!.id;
 
   if (!idpedidos || estado === undefined || cant_bolson === undefined) {
     return res.status(400).json({ success: false, message: "Faltan parámetros" });
@@ -51,8 +49,8 @@ export const postMarcarCompletado = async (req: Request, res: Response) => {
 
     // actualizar estado en pedidos
     await pool.execute(
-      "UPDATE pedidos SET estado = ?, id_recolector = ? WHERE idpedidos = ?",
-      [estado, idRecolector, idpedidos]
+      "UPDATE pedidos SET estado = ? WHERE idpedidos = ?",
+      [estado, idpedidos]
     );
 
     // insertar detalle
@@ -70,6 +68,7 @@ export const postMarcarCompletado = async (req: Request, res: Response) => {
   }
 };
 
+
 /**
  * 🔹 Marcar pedido como ausente
  */
@@ -81,6 +80,7 @@ export const postMarcarAusente = async (req: Request, res: Response) => {
   }
 
   try {
+    // actualizar estado en pedidos
     await pool.execute(
       "UPDATE pedidos SET estado = ? WHERE idpedidos = ?",
       [estado, idpedidos]

@@ -19,7 +19,7 @@ export const obtenerPedidosAsignadosDB = async (idRecolector: number): Promise<P
     SELECT 
       p.idpedidos,
       p.estado,
-      p.id_ruta,
+      pr.rutas_asignadas_idrutas_asignadas AS id_ruta,
       u.nombre,
       u.apellido,
       u.idusuario,
@@ -28,11 +28,16 @@ export const obtenerPedidosAsignadosDB = async (idRecolector: number): Promise<P
       d.latitud,
       d.longitud
     FROM pedidos p
-    INNER JOIN direcciones d ON p.id_direccion = d.iddirecciones
-    INNER JOIN usuario u ON p.usuario_idusuario = u.idusuario
+    INNER JOIN direcciones d 
+      ON p.id_direccion = d.iddirecciones
+    INNER JOIN usuario u 
+      ON p.usuario_idusuario = u.idusuario
+    INNER JOIN pedidos_rutas pr 
+      ON p.idpedidos = pr.pedidos_idpedidos
+    INNER JOIN rutas_asignadas ra 
+      ON pr.rutas_asignadas_idrutas_asignadas = ra.idrutas_asignadas
     WHERE p.estado = 0
-      AND p.id_ruta <> 0
-      AND p.id_recolector = ?
+      AND ra.id_recolector = ?
     GROUP BY p.idpedidos
   `, [idRecolector]);
 

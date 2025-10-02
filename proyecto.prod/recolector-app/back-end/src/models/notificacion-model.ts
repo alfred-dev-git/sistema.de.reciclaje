@@ -7,7 +7,7 @@ export const getNotificacion = async () => {
     SELECT 
       DATE_FORMAT(fr.fecha, '%d/%m/%Y') AS fecha,
       tr.descripcion AS tipo_reciclable
-    FROM fechas_recoleccion fr
+    FROM fecha_recoleccion fr
     INNER JOIN tipo_reciclable tr 
       ON fr.tipo_reciclable_idtipo_reciclable = tr.idtipo_reciclable
     WHERE fr.estado = 1
