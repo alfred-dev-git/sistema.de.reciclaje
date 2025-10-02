@@ -41,7 +41,7 @@ app.use('/api/notificacion', notificacionRoutes)
 // })
 
 // 🔹 Railway usa su propio PORT
-const PORT = Number(process.env.PORT) || 3000
+const PORT = Number(process.env.PORT) || 8080
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Servidor backend corriendo en el puerto ${PORT}`)
 })
