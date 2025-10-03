@@ -38,7 +38,6 @@ export const obtenerPedidosAsignadosDB = async (idRecolector: number): Promise<P
       ON pr.rutas_asignadas_idrutas_asignadas = ra.idrutas_asignadas
     WHERE p.estado = 0
       AND ra.id_recolector = ?
-    GROUP BY p.idpedidos
   `, [idRecolector]);
 
   return rows;
