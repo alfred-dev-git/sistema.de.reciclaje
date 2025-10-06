@@ -4,7 +4,7 @@ import { pool } from "../db.js";
 export interface PedidoAsignado extends RowDataPacket {
   idpedidos: number;
   estado: number;
-  id_ruta: number;
+  estado_ruta: number;
   nombre: string;
   apellido: string;
   idusuario: number;
@@ -12,6 +12,7 @@ export interface PedidoAsignado extends RowDataPacket {
   numero: string;
   latitud: number;
   longitud: number;
+  id_ruta: number;
 }
 
 export const obtenerPedidosAsignadosDB = async (idRecolector: number): Promise<PedidoAsignado[]> => {
@@ -19,6 +20,7 @@ export const obtenerPedidosAsignadosDB = async (idRecolector: number): Promise<P
     SELECT 
       p.idpedidos,
       p.estado,
+      p.estado_ruta,
       pr.rutas_asignadas_idrutas_asignadas AS id_ruta,
       u.nombre,
       u.apellido,
@@ -36,12 +38,15 @@ export const obtenerPedidosAsignadosDB = async (idRecolector: number): Promise<P
       ON p.idpedidos = pr.pedidos_idpedidos
     INNER JOIN rutas_asignadas ra 
       ON pr.rutas_asignadas_idrutas_asignadas = ra.idrutas_asignadas
-    WHERE p.estado = 0
-      AND ra.id_recolector = ?
+    WHERE 
+      p.estado = 0
+      AND p.estado_ruta = 1
+      AND ra.recolector_idrecolector = ?
   `, [idRecolector]);
 
   return rows;
 };
+
 
 
 

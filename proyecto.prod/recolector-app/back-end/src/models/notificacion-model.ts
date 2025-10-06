@@ -2,18 +2,18 @@ import { RowDataPacket } from "mysql2";
 import { pool } from "../db.js";
 
 export const getNotificacion = async () => {
-  const [rows] = await pool.query<RowDataPacket[]>(
-    `
+  const [rows] = await pool.query<RowDataPacket[]>(`
     SELECT 
-      DATE_FORMAT(fr.fecha, '%d/%m/%Y') AS fecha,
-      tr.descripcion AS tipo_reciclable
-    FROM fecha_recoleccion fr
-    INNER JOIN tipo_reciclable tr 
-      ON fr.tipo_reciclable_idtipo_reciclable = tr.idtipo_reciclable
-    WHERE fr.estado = 1
-    ORDER BY fr.fecha ASC
-    LIMIT 10;
-    `
-  );
+      n.titulo,
+      n.mensaje
+    FROM notificaciones n
+    INNER JOIN cronograma_recoleccion c 
+      ON n.cronograma_recoleccion_idcronograma_recoleccion = c.idcronograma_recoleccion
+    WHERE 
+      c.estado = 1
+      AND n.fecha_envio >= (CURDATE() - INTERVAL 3 DAY)
+    ORDER BY n.fecha_envio DESC;
+  `);
+
   return rows;
 };

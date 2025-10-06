@@ -16,8 +16,8 @@ import { getHistorial } from "../../api/services/historial-service";
 import { getNotificacion } from "../../api/services/notificacion-service"; 
 
 type Notificacion = {
-  fecha: string;
-  tipo_reciclable: string;
+  titulo: string;
+  mensaje: string;
 };
 
 const HomeRecolector: React.FC = () => {
@@ -94,10 +94,10 @@ const HomeRecolector: React.FC = () => {
           {notificaciones.map((n, idx) => (
             <View key={idx} style={{ marginBottom: 4, flexDirection: "row", flexWrap: "wrap" }}>
               <Text style={styles.notificacion}>
-                El {n.fecha} se recolectará:
+                Aviso! {n.titulo}:
               </Text>
               <Text style={[styles.notificacion, { fontWeight: "bold", marginLeft: 4 }]}>
-                {n.tipo_reciclable}
+                {n.mensaje}
               </Text>
             </View>
           ))}

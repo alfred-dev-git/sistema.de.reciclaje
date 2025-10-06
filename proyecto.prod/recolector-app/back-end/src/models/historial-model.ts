@@ -23,7 +23,7 @@ export const obtenerHistorialDB = async (idRecolector: number) => {
         ON p.idpedidos = pr.pedidos_idpedidos
     INNER JOIN rutas_asignadas ra 
         ON pr.rutas_asignadas_idrutas_asignadas = ra.idrutas_asignadas
-    WHERE ra.id_recolector = ?
+    WHERE ra.recolector_idrecolector = ?
       AND MONTH(dp.fecha_entrega) = MONTH(CURRENT_DATE())
       AND YEAR(dp.fecha_entrega) = YEAR(CURRENT_DATE())
     ORDER BY dp.fecha_entrega DESC
