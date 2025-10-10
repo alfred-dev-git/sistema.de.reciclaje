@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
-  SafeAreaView,
   View,
   Text,
   TouchableOpacity,
@@ -9,11 +8,20 @@ import {
   Image,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import {
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+  DrawerActions,
+} from "@react-navigation/native";
+
 import { handleLogout } from "../../utils/logout-util";
-import { obtenerParadasAgrupadas, RutaCalculada } from "../../api/services/paradas-service";
+import {
+  obtenerParadasAgrupadas,
+  RutaCalculada,
+} from "../../api/services/paradas-service";
 import { getHistorial } from "../../api/services/historial-service";
-import { getNotificacion } from "../../api/services/notificacion-service"; 
+import { getNotificacion } from "../../api/services/notificacion-service";
 
 type Notificacion = {
   titulo: string;
@@ -27,7 +35,12 @@ const HomeRecolector: React.FC = () => {
 
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  
+
+  // Función para abrir el Drawer
+  const abrirDrawer = () => {
+    navigation.dispatch(DrawerActions.openDrawer());
+  };
+
   useFocusEffect(
     React.useCallback(() => {
       const cargarDatos = async () => {
@@ -41,15 +54,12 @@ const HomeRecolector: React.FC = () => {
           }
 
           const historialRes = await getHistorial();
-          if (historialRes.success) {
-            setHistorial(historialRes.data);
+          if (historialRes.success) setHistorial(historialRes.data);
+
+          const notificacionRes = await getNotificacion();
+          if (notificacionRes.success && Array.isArray(notificacionRes.data)) {
+            setNotificaciones(notificacionRes.data);
           }
-
-         const notificacionRes = await getNotificacion();
-        if (notificacionRes.success && Array.isArray(notificacionRes.data)) {
-
-          setNotificaciones(notificacionRes.data);
-        }
         } catch (error) {
           console.warn("Error al cargar rutas/historial/notificación:", error);
         }
@@ -60,25 +70,35 @@ const HomeRecolector: React.FC = () => {
 
   const getEstadoInfo = (estado: number) => {
     switch (estado) {
-      case 1: return { label: "Completado", color: "green" };
-      case 2: return { label: "No estuvo", color: "red" };
-      case 3: return { label: "Cancelado", color: "red" };
-      default: return { label: "Desconocido", color: "gray" };
+      case 1:
+        return { label: "Completado", color: "green" };
+      case 2:
+        return { label: "No estuvo", color: "red" };
+      case 3:
+        return { label: "Cancelado", color: "red" };
+      default:
+        return { label: "Desconocido", color: "gray" };
     }
   };
-  
+
   const renderHeader = () => (
     <View>
       {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerItem}>
-          <TouchableOpacity onPress={() => console.log("Abrir menú")}>
+          <TouchableOpacity onPress={abrirDrawer}>
             <Ionicons name="menu" size={28} color="#fff" />
           </TouchableOpacity>
         </View>
+
         <View style={styles.logoContainer}>
-          <Image source={require("../../../assets/logos/logo-2.png")} style={styles.logo} resizeMode="contain" />
+          <Image
+            source={require("../../../assets/logos/logo-2.png")}
+            style={styles.logo}
+            resizeMode="contain"
+          />
         </View>
+
         <View style={styles.headerItem}>
           <TouchableOpacity onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={24} color="#fff" />
@@ -87,25 +107,30 @@ const HomeRecolector: React.FC = () => {
       </View>
 
       {/* Bienvenida */}
-        <View style={styles.bienvenidaContainer}>
-      <Text style={styles.bienvenida}>Bienvenido Recolector 👋</Text>
-      {notificaciones.length > 0 && (
-        <View style={{ marginTop: 5 }}>
-          {notificaciones.map((n, idx) => (
-            <View key={idx} style={{ marginBottom: 4, flexDirection: "row", flexWrap: "wrap" }}>
-              <Text style={styles.notificacion}>
-                Aviso! {n.titulo}:
-              </Text>
-              <Text style={[styles.notificacion, { fontWeight: "bold", marginLeft: 4 }]}>
-                {n.mensaje}
-              </Text>
-            </View>
-          ))}
-        </View>
-      )}
-    </View>
+      <View style={styles.bienvenidaContainer}>
+        <Text style={styles.bienvenida}>Bienvenido Recolector 👋</Text>
 
-
+        {notificaciones.length > 0 && (
+          <View style={{ marginTop: 5 }}>
+            {notificaciones.map((n, idx) => (
+              <View
+                key={idx}
+                style={{ marginBottom: 4, flexDirection: "row", flexWrap: "wrap" }}
+              >
+                <Text style={styles.notificacion}>Aviso! {n.titulo}:</Text>
+                <Text
+                  style={[
+                    styles.notificacion,
+                    { fontWeight: "bold", marginLeft: 4 },
+                  ]}
+                >
+                  {n.mensaje}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+      </View>
 
       {/* Rutas */}
       <View style={styles.card}>
@@ -118,12 +143,20 @@ const HomeRecolector: React.FC = () => {
               </View>
               <View style={{ marginLeft: 15 }}>
                 <Text style={styles.infoTitle}>Recorrido {index + 1}</Text>
-                <Text style={styles.infoSubtitle}>{ruta.paradas.length} Paradas asignadas</Text>
+                <Text style={styles.infoSubtitle}>
+                  {ruta.paradas.length} Paradas asignadas
+                </Text>
               </View>
             </View>
+
             <TouchableOpacity
               style={styles.botonVer}
-              onPress={() => navigation.navigate("RutaAsignada", { rutaSeleccionada: index, rutas })}
+              onPress={() =>
+                navigation.navigate("RutaAsignada", {
+                  rutaSeleccionada: index,
+                  rutas,
+                })
+              }
             >
               <Ionicons name="eye" size={10} color="green" />
               <Text style={styles.botonTexto}>Ver</Text>
@@ -133,7 +166,9 @@ const HomeRecolector: React.FC = () => {
       </View>
 
       {/* Historial título */}
-      <Text style={[styles.sectionTitle, { marginLeft: 15 }]}>Recolecciones del Mes</Text>
+      <Text style={[styles.sectionTitle, { marginLeft: 15 }]}>
+        Recolecciones del Mes
+      </Text>
     </View>
   );
 
@@ -141,11 +176,25 @@ const HomeRecolector: React.FC = () => {
     const { label, color } = getEstadoInfo(item.estado);
     return (
       <View style={styles.historialItem}>
-        <Image source={require("../../../assets/images/truck-icon.png")} style={styles.icon} />
+        <Image
+          source={require("../../../assets/images/truck-icon.png")}
+          style={styles.icon}
+        />
         <View>
-          <Text style={styles.fecha}>{new Date(item.fecha_entrega).toLocaleDateString()}</Text>
-          <Text style={styles.direccion}>{item.calle} {item.numero}</Text>
-          <Text style={[styles.puntos, { color: item.total_puntos > 0 ? "green" : "black" }]}>{item.total_puntos} puntos</Text>
+          <Text style={styles.fecha}>
+            {new Date(item.fecha_entrega).toLocaleDateString()}
+          </Text>
+          <Text style={styles.direccion}>
+            {item.calle} {item.numero}
+          </Text>
+          <Text
+            style={[
+              styles.puntos,
+              { color: item.total_puntos > 0 ? "green" : "black" },
+            ]}
+          >
+            {item.total_puntos} puntos
+          </Text>
           <Text style={[styles.estado, { color }]}>{label}</Text>
         </View>
       </View>
@@ -153,21 +202,18 @@ const HomeRecolector: React.FC = () => {
   };
 
   return (
-   <View style={{ flex: 1 }}>
-  {/* Header + rutas */}
-  {renderHeader()}
-
-  {/* Bloque de historial scrolleable */}
-  <View style={{ flex: 1, maxHeight: 350 }}> 
-    <FlatList
-      data={historial}
-      keyExtractor={(item) => item.idpedidos.toString()}
-      renderItem={renderHistorialItem}
-      contentContainerStyle={{ paddingBottom: 20 }}
-      showsVerticalScrollIndicator={true}
-    />
-  </View>
-</View>
+    <View style={{ flex: 1 }}>
+      {renderHeader()}
+      <View style={{ flex: 1, maxHeight: 350 }}>
+        <FlatList
+          data={historial}
+          keyExtractor={(item) => item.idpedidos.toString()}
+          renderItem={renderHistorialItem}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator
+        />
+      </View>
+    </View>
   );
 };
 

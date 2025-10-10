@@ -7,18 +7,20 @@ import paradasRoutes from './routes/paradas-routes.js';
 import recoleccionRoutes from './routes/recoleccion-routes.js';
 import historialRoutes from './routes/historial-routes.js';
 import notificacionRoutes from './routes/notificacion-routes.js';
-
+import perfilRoutes from './routes/perfil-routes.js';
+import cronogramaRoutes from './routes/cronograma-routes.js';
 
 dotenv.config()
 
 const app = express()
 
-// //cors bien configurado
+// //cors dev
 // app.use(cors({
 //   origin: 'http://localhost:5173', //luego cambiar a HTTPS y el nombre del domisnio 'https://midominio.com',
 //   credentials: true
 // }));
 
+// cors prod
 app.use(cors({
   origin: process.env.CORS_ORIGIN || '*',
   credentials: true
@@ -33,6 +35,9 @@ app.use('/api/completado', recoleccionRoutes)
 app.use('/api/userAusente', recoleccionRoutes)
 app.use('/api/historial', historialRoutes)
 app.use('/api/notificacion', notificacionRoutes)
+app.use('/api/perfil', perfilRoutes)
+app.use('/api/cronograma', cronogramaRoutes)
+
 
 // const PORT = Number(process.env.PORT) || 3000;
 // app.listen(PORT, () => {

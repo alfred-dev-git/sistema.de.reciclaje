@@ -17,7 +17,18 @@ export default function ModalCompletado({ visible, parada, onCancel, onConfirm }
   }, [visible]);
 
   const handleConfirm = () => {
-    onConfirm(Number(cantidad) || 0);
+    if (!cantidad.trim()) {
+    alert("Por favor, indique la cantidad de bolsones.");
+    return;
+  }
+   const numero = Number(cantidad);
+
+  if (isNaN(numero) || numero <= 0) {
+    alert("Ingrese una cantidad válida mayor a 0.");
+    return;
+  }
+
+  onConfirm(numero);
   };
 
   return (
@@ -44,7 +55,15 @@ export default function ModalCompletado({ visible, parada, onCancel, onConfirm }
                   <Text style={styles.modalBtnText}>Cancelar</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={[styles.modalBtn, styles.guardarBtn]} onPress={handleConfirm}>
+                <TouchableOpacity
+                  style={[
+                    styles.modalBtn,
+                    styles.guardarBtn,
+                    !cantidad.trim() && { backgroundColor: "#ccc" } // cambia color si vacío
+                  ]}
+                  onPress={handleConfirm}
+                  disabled={!cantidad.trim()}
+                >
                   <Text style={styles.modalBtnText}>Guardar</Text>
                 </TouchableOpacity>
               </View>
