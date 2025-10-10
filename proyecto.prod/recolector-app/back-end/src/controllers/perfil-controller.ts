@@ -1,8 +1,5 @@
 import { Request, Response } from "express";
 import { obtenerPerfilDB, actualizarFotoPerfilRutaDB  } from "../models/perfil-model.js";
-import path from "path";
-import fs from "fs";
-
 // GET /api/perfil
 export const getPerfil = async (req: Request, res: Response): Promise<void> => {
   try {
