@@ -1,126 +1,128 @@
-// import React, { useEffect, useState } from 'react';
-// import { View, Text, StyleSheet, ActivityIndicator, ScrollView, TouchableOpacity } from 'react-native';
-// import Icon from 'react-native-vector-icons/FontAwesome';
-// import { verPerfil } from '../../api/services/usuario-service';
+import React, { useEffect, useState } from "react";
+import { View, Text, ActivityIndicator, ScrollView, StyleSheet, Image, TouchableOpacity, Alert } from "react-native";
+import { getPerfil, updateFotoPerfil, Perfil } from "../../api/services/perfil-service";
+import { useImagePicker } from "../../utils/imag-picker";
 
-// export default function PerfilUsuario() {
-//   const [usuario, setUsuario] = useState(null);
-//   const [loading, setLoading] = useState(true);
+export default function PerfilScreen() {
+  const [perfil, setPerfil] = useState<Perfil | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [updatingPhoto, setUpdatingPhoto] = useState(false);
+  const [imageError, setImageError] = useState(false); 
 
-//   useEffect(() => {
-//     const cargarPerfil = async () => {
-//       try {
-//         const data = await verPerfil();
-//         setUsuario(data);
-//       } catch (error) {
-//         console.error('Error al cargar perfil:', error);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
+  const { pickImageFromLibrary } = useImagePicker();
 
-//     cargarPerfil();
-//   }, []);
+  // Obtener perfil al montar
+  useEffect(() => {
+    const fetchPerfil = async () => {
+      const result = await getPerfil();
+      if (result.success && result.data) {
+        setPerfil(result.data);
+      } else {
+        console.warn("⚠️ No se encontró perfil válido");
+      }
+      setLoading(false);
+    };
 
-//   if (loading) {
-//     return <ActivityIndicator style={{ flex: 1 }} size="large" />;
-//   }
+    fetchPerfil();
+  }, []);
 
-//   if (!usuario) {
-//     return (
-//       <View style={styles.container}>
-//         <Text>No se pudo cargar el perfil</Text>
-//       </View>
-//     );
-//   }
+  // Función para actualizar la foto
+  const handleChangePhoto = async () => {
+    const asset = await pickImageFromLibrary();
+    if (!asset) return;
 
-//   return (
-//     <ScrollView contentContainerStyle={styles.container}>
-//       <View style={styles.header}>
-//         <Text style={styles.headerTitle}>ReciclApp</Text>
-//       </View>
+    try {
+      setUpdatingPhoto(true);
+      const result = await updateFotoPerfil(asset);
+      if (result.success && result.data) {
+        setPerfil((prev) => (prev ? { ...prev, foto_perfil: result.data } : null));
+        setImageError(false); // 👈 reseteamos error si había
+        Alert.alert("✅ Ruta de imagen guardada correctamente");
+      } else {
+        Alert.alert("❌ Error", result.message);
+      }
+    } finally {
+      setUpdatingPhoto(false);
+    }
+  };
 
-//       <View style={styles.avatarContainer}>
-//         <Icon name="user-circle" size={100} color="#b0b0b0" />
-//         <Text style={styles.profileTitle}>Perfil</Text>
-//       </View>
+  if (loading) {
+    return (
+      <View style={styles.centered}>
+        <ActivityIndicator size="large" color="#00BFA6" />
+      </View>
+    );
+  }
 
-//       <View style={styles.row}>
-//         <Text style={styles.label}>Nombre y apellido:</Text>
-//         <Text style={styles.value}>{usuario.nombre_completo || 'Sin datos'}</Text>
-//       </View>
-//       <View style={styles.row}>
-//         <Text style={styles.label}>Email:</Text>
-//         <Text style={styles.value}>{usuario.email || 'Sin datos'}</Text>
-//       </View>
-//       <View style={styles.row}>
-//         <Text style={styles.label}>Teléfono:</Text>
-//         <Text style={styles.value}>{usuario.telefono || 'Sin datos'}</Text>
-//       </View>
-//       <View style={styles.row}>
-//         <Text style={styles.label}>Fecha de ingreso:</Text>
-//         <Text style={styles.value}>{usuario.fecha_ingreso || 'Sin datos'}</Text>
-//       </View>
-//       <View style={styles.row}>
-//         <Text style={styles.label}>Municipio actual:</Text>
-//         <Text style={styles.value}>{usuario.municipio_actual || 'Sin datos'}</Text>
-//       </View>
+  if (!perfil) {
+    return (
+      <View style={styles.centered}>
+        <Text>No se pudo cargar el perfil.</Text>
+      </View>
+    );
+  }
 
-//       <TouchableOpacity style={styles.button}>
-//         <Text style={styles.buttonText}>Solicitar usuario premium</Text>
-//       </TouchableOpacity>
-//     </ScrollView>
-//   );
-// }
-// const styles = StyleSheet.create({
-//   container: {
-//     flexGrow: 1,
-//     backgroundColor: '#ffffff',
-//     padding: 10,
-//     paddingTop: 40, // <-- aumenta este valor para bajar más el contenido
-//   },
-//   header: {
-//     backgroundColor: '#FFD740',
-//     paddingVertical: 16,
-//     alignItems: 'center',
-//     marginBottom: 20,
-//     borderRadius: 10,
-//   },
-//   headerTitle: {
-//     fontSize: 20,
-//     fontWeight: 'bold',
-//     color: '#ffffff',
-//   },
-//   avatarContainer: {
-//     alignItems: 'center',
-//     marginBottom: 20,
-//   },
-//   profileTitle: {
-//     fontSize: 18,
-//     fontWeight: 'bold',
-//     marginTop: 10,
-//   },
-//   row: {
-//     marginBottom: 12,
-//   },
-//   label: {
-//     fontWeight: 'bold',
-//     marginBottom: 4,
-//   },
-//   value: {
-//     backgroundColor: '#e0e0e0',
-//     padding: 8,
-//     borderRadius: 8,
-//   },
-//   button: {
-//     backgroundColor: '#4287f5',
-//     paddingVertical: 12,
-//     borderRadius: 8,
-//     marginTop: 20,
-//     alignItems: 'center',
-//   },
-//   buttonText: {
-//     color: '#ffffff',
-//     fontWeight: 'bold',
-//   },
-// });
+  return (
+    <ScrollView style={styles.scrollContainer}>
+      <TouchableOpacity onPress={handleChangePhoto} disabled={updatingPhoto}>
+            <Image
+            source={
+                !imageError && perfil.foto_perfil
+                ? { uri: perfil.foto_perfil }
+                : require("../../../assets/images/perfildefault.png")
+            }
+            style={styles.profileImage}
+            onError={() => {
+                if (!imageError) {
+                setImageError(true);
+                Alert.alert("⚠️ Aviso", "No se pudo cargar la imagen, pruebe cambiarla.");
+                }
+            }}
+            />
+
+        <Text style={styles.changePhotoText}>
+          {updatingPhoto ? "Actualizando..." : "Cambiar foto"}
+        </Text>
+      </TouchableOpacity>
+
+      <Text style={styles.nombre}>
+        {perfil.nombre} {perfil.apellido}
+      </Text>
+      <Text>DNI: {perfil.DNI}</Text>
+      <Text>Email: {perfil.email}</Text>
+      <Text>Teléfono: {perfil.telefono}</Text>
+      <Text>Fecha de nacimiento: {perfil.fecha_nacimiento}</Text>
+      <Text>Municipio: {perfil.municipio}</Text>
+      <Text>Puntos: {perfil.puntos}</Text>
+    </ScrollView>
+  );
+}
+
+const styles = StyleSheet.create({
+  centered: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scrollContainer: {
+    padding: 16,
+  },
+  nombre: {
+    fontSize: 24,
+    fontWeight: "bold",
+    marginBottom: 8,
+  },
+  profileImage: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    alignSelf: "center",
+    marginBottom: 8,
+    backgroundColor: "#f0f0f0", // 👈 evita el fondo negro al fallar
+  },
+  changePhotoText: {
+    textAlign: "center",
+    color: "#00BFA6",
+    marginBottom: 16,
+  },
+});
