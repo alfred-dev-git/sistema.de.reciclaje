@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { getCronograma } from "../api/services/cronograma-service";
+import HeaderRecolector from "./headerComponent";
 
 // Interfaz actualizada según tu backend
 interface CronogramaItem {
   dia_semana: number;
-  semana_mes: number; 
+  semana_mes: number;
   hora_inicio: string;
   hora_fin: string;
   tipo_reciclable: string;
@@ -75,18 +76,22 @@ const CronogramaRecoleccion: React.FC = () => {
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>🗓 Frecuencias en el mes</Text>
 
-      {cronograma.map((item, index) => (
-        <TouchableOpacity key={`${item.dia_semana}-${item.semana_mes}-${index}`} style={styles.card}>
-          <Text style={styles.day}>
-            📅 {obtenerNombreSemana(item.semana_mes)} - {obtenerNombreDia(item.dia_semana)}
-          </Text>
-          <Text>🕒 {item.hora_inicio} - {item.hora_fin}</Text>
-          <Text>♻️ Tipo reciclable: {item.tipo_reciclable}</Text>
-        </TouchableOpacity>
-      ))}
+    <ScrollView >
+      <HeaderRecolector />
+      <View style={styles.container}>
+
+        <Text style={styles.title}>🗓 Frecuencias en el mes</Text>
+        {cronograma.map((item, index) => (
+          <TouchableOpacity key={`${item.dia_semana}-${item.semana_mes}-${index}`} style={styles.card}>
+            <Text style={styles.day}>
+              📅 {obtenerNombreSemana(item.semana_mes)} - {obtenerNombreDia(item.dia_semana)}
+            </Text>
+            <Text>🕒 {item.hora_inicio} - {item.hora_fin}</Text>
+            <Text>♻️ Tipo reciclable: {item.tipo_reciclable}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
     </ScrollView>
   );
 };

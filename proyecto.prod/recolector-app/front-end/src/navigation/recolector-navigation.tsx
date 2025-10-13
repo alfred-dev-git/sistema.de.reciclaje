@@ -4,7 +4,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import HomeRecolector from "../screens/recolector/home-recolector";
 import RutaAsignada from "../screens/recolector/ruta-asignada";
 
-import { Ionicons } from "@expo/vector-icons";
+
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -20,27 +20,7 @@ const RecolectorStack = () => {
 };
 
 const RecolectorNavigation: React.FC = () => {
-  return (
-    <Tab.Navigator
-      initialRouteName="RecolectorStack"
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#307043",
-        tabBarInactiveTintColor: "gray",
-      }}
-    >
-      <Tab.Screen
-        name="RecolectorStack"
-        component={RecolectorStack}
-        options={{
-          title: "Inicio",
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tab.Navigator>
-  );
+  return <RecolectorStack />;
 };
 
 export default RecolectorNavigation;

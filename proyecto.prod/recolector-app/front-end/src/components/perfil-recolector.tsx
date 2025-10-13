@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, ScrollView, StyleSheet, Image, TouchableOpacity, Alert } from "react-native";
 import { getPerfil, updateFotoPerfil, Perfil } from "../api/services/perfil-service";
-import { useImagePicker } from "../utils/imag-picker";
+import { useImagePicker } from "../utils/imag-picker"
+import HeaderRecolector from "./headerComponent";
+import { Ionicons } from "@expo/vector-icons";
 
 export default function PerfilScreen() {
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [loading, setLoading] = useState(true);
   const [updatingPhoto, setUpdatingPhoto] = useState(false);
-  const [imageError, setImageError] = useState(false); 
+  const [imageError, setImageError] = useState(false);
 
   const { pickImageFromLibrary } = useImagePicker();
 
@@ -36,7 +38,7 @@ export default function PerfilScreen() {
       const result = await updateFotoPerfil(asset);
       if (result.success && result.data) {
         setPerfil((prev) => (prev ? { ...prev, foto_perfil: result.data } : null));
-        setImageError(false); 
+        setImageError(false);
         Alert.alert("✅ Ruta de imagen guardada correctamente");
       } else {
         Alert.alert("❌ Error", result.message);
@@ -63,36 +65,49 @@ export default function PerfilScreen() {
   }
 
   return (
-    <ScrollView style={styles.scrollContainer}>
-      <TouchableOpacity onPress={handleChangePhoto} disabled={updatingPhoto}>
-        <Image
-          source={
-            !imageError && perfil.foto_perfil
-              ? { uri: perfil.foto_perfil }
-              : require("../../assets/images/perfildefault.png")
-          }
-          style={styles.profileImage}
-          onError={() => {
-            if (!imageError) {
-              setImageError(true);
-              Alert.alert("⚠️ Aviso", "No se pudo cargar la imagen, pruebe cambiarla.");
+    <ScrollView>
+      <HeaderRecolector />
+      <View style={styles.scrollContainer}>
+        <TouchableOpacity onPress={handleChangePhoto} disabled={updatingPhoto}>
+          <Image
+            source={
+              !imageError && perfil.foto_perfil
+                ? { uri: perfil.foto_perfil }
+                : require("../../assets/images/perfildefault.png")
             }
-          }}
-        />
-        <Text style={styles.changePhotoText}>
-          {updatingPhoto ? "Actualizando..." : "Cambiar foto"}
-        </Text>
-      </TouchableOpacity>
+            style={styles.profileImage}
+            onError={() => {
+              if (!imageError) {
+                setImageError(true);
+                Alert.alert("⚠️ Aviso", "No se pudo cargar la imagen, pruebe cambiarla.");
+              }
+            }}
+          />
+          <Text style={styles.changePhotoText}>
+            {updatingPhoto ? "Actualizando..." : "Cambiar foto"}
+          </Text>
+        </TouchableOpacity>
 
-      <Text style={styles.nombre}>
-        {perfil.nombre} {perfil.apellido}
-      </Text>
-      <Text>DNI: {perfil.DNI}</Text>
-      <Text>Email: {perfil.email}</Text>
-      <Text>Teléfono: {perfil.telefono}</Text>
-      <Text>Fecha de nacimiento: {perfil.fecha_nacimiento}</Text>
-      <Text>Municipio: {perfil.municipio}</Text>
-      <Text>Puntos: {perfil.puntos}</Text>
+        <Text style={styles.nombre}>
+          {perfil.nombre} {perfil.apellido}
+        </Text>
+        <Text>DNI: {perfil.DNI}</Text>
+        <Text>
+          <Ionicons name="at-circle-outline" size={16} color="black" />
+          Email: {perfil.email}</Text>
+        <Text>
+          <Ionicons name="call-outline" size={16} color="black" />
+          Teléfono: {perfil.telefono}</Text>
+        <Text>
+          <Ionicons name="calendar-outline" size={16} color="black" />
+          Fecha de nacimiento:{perfil.fecha_nacimiento}</Text>
+        <Text>
+          <Ionicons name="location-outline" size={16} color="black" />
+          Municipio: {perfil.municipio}</Text>
+        <Text>
+          <Ionicons name="star-outline" size={16} color="black" />
+          Puntos: {perfil.puntos}</Text>
+      </View>
     </ScrollView>
   );
 }
@@ -117,7 +132,7 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     alignSelf: "center",
     marginBottom: 8,
-    backgroundColor: "#f0f0f0", 
+    backgroundColor: "#f0f0f0",
   },
   changePhotoText: {
     textAlign: "center",
