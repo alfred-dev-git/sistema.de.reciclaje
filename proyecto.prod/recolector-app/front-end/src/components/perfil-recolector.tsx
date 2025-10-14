@@ -68,50 +68,94 @@ export default function PerfilScreen() {
     <ScrollView>
       <HeaderRecolector />
       <View style={styles.scrollContainer}>
-        <TouchableOpacity onPress={handleChangePhoto} disabled={updatingPhoto}>
-          <Image
-            source={
-              !imageError && perfil.foto_perfil
-                ? { uri: perfil.foto_perfil }
-                : require("../../assets/images/perfildefault.png")
-            }
-            style={styles.profileImage}
-            onError={() => {
-              if (!imageError) {
-                setImageError(true);
-                Alert.alert("⚠️ Aviso", "No se pudo cargar la imagen, pruebe cambiarla.");
+        <Text style={styles.titulo} >Mi Perfil</Text>
+        <View style={styles.profileContainer}>
+          <View style={{ alignItems: "center", justifyContent: "center" }}>
+            <Image
+              source={
+                !imageError && perfil.foto_perfil
+                  ? { uri: perfil.foto_perfil }
+                  : require("../../assets/images/perfildefault.png")
               }
-            }}
-          />
-          <Text style={styles.changePhotoText}>
-            {updatingPhoto ? "Actualizando..." : "Cambiar foto"}
-          </Text>
-        </TouchableOpacity>
-
-        <Text style={styles.nombre}>
-          {perfil.nombre} {perfil.apellido}
-        </Text>
-        <Text>DNI: {perfil.DNI}</Text>
-        <Text>
-          <Ionicons name="at-circle-outline" size={16} color="black" />
-          Email: {perfil.email}</Text>
-        <Text>
-          <Ionicons name="call-outline" size={16} color="black" />
-          Teléfono: {perfil.telefono}</Text>
-        <Text>
-          <Ionicons name="calendar-outline" size={16} color="black" />
-          Fecha de nacimiento:{perfil.fecha_nacimiento}</Text>
-        <Text>
-          <Ionicons name="location-outline" size={16} color="black" />
-          Municipio: {perfil.municipio}</Text>
-        <Text>
-          <Ionicons name="star-outline" size={16} color="black" />
-          Puntos: {perfil.puntos}</Text>
+              style={styles.profileImage}
+              onError={() => {
+                if (!imageError) {
+                  setImageError(true);
+                  Alert.alert("⚠️ Aviso", "No se pudo cargar la imagen, pruebe cambiarla.");
+                }
+              }}
+            />
+          </View>
+          <View>
+            <Text style={styles.nombre}>
+              {perfil.nombre} {perfil.apellido}
+            </Text>
+            <TouchableOpacity onPress={handleChangePhoto} disabled={updatingPhoto}>
+              <Text style={styles.changePhotoText}>
+                {updatingPhoto ? "Actualizando..." : "Cambiar foto"}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity>
+              <Text style={styles.changePhotoText}>Editar informacion</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        <View style={styles.itemProfile}>
+          <View><Ionicons name="accessibility-outline" size={30} color="gray" /></View>
+          <View style={styles.ItemInfo}>
+            <Text style={styles.itemTitulo} >DNI:</Text>
+            <Text style={styles.itemSubtitulo} >{perfil.DNI}</Text>
+          </View>
+        </View>
+        <View style={styles.itemProfile}>
+          <View>
+            <Ionicons name="at-circle-outline" size={30} color="black" />
+          </View>
+          <View style={styles.ItemInfo}>
+            <Text style={styles.itemTitulo} >Email: </Text>
+            <Text style={styles.itemSubtitulo}>{perfil.email}</Text>
+          </View>
+        </View>
+        <View style={styles.itemProfile}>
+          <View>
+            <Ionicons name="call-outline" size={30} color="black" />
+          </View>
+          <View style={styles.ItemInfo}>
+            <Text style={styles.itemTitulo}>Teléfono:</Text>
+            <Text style={styles.itemSubtitulo}>{perfil.telefono}</Text>
+          </View>
+        </View>
+        <View style={styles.itemProfile}>
+          <View>
+            <Ionicons name="calendar-outline" size={30} color="black" />
+          </View>
+          <View style={styles.ItemInfo}>
+            <Text style={styles.itemTitulo}>Fecha de nacimiento:</Text>
+            <Text style={styles.itemSubtitulo}>{perfil.fecha_nacimiento}</Text>
+          </View>
+        </View>
+        <View style={styles.itemProfile}>
+          <View>
+            <Ionicons name="location-outline" size={30} color="black" />
+          </View>
+          <View style={styles.ItemInfo}>
+            <Text style={styles.itemTitulo}>Municipio:</Text>
+            <Text style={styles.itemSubtitulo}>{perfil.municipio}</Text>
+          </View>
+        </View>
+        <View style={styles.itemProfile}>
+          <View>
+            <Ionicons name="star-outline" size={30} color="black" />
+          </View>
+          <View style={styles.ItemInfo}>
+            <Text style={styles.itemTitulo}>Puntos:</Text>
+            <Text style={styles.itemSubtitulo}>{perfil.puntos}</Text>
+          </View>
+        </View>
       </View>
     </ScrollView>
   );
 }
-
 const styles = StyleSheet.create({
   centered: {
     flex: 1,
@@ -121,22 +165,58 @@ const styles = StyleSheet.create({
   scrollContainer: {
     padding: 16,
   },
+  titulo: {
+    fontSize: 32,
+    fontWeight: "bold",
+    marginBottom: 16,
+    textAlign: "center",
+  },
   nombre: {
     fontSize: 24,
     fontWeight: "bold",
     marginBottom: 8,
   },
+  profileContainer: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 24,
+  },
   profileImage: {
     width: 120,
     height: 120,
+    marginRight: 18,
+    marginLeft: 8,
     borderRadius: 60,
     alignSelf: "center",
     marginBottom: 8,
     backgroundColor: "#f0f0f0",
   },
   changePhotoText: {
-    textAlign: "center",
-    color: "#00BFA6",
-    marginBottom: 16,
+    color: "#307043",
+    fontSize: 16,
+    marginTop: 5,
   },
+  itemProfile: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+    gap: 12
+  },
+  itemTitulo: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "medium",
+  },
+  itemSubtitulo: {
+    fontSize: 19,
+    fontWeight: "medium",
+  },
+  ItemInfo: {
+    padding: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    width: "100%"
+  }
 });
