@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import { View, Text, ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, Alert } from "react-native";
 import { getCronograma } from "../api/services/cronograma-service";
 import HeaderRecolector from "./headerComponent";
+import { Ionicons } from "@expo/vector-icons";
+import BackgorundContainer from "./layout";
 
 // Interfaz actualizada según tu backend
 interface CronogramaItem {
@@ -77,22 +79,28 @@ const CronogramaRecoleccion: React.FC = () => {
 
   return (
 
-    <ScrollView >
-      <HeaderRecolector />
-      <View style={styles.container}>
-
-        <Text style={styles.title}>🗓 Frecuencias en el mes</Text>
-        {cronograma.map((item, index) => (
-          <TouchableOpacity key={`${item.dia_semana}-${item.semana_mes}-${index}`} style={styles.card}>
-            <Text style={styles.day}>
-              📅 {obtenerNombreSemana(item.semana_mes)} - {obtenerNombreDia(item.dia_semana)}
-            </Text>
-            <Text>🕒 {item.hora_inicio} - {item.hora_fin}</Text>
-            <Text>♻️ Tipo reciclable: {item.tipo_reciclable}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-    </ScrollView>
+    <BackgorundContainer>
+      <ScrollView >
+        <HeaderRecolector />
+        <View style={styles.container}>
+          <Text style={styles.title}>🗓 Frecuencias en el mes</Text>
+          {cronograma.map((item, index) => (
+            <TouchableOpacity key={`${item.dia_semana}-${item.semana_mes}-${index}`} style={styles.card}>
+              <View>
+                <Ionicons name="bicycle" size={34} color="#55b947" />
+              </View>
+              <View style={{ gap: 6 }}>
+                <Text style={styles.day}>
+                  📅 {obtenerNombreSemana(item.semana_mes)} - {obtenerNombreDia(item.dia_semana)}
+                </Text>
+                <Text>🕒 {item.hora_inicio} - {item.hora_fin}</Text>
+                <Text>♻️ Tipo reciclable: {item.tipo_reciclable}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </ScrollView>
+    </BackgorundContainer>
   );
 };
 
@@ -112,12 +120,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   card: {
-    backgroundColor: "#E9F9EF",
-    padding: 12,
-    borderRadius: 12,
+    backgroundColor: "white",
+    padding: 16,
+    borderRadius: 16,
     width: "90%",
     marginBottom: 10,
     elevation: 2,
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
   },
   day: {
     fontSize: 16,
