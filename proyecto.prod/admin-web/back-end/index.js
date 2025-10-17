@@ -10,16 +10,16 @@ import paradasRoutes from './routes/paradas.routes.js';
 
 const app = express();
 
+// 🔹 Configurar CORS dinámicamente (funciona en local y en Railway)
+const allowedOrigins = [
+  'http://localhost:5173',             // Vite local
+  process.env.CORS_ORIGIN              // Frontend desplegado (ej: https://miapp-front.vercel.app)
+].filter(Boolean); // elimina undefined
+
 app.use(cors({
-  origin: 'http://localhost:5173', // Vite
+  origin: allowedOrigins,
   credentials: true
 }));
-
-// // cors prod
-// app.use(cors({
-//   origin: process.env.CORS_ORIGIN || '*',
-//   credentials: true
-// }))
 
 app.use(express.json());
 app.use(cookieParser());
@@ -30,11 +30,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api', pedidosRoutes);
 app.use('/api', paradasRoutes);
 
-const port = process.env.PORT || 3000;
-app.listen(port, () => console.log(`API escuchando en http://localhost:${port}`));
-
-// // 🔹 Railway usa su propio PORT
-// const PORT = Number(process.env.PORT) || 8080
-// app.listen(PORT, '0.0.0.0', () => {
-//   console.log(`Servidor backend corriendo en el puerto ${PORT}`)
-// })
+// 🔹 Railway asigna su propio puerto, así que usá este formato:
+const PORT = process.env.PORT || 8080;
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Servidor backend corriendo en el puerto ${PORT}`);
+});
