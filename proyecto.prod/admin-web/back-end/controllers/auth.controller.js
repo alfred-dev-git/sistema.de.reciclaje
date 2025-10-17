@@ -1,0 +1,65 @@
+import bcrypt from 'bcryptjs';
+import { pool } from '../config/db.js';
+import { signToken } from '../utils/jwt.js';
+import { validateLogin } from '../utils/validate.login.js';
+
+const cookieOpts = {
+  httpOnly: true,
+  sameSite: 'lax',
+  secure: process.env.COOKIE_SECURE === 'true',
+  path: '/',
+};
+
+export const login = async (req, res) => {
+  const { email, password } = req.body;
+
+  // Validación
+  const { valid, errors } = validateLogin({ email, password });
+  if (!valid) return res.status(400).json({ error: errors.join(', ') });
+
+  try {
+    const [rows] = await pool.query(
+      `SELECT idusuario, nombre, apellido, email, password, rol_idrol 
+       FROM usuario WHERE email = ? LIMIT 1`,
+      [email]
+    );
+
+    if (rows.length === 0) 
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+
+    const user = rows[0];
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) 
+      return res.status(401).json({ error: 'Credenciales inválidas' });
+
+    const token = signToken({
+      idusuario: user.idusuario,
+      nombre: user.nombre,
+      email: user.email,
+      rol_idrol: user.rol_idrol
+    });
+
+    res.cookie('token', token, cookieOpts);
+    return res.json({
+      message: 'Login OK',
+      user: {
+        nombre: user.nombre,
+        apellido: user.apellido,
+        email: user.email,
+        rol_idrol: user.rol_idrol
+      }
+    });
+  } catch (err) {
+    console.error('Error en login:', err);
+    return res.status(500).json({ error: 'Error interno del servidor' });
+  }
+};
+
+export const me = async (req, res) => {
+  return res.json({ user: req.user });
+};
+
+export const logout = async (req, res) => {
+  res.clearCookie('token', { ...cookieOpts, maxAge: 0 });
+  return res.json({ message: 'Logout OK' });
+};
