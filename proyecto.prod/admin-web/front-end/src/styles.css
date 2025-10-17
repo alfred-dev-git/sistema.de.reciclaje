@@ -6,22 +6,22 @@
     --accent: #2faa3f;
 }
 
+/* === RESETEO GENERAL === */
 * {
-    box-sizing: border-box
+    box-sizing: border-box;
 }
 
 body {
     margin: 0;
     font-family: system-ui, Segoe UI, Roboto, sans-serif;
     background: var(--bg);
-    color: var(--text)
+    color: var(--text);
 }
 
+/* === LAYOUT GENERAL === */
 .layout {
-    display: grid;
     grid-template-rows: auto auto 1fr;
     min-height: 100vh;
-
 }
 
 .topbar {
@@ -30,18 +30,18 @@ body {
     justify-content: space-between;
     padding: 8px 16px;
     background: #e9f3ea;
-    border-bottom: 1px solid var(--border)
+    border-bottom: 1px solid var(--border);
 }
 
 .topbar h1 {
     font-size: 18px;
-    margin: 0
+    margin: 0;
 }
 
 .topbar .user {
     display: flex;
     gap: 8px;
-    align-items: center
+    align-items: center;
 }
 
 .topbar button {
@@ -49,7 +49,7 @@ body {
     background: #fff;
     padding: 6px 10px;
     border-radius: 8px;
-    cursor: pointer
+    cursor: pointer;
 }
 
 .nav {
@@ -57,7 +57,7 @@ body {
     gap: 12px;
     padding: 8px 16px;
     border-bottom: 1px solid var(--border);
-    background: #f4faf4
+    background: #f4faf4;
 }
 
 .nav a {
@@ -65,50 +65,121 @@ body {
     border-radius: 8px;
     text-decoration: none;
     border: 1px solid var(--border);
-    color: var(--text)
+    color: var(--text);
 }
 
 .nav a:hover {
-    background: #fff
+    background: #fff;
 }
 
+/* === CONTENIDO PRINCIPAL === */
 .content {
     padding: 16px;
     max-width: 1100px;
-    margin: 0 auto
+    margin: 0 auto;
+}
+
+/* === TARJETAS === */
+.Container-Cards {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 30px;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
 }
 
 .card {
-    background: var(--card);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    /* distribuye bien el contenido */
+    background: #2e703ed8;
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 16px;
+    padding: 38px;
     margin-bottom: 16px;
-    box-shadow: 0 1px 2px rgba(16, 24, 40, .06)
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+    backdrop-filter: blur(5px);
+    gap: 12px;
+}
+
+.card.card-home {
+    width: 282px;
+    height: 270px;
+}
+
+.card p {
+    justify-content: flex-end;
+    margin: 5;
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 100;
 }
 
 .card h3 {
+    font-family: "Fugaz One", sans-serif;
     margin: 0 0 12px;
-    color: #164e1f
+    color: #ebe5e5;
+    font-variant: inherit;
+    font-weight: 100;
 }
 
+.card button {
+    margin-top: auto;
+    padding: 10px;
+    background: #ffffff;
+    border: none;
+    color: #2e703ed8;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.card button:hover {
+    background: #f0f0f0;
+    transition: background 0.5s;
+}
+
+.home {
+    width: 100%;
+
+}
+
+/* encabezado centrado */
 .home .hero {
     display: flex;
     justify-content: center;
-    margin-bottom: 12px
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.home .welcome h2 {
+    margin: 0;
+    font-family: "Knewave", system-ui;
+    color: #000000;
+    font-weight: 350;
+}
+
+.home .welcome p {
+    margin: 4px 0 0;
+    color: var(--accent);
+    letter-spacing: 1px;
+    font-weight: 500;
 }
 
 .home .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-    gap: 12px
+    gap: 12px;
 }
 
+/* === LOGIN === */
 .login {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh
+    height: 100vh;
 }
 
 .login form {
@@ -116,16 +187,16 @@ body {
     background: #fff;
     border: 1px solid var(--border);
     border-radius: 16px;
-    padding: 20px
+    padding: 20px;
 }
 
 .login h2 {
-    margin: 0 0 12px
+    margin: 0 0 12px;
 }
 
 .login label {
     display: block;
-    margin-top: 8px
+    margin-top: 8px;
 }
 
 .login input {
@@ -133,7 +204,7 @@ body {
     padding: 10px;
     margin-top: 6px;
     border: 1px solid var(--border);
-    border-radius: 8px
+    border-radius: 8px;
 }
 
 .login button {
@@ -144,59 +215,62 @@ body {
     border: none;
     color: #fff;
     border-radius: 10px;
-    cursor: pointer
+    cursor: pointer;
 }
 
+/* === ERRORES === */
 .error {
     background: #ffe5e5;
     border: 1px solid #f5bcbc;
     color: #931b1b;
     padding: 8px;
     border-radius: 8px;
-    margin-bottom: 8px
+    margin-bottom: 8px;
 }
 
+/* === FILTRO Y TABLAS === */
 .filter {
-    margin-bottom: 10px
+    margin-bottom: 10px;
 }
 
 .filter input {
     width: 100%;
     padding: 10px;
     border: 1px solid var(--border);
-    border-radius: 10px
+    border-radius: 10px;
 }
 
 .table-wrap {
     overflow: auto;
     border: 1px solid var(--border);
-    border-radius: 12px
+    border-radius: 12px;
 }
 
 table {
     width: 100%;
-    border-collapse: collapse
+    border-collapse: collapse;
 }
 
 thead {
-    background: #f5fbf6
+    background: #f5fbf6;
 }
 
 th,
 td {
     padding: 10px;
     border-bottom: 1px solid var(--border);
-    text-align: left
+    text-align: left;
 }
 
+/* === CHARTS === */
 .charts {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 16px
+    gap: 16px;
 }
 
-@media (max-width:900px) {
+@media (max-width: 900px) {
     .charts {
-        grid-template-columns: 1fr
+        grid-template-columns: 1fr;
     }
 }

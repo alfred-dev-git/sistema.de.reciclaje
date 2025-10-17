@@ -1,10 +1,9 @@
-import './card.css';
 
-export default function Card({ title, children }: { title?: string; children: React.ReactNode }) {
+export default function Card({ title, children, isHome }: { title?: string; children: React.ReactNode; isHome?: boolean }) {
   return (
-    <div className="card">
+    <div className={`card ${isHome ? 'card-home' : ''}`}>
       {title && <h3>{title}</h3>}
-      <div>{children}</div>
+      {children}
     </div>
   );
 }

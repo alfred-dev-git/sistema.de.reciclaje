@@ -1,8 +1,7 @@
 import { Link, Outlet } from 'react-router-dom';
 import Protected from './components/Protected';
 import { useAuth } from './context/AuthContext';
-import banner from './assets/logos/logo2.png';
-
+import background from './assets/Backgrounds/background.jpg';
 export default function App() {
   const { user, logout } = useAuth();
   return (
@@ -10,7 +9,6 @@ export default function App() {
       <div className="layout">
         <header className="topbar">
           <button className="menu">≡</button>
-          <img src={banner} alt="Recolectapp" style={styles.logo} />
           <div className="user">
             {user?.nombre}
             <button onClick={logout}>Salir</button>
@@ -22,17 +20,23 @@ export default function App() {
           <Link to="/historial">Historial</Link>
         </nav>
 
-        <main className="content">
-          <Outlet />
-        </main>
+        <div
+          style={{
+            backgroundImage: `url(${background})`,
+
+            backgroundPosition: 'center',
+            backgroundSize: 'cover',
+            backgroundAttachment: 'fixed',
+            minHeight: '100vh',
+            width: '100%',
+            padding: '20px',
+          }}
+        >
+          <main className="content">
+            <Outlet />
+          </main>
+        </div>
       </div>
     </Protected>
   );
-}
-const styles = {
-  logo: {
-    width: '200px',
-    height: 'auto',
-  }
-
 }
