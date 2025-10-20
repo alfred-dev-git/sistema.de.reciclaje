@@ -44,3 +44,23 @@ export async function getCurrentUser() {
     return null;
   }
 }
+
+// --- Reset de contraseña por email (OTP) ---
+
+export async function requestPasswordReset(email: string) {
+  const body = { email: String(email).trim().toLowerCase() };
+  return api.post<{ ok: boolean }>("/auth/forgot", body);
+}
+
+export async function resetPassword(payload: {
+  email: string;
+  code: string;
+  new_password: string;
+}) {
+  const body = {
+    email: String(payload.email).trim().toLowerCase(),
+    code: String(payload.code).trim(),
+    new_password: String(payload.new_password),
+  };
+  return api.post<{ ok: boolean }>("/auth/reset", body);
+}
