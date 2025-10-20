@@ -13,7 +13,7 @@ const cookieOpts = {
 export const login = async (req, res) => {
   const { email, password } = req.body;
 
-  // Validación
+  // Validación de formato
   const { valid, errors } = validateLogin({ email, password });
   if (!valid) return res.status(400).json({ error: errors.join(', ') });
 
@@ -24,19 +24,27 @@ export const login = async (req, res) => {
       [email]
     );
 
-    if (rows.length === 0) 
+    if (rows.length === 0)
       return res.status(401).json({ error: 'Credenciales inválidas' });
 
     const user = rows[0];
     const match = await bcrypt.compare(password, user.password);
-    if (!match) 
+    if (!match)
       return res.status(401).json({ error: 'Credenciales inválidas' });
 
+    // ✅ Validación de roles permitidos
+    if (user.rol_idrol !== 1 && user.rol_idrol !== 2) {
+      return res
+        .status(403)
+        .json({ error: 'Acceso denegado. Solo administradores pueden ingresar.' });
+    }
+
+    // Generar token solo si pasa la validación de rol
     const token = signToken({
       idusuario: user.idusuario,
       nombre: user.nombre,
       email: user.email,
-      rol_idrol: user.rol_idrol
+      rol_idrol: user.rol_idrol,
     });
 
     res.cookie('token', token, cookieOpts);
@@ -46,8 +54,8 @@ export const login = async (req, res) => {
         nombre: user.nombre,
         apellido: user.apellido,
         email: user.email,
-        rol_idrol: user.rol_idrol
-      }
+        rol_idrol: user.rol_idrol,
+      },
     });
   } catch (err) {
     console.error('Error en login:', err);

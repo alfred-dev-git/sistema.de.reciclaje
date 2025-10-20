@@ -7,6 +7,7 @@ import Login from './pages/Login'
 import Home from './pages/Home'
 import Historial from './pages/Historial'
 import Rutas from "./pages/Rutas";
+import Cronograma from "./pages/Notificacion";
 import AppNavigator from './AppNavigator' 
 import './styles.css'
 
@@ -21,6 +22,7 @@ const router = createBrowserRouter([
           { index: true, element: <Home /> },
           { path: "historial", element: <Historial /> },
           { path: "rutas", element: <Rutas /> }, 
+          { path: "cronograma", element: <Cronograma /> }, 
         ],
       },
       { path: "login", element: <Login /> }, // fuera del layout protegido

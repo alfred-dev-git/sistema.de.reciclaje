@@ -36,6 +36,8 @@ export default function Home() {
         <Card title="Lanzar notificación" isHome={true}>
           <p>Hay {kpis?.fechasActivas ?? '...'} fechas activas</p>
           <button
+            onClick={() => navigate("/cronograma")}
+
           >
             🢂
           </button>

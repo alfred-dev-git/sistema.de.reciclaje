@@ -7,6 +7,7 @@ dotenv.config();
 import authRoutes from './routes/auth.routes.js';
 import pedidosRoutes from './routes/pedidos.routes.js';
 import paradasRoutes from './routes/paradas.routes.js';
+import cronogramaRoutes from './routes/cronograma.routes.js';
 
 const app = express();
 
@@ -29,6 +30,8 @@ app.get('/api/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api', pedidosRoutes);
 app.use('/api', paradasRoutes);
+app.use('/api/cronograma', cronogramaRoutes);
+
 
 // 🔹 Railway asigna su propio puerto, así que usá este formato:
 const PORT = process.env.PORT || 8080;
