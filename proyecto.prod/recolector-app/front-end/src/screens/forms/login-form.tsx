@@ -36,7 +36,7 @@ const LoginForm: React.FC = () => {
         await saveUser(response.user);
 
         if (verificarRol(response.user)) {
-          navigate('RecolectorNavigation');
+          navigate('RecolectorNavigation' as any);
         } else {
           Alert.alert('Acceso denegado', 'No tienes permisos para acceder.');
         }
@@ -102,12 +102,20 @@ const LoginForm: React.FC = () => {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.boton, styles.botonSecundario]}
-                onPress={() => navigate('Home')}
+                onPress={() => navigate('Home' as any)}
                 disabled={loading}
                 accessibilityLabel="Ir al Home"
               >
                 <Text style={styles.botonTexto}>Ir al Home</Text>
               </TouchableOpacity>
+              <View style={styles.registerContainer}>
+                <Text style={styles.registerText}>
+                  ¿No tenés una cuenta?{' '}
+                </Text>
+                <TouchableOpacity onPress={() => navigate('Register' as any)}>
+                  <Text style={styles.registerLink}>Registrate</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </View>
@@ -119,6 +127,7 @@ const LoginForm: React.FC = () => {
 export default LoginForm;
 
 const styles = StyleSheet.create({
+
   background: {
     flex: 1,
   },
@@ -164,6 +173,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#137ce4ff',
     marginTop: 0,
   },
+  registerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+
+  registerText: {
+    color: '#333',
+    fontSize: 15,
+  },
+
+  registerLink: {
+    color: '#2e7040',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+
   botonTexto: {
     color: 'white',
     fontWeight: 'bold',
