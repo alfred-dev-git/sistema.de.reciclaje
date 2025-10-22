@@ -1,45 +1,30 @@
-import React, { useEffect, useState } from "react";
+// src/components/rutas/RutasViewer.tsx
+import React from "react";
 import { useJsApiLoader } from "@react-google-maps/api";
-import { obtenerParadas, PedidoAsignado } from "../../api/services/paradas.service";
-import {
-  obtenerOpcionesAgrupamiento,
-  agruparParadasPorCercania,
-  RutaAgrupada,
-} from "../mapa/agrupador-rutas";
 import RutasMap from "./rutas-map";
-import PanelRecolector from "../Recolector";
+import ModalRecolector from "../Recolector";
+import { useRutas } from "./use-rutas";
 
 export default function RutasViewer() {
-  const [paradas, setParadas] = useState<PedidoAsignado[]>([]);
-  const [rutas, setRutas] = useState<RutaAgrupada[]>([]);
-  const [opciones, setOpciones] = useState<number[]>([]);
-  const [opcionSeleccionada, setOpcionSeleccionada] = useState<number | null>(null);
-  const [rutaActiva, setRutaActiva] = useState<number | null>(null);
-  const [puntoSeleccionado, setPuntoSeleccionado] = useState<PedidoAsignado | null>(null);
+  const {
+    paradas,
+    rutas,
+    opciones,
+    opcionSeleccionada,
+    rutaActiva,
+    mostrarModal,
+    handleSeleccion,
+    handleAsignarRuta,
+    handleConfirmarAsignacion,
+    setRutaActiva,
+    setMostrarModal,
+    puntoSeleccionado,
+    setPuntoSeleccionado,
+  } = useRutas();
 
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
   });
-
-  useEffect(() => {
-    async function cargarParadas() {
-      try {
-        const data = await obtenerParadas();
-        setParadas(data);
-        setOpciones(obtenerOpcionesAgrupamiento(data.length));
-      } catch (err) {
-        console.error("❌ Error cargando paradas:", err);
-      }
-    }
-    cargarParadas();
-  }, []);
-
-  const handleSeleccion = (valor: number) => {
-    setOpcionSeleccionada(valor);
-    const agrupadas = agruparParadasPorCercania(paradas, valor);
-    setRutas(agrupadas);
-    setRutaActiva(null);
-  };
 
   const center = React.useMemo(() => {
     if (paradas.length > 0)
@@ -53,11 +38,8 @@ export default function RutasViewer() {
     <div className="p-4 flex flex-col gap-4">
       {paradas.length > 0 ? (
         <>
-          {/* 🔹 Selector de opciones */}
           <div>
-            <h3 className="text-lg font-semibold">
-              Total de paradas: {paradas.length}
-            </h3>
+            <h3 className="text-lg font-semibold">Total de paradas: {paradas.length}</h3>
             <label className="font-medium">Elegí cómo agrupar las rutas:</label>
             <select
               className="border p-2 rounded w-64 ml-2"
@@ -66,14 +48,12 @@ export default function RutasViewer() {
             >
               <option value="">Seleccioná una opción</option>
               {opciones.map((n) => (
-                <option key={n} value={n}>
-                  {n} rutas → {Math.ceil(paradas.length / n)} paradas por ruta
-                </option>
+                <option key={n} value={n}>{n} rutas</option>
               ))}
             </select>
           </div>
 
-          {/* 🔹 Botones de rutas */}
+          {/* Botones de rutas */}
           {rutas.length > 0 && (
             <div className="flex gap-2 flex-wrap mt-2">
               {rutas.map((r) => (
@@ -89,26 +69,29 @@ export default function RutasViewer() {
               ))}
             </div>
           )}
+        <RutasMap
+          rutas={rutas}
+          rutaActiva={rutaActiva}
+          puntoSeleccionado={puntoSeleccionado}
+          setPuntoSeleccionado={setPuntoSeleccionado}
+          center={center}
+        />
 
-          {/* 🔹 Mapa separado */}
-          <RutasMap
-            rutas={rutas}
-            rutaActiva={rutaActiva}
-            puntoSeleccionado={puntoSeleccionado}
-            setPuntoSeleccionado={setPuntoSeleccionado}
-            center={center}
-          />
-                {/* 👷 Panel lateral */}
-          <div>
-            <PanelRecolector rutaActiva={rutaActiva} />
-          </div>
-          {/* 🔹 Listado de rutas */}
+          {/* Lista de rutas */}
           {rutas.length > 0 && (
             <div>
               <h4 className="font-semibold mt-4">Rutas generadas:</h4>
               {rutas.map((ruta) => (
                 <div key={ruta.id} className="border p-2 rounded mb-2">
-                  <h5 className="font-bold">Ruta {ruta.id}</h5>
+                  <div className="flex justify-between items-center mb-1">
+                    <h5 className="font-bold">Ruta {ruta.id}</h5>
+                    <button
+                      onClick={() => handleAsignarRuta(ruta)}
+                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
+                    >
+                      Asignar ruta
+                    </button>
+                  </div>
                   <ul className="ml-4 list-disc">
                     {ruta.paradas.map((p) => (
                       <li key={p.idpedidos}>
@@ -122,8 +105,14 @@ export default function RutasViewer() {
           )}
         </>
       ) : (
-        <p>Cargando paradas...</p>
+        <p>No hay paradas aún...</p>
       )}
+
+      <ModalRecolector
+        mostrar={mostrarModal}
+        onCerrar={() => setMostrarModal(false)}
+        onConfirmar={handleConfirmarAsignacion}
+      />
     </div>
   );
 }

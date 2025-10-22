@@ -8,6 +8,8 @@ import authRoutes from './routes/auth.routes.js';
 import pedidosRoutes from './routes/pedidos.routes.js';
 import paradasRoutes from './routes/paradas.routes.js';
 import cronogramaRoutes from './routes/cronograma.routes.js';
+import rutasRoutes from './routes/rutas.routes.js';
+
 
 const app = express();
 
@@ -31,6 +33,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api', pedidosRoutes);
 app.use('/api', paradasRoutes);
 app.use('/api/cronograma', cronogramaRoutes);
+app.use('/api/rutas', rutasRoutes);
+
 
 
 // 🔹 Railway asigna su propio puerto, así que usá este formato:
