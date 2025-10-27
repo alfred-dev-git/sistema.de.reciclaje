@@ -1,5 +1,11 @@
 import React, { useCallback } from "react";
-import { GoogleMap, Marker, InfoWindow, Polyline } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  Marker,
+  InfoWindow,
+  Polyline,
+  useJsApiLoader,
+} from "@react-google-maps/api";
 import { PedidoAsignado } from "../../api/services/paradas.service";
 import { RutaAgrupada } from "../mapa/agrupador-rutas";
 
@@ -17,8 +23,15 @@ const containerStyle = {
 };
 
 const colores = [
-  "red", "blue", "green", "orange", "purple",
-  "pink", "yellow", "cyan", "magenta",
+  "red",
+  "blue",
+  "green",
+  "orange",
+  "purple",
+  "pink",
+  "yellow",
+  "cyan",
+  "magenta",
 ];
 
 export default function RutasMap({
@@ -28,10 +41,18 @@ export default function RutasMap({
   setPuntoSeleccionado,
   center,
 }: RutasMapProps) {
-  // 🔹 Limpiar selección al hacer click en el mapa vacío
+  const { isLoaded, loadError } = useJsApiLoader({
+    id: "google-map-script",
+    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
+  });
+
   const handleMapClick = useCallback(() => {
     setPuntoSeleccionado(null);
   }, [setPuntoSeleccionado]);
+
+  // 🔹 Mostrar mensajes apropiados
+  if (loadError) return <p>Error al cargar el mapa</p>;
+  if (!isLoaded) return <p>Cargando mapa...</p>;
 
   return (
     <div className="relative">
@@ -42,14 +63,13 @@ export default function RutasMap({
       )}
 
       <GoogleMap
-        key={rutaActiva ?? 0} // 🔹 fuerza a re-montar el mapa al cambiar de ruta
+        key={rutaActiva ?? 0}
         mapContainerStyle={containerStyle}
         center={center}
         zoom={12}
         options={{ gestureHandling: "greedy" }}
         onClick={handleMapClick}
       >
-        {/* 🔸 Marcadores de la ruta activa */}
         {rutaActiva &&
           rutas
             .filter((r) => r.id === rutaActiva)
@@ -82,16 +102,19 @@ export default function RutasMap({
                     key={p.idpedidos}
                     position={{ lat, lng }}
                     onClick={() => setPuntoSeleccionado(p)}
-                    icon={{
-                      url: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`,
-                      scaledSize: new google.maps.Size(40, 40),
-                    }}
+                    icon={
+                      isLoaded
+                        ? {
+                            url: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`,
+                            scaledSize: new google.maps.Size(40, 40),
+                          }
+                        : undefined
+                    }
                   />
                 );
               })
             )}
 
-        {/* 🔹 Línea de la ruta activa */}
         {rutaActiva &&
           rutas
             .filter((r) => r.id === rutaActiva)
@@ -110,7 +133,6 @@ export default function RutasMap({
               />
             ))}
 
-        {/* InfoWindow (tooltip del punto seleccionado) */}
         {puntoSeleccionado && (
           <InfoWindow
             position={{
@@ -118,7 +140,8 @@ export default function RutasMap({
               lng: Number(puntoSeleccionado.longitud),
             }}
             onCloseClick={() => setPuntoSeleccionado(null)}
-            options={{ pixelOffset: new google.maps.Size(0, -10) }}
+            options={ isLoaded ? { pixelOffset: new google.maps.Size(0, -10) } : undefined }
+
           >
             <div style={{ lineHeight: "1.4" }}>
               <strong>

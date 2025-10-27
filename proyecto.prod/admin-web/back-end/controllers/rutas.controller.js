@@ -1,5 +1,6 @@
 import { obtenerCantRutasPorRecolector } from "../models/rutas.recolectores.model.js";
 import { asignarRutaARecolector } from "../models/rutas.recolectores.model.js";
+import { cambiarRecolectorRuta } from "../models/rutas.recolectores.model.js";
 
 /**
  * Endpoint para obtener todas las rutas pendientes y no, de los recolectores
@@ -7,7 +8,6 @@ import { asignarRutaARecolector } from "../models/rutas.recolectores.model.js";
 export const getCantRutas = async (req, res) => {
   try {
     const cantrutas = await obtenerCantRutasPorRecolector();
-    console.log("Resultado de obtenerCantRutasPorRecolector:", cantrutas);
     res.json(cantrutas);
   } catch (error) {
     console.error("Error al obtener cantidad de rutass:", error);
@@ -44,4 +44,34 @@ export const asignarRuta = async (req, res) => {
     });
   }
 };
+
+export const cambiarRecolector = async (req, res) => {
+  try {
+    const { id_ruta, id_recolector } = req.body;
+    if (!id_ruta || !id_recolector) {
+      return res.status(400).json({
+        success: false,
+        message: "Datos incompletos: se requiere idRuta e idRecolector",
+      });
+    }
+
+    const resultado = await cambiarRecolectorRuta(id_ruta, id_recolector);
+
+    // 🟢 Evitamos el 404 para errores lógicos
+    if (!resultado.success) {
+      return res.status(200).json(resultado);
+    }
+
+    res.json(resultado);
+  } catch (error) {
+    console.error("❌ Error en cambiarRecolector:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error interno al cambiar el recolector",
+    });
+  }
+};
+
+
+
 //novedad_rutas

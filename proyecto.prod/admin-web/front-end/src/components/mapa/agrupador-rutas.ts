@@ -1,5 +1,5 @@
 import { DBSCAN } from "density-clustering";
-import { PedidoAsignado } from "../../api/services/paradas.service";
+import { PedidoAsignado, obtenerParadasRecolector } from "../../api/services/paradas.service";
 
 export interface Punto {
   latitude: number;
@@ -81,4 +81,30 @@ export function agruparParadasPorCercania(
     id: i + 1,
     paradas: g,
   }));
+}
+
+
+
+export async function obtenerRutasPorRecolector(idRecolector: number): Promise<RutaAgrupada[]> {
+  // 1️⃣ Traer pedidos del backend
+  const pedidos: PedidoAsignado[] = await obtenerParadasRecolector(idRecolector);
+
+  // 2️⃣ Agrupar por id de ruta
+  const rutasMap = new Map<number, PedidoAsignado[]>();
+
+  pedidos.forEach(pedido => {
+    const idRuta = pedido.id_ruta; // viene del backend
+    if (!rutasMap.has(idRuta)) {
+      rutasMap.set(idRuta, []);
+    }
+    rutasMap.get(idRuta)!.push(pedido);
+  });
+
+  // 3️⃣ Transformar en arreglo de RutaAgrupada
+  const rutasAgrupadas: RutaAgrupada[] = Array.from(rutasMap.entries()).map(([id, paradas]) => ({
+    id,
+    paradas,
+  }));
+
+  return rutasAgrupadas;
 }
