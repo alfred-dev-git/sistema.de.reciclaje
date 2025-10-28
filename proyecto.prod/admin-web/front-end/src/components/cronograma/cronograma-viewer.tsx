@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getCronograma } from "../../api/services/cronograma.service";
+import "./cronograma.css";
 
 interface CronogramaItem {
   dia_semana: number;
@@ -51,8 +52,8 @@ const CronogramaViewer: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ textAlign: "center", padding: "2rem" }}>
-        <div className="loader" /> {/* Puedes poner un spinner CSS */}
+      <div className="cronograma-viewer__estado">
+        <div className="loader" />
         <p>Cargando cronograma...</p>
       </div>
     );
@@ -60,36 +61,38 @@ const CronogramaViewer: React.FC = () => {
 
   if (cronograma.length === 0) {
     return (
-      <div style={{ textAlign: "center", padding: "2rem", color: "#666" }}>
+      <div className="cronograma-viewer__estado">
         No hay días de recolección disponibles.
       </div>
     );
   }
 
   return (
-    <div style={{ padding: "1rem" }}>
-      <h2 style={{ textAlign: "center", marginBottom: "1rem" }}>🗓 Frecuencias en el mes</h2>
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "1rem" }}>
+    <div className="cronograma-viewer">
+      <h2 className="cronograma-viewer__titulo titulo">🗓 Frecuencias de Recolección</h2>
+
+      <div className="cronograma-list">
         {cronograma.map((item, index) => (
           <button
             key={`${item.dia_semana}-${item.semana_mes}-${index}`}
-            style={{
-              backgroundColor: "#E9F9EF",
-              padding: "1rem",
-              borderRadius: "12px",
-              width: "90%",
-              border: "none",
-              textAlign: "left",
-              cursor: "pointer",
-              boxShadow: "0 2px 5px rgba(0,0,0,0.1)"
-            }}
+            className="cronograma-item"
             onClick={() => window.alert(`Detalles: ${obtenerNombreSemana(item.semana_mes)} - ${obtenerNombreDia(item.dia_semana)}`)}
           >
-            <p style={{ fontWeight: "bold", marginBottom: "0.5rem" }}>
-              📅 {obtenerNombreSemana(item.semana_mes)} - {obtenerNombreDia(item.dia_semana)}
-            </p>
-            <p>🕒 {item.hora_inicio} - {item.hora_fin}</p>
-            <p>♻️ Tipo reciclable: {item.tipo_reciclable}</p>
+
+            <div className="cronograma-item__fecha">
+              <p className="cronograma-item__semana">
+                {obtenerNombreSemana(item.semana_mes)}
+              </p>
+              <p className="cronograma-item__dia">
+                {obtenerNombreDia(item.dia_semana)}
+              </p>
+            </div>
+
+
+            <div className="cronograma-item__detalles">
+              <p>⏰ Horarios: **{item.hora_inicio} - {item.hora_fin}**</p>
+              <p className="cronograma-item__tipo">♻️ Tipo: **{item.tipo_reciclable}**</p>
+            </div>
           </button>
         ))}
       </div>
