@@ -1,67 +1,46 @@
-import React, { useState, useEffect } from "react";
-import ModalRecolector, { RutasPendientesItem } from "../Recolector";
+import React, { useEffect, useMemo, useState } from "react";
+import ModalRecolector from "../Recolector";
 import RutasMap from "./rutas-map";
-import { obtenerRutasPorRecolector } from "./agrupador-rutas";
-import { RutaAgrupada } from "./agrupador-rutas";
-import { updateRutaRecolector } from "../../api/services/paradas.service";
+import { RutasPendientesItem } from "../Recolector";
+import { useRutas } from "./use-rutas";
 
-export default function Seguimiento() {
-  const [mostrarModal, setMostrarModal] = useState(false);
-  const [recolectorSeleccionado, setRecolectorSeleccionado] =
-    useState<RutasPendientesItem | null>(null);
+export default function SeguimientoRutas() {
+  const {
+    rutas,
+    rutaActiva,
+    setRutaActiva,
+    puntoSeleccionado,
+    setPuntoSeleccionado,
+    mostrarModal,
+    setMostrarModal,
+    recolectorSeleccionado,
+    setRecolectorSeleccionado,
+    rutaParaCambio,
+    setRutaParaCambio,
+    cargarRutasPorRecolector,
+    actualizarRecolectorRuta,
+    anularRutaExistente,
+  } = useRutas("seguimiento");
 
-  const [rutas, setRutas] = useState<RutaAgrupada[]>([]);
-  const [rutaActiva, setRutaActiva] = useState<number | null>(null);
-  const [puntoSeleccionado, setPuntoSeleccionado] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const [rutaParaCambio, setRutaParaCambio] = useState<number | null>(null); // para saber a qué ruta se cambia el recolector
-
+  // 📦 cuando cambia el recolector seleccionado, cargamos sus rutas
   useEffect(() => {
     const fetchRutas = async () => {
       if (!recolectorSeleccionado?.idrecolector) return;
       setLoading(true);
-      try {
-        const data = await obtenerRutasPorRecolector(recolectorSeleccionado.idrecolector);
-        setRutas(data);
-      } catch (error) {
-        console.error("Error al obtener rutas:", error);
-      } finally {
-        setLoading(false);
-      }
+      await cargarRutasPorRecolector(recolectorSeleccionado.idrecolector);
+      setLoading(false);
     };
 
     fetchRutas();
   }, [recolectorSeleccionado]);
 
+  // 💾 cuando se confirma un recolector (ya sea para selección o cambio)
   const handleConfirmarRecolector = async (recolector: RutasPendientesItem) => {
     if (rutaParaCambio !== null) {
-      try {
-        const resultado = await updateRutaRecolector(rutaParaCambio, recolector.idrecolector);
-
-        if (!resultado.success) {
-          // ⚠️ Error lógico: mismo recolector o problema
-          alert(`No se pudo actualizar: ${resultado.message}`);
-          console.warn("Error lógico al actualizar recolector:", resultado.message);
-          setRutaParaCambio(null);
-          return;
-        }
-
-        // ✅ Si todo va bien
-        alert(`Recolector de la ruta ${rutaParaCambio} actualizado correctamente.`);
-
-        // Refrescar rutas
-        if (recolectorSeleccionado) {
-          const data = await obtenerRutasPorRecolector(recolectorSeleccionado.idrecolector);
-          setRutas(data);
-        }
-
-        setRutaParaCambio(null);
-
-      } catch (error) {
-        alert("Error al actualizar recolector. Revisa la consola.");
-        console.error(error);
-      }
+      await actualizarRecolectorRuta(rutaParaCambio, recolector);
+      setRutaParaCambio(null);
     } else {
       setRecolectorSeleccionado(recolector);
     }
@@ -69,7 +48,8 @@ export default function Seguimiento() {
     setMostrarModal(false);
   };
 
-  const center = React.useMemo(() => {
+  // 📍 centro del mapa
+  const center = useMemo(() => {
     if (rutas.length > 0 && rutas[0].paradas.length > 0) {
       return {
         lat: Number(rutas[0].paradas[0].latitud),
@@ -111,7 +91,9 @@ export default function Seguimiento() {
                 <button
                   onClick={() => setRutaActiva(r.id)}
                   className={`px-4 py-2 rounded text-white font-medium ${
-                    rutaActiva === r.id ? "bg-blue-600" : "bg-gray-500 hover:bg-gray-600"
+                    rutaActiva === r.id
+                      ? "bg-blue-600"
+                      : "bg-gray-500 hover:bg-gray-600"
                   }`}
                 >
                   Ruta {r.id}
@@ -125,6 +107,17 @@ export default function Seguimiento() {
                   className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
                 >
                   Cambiar recolector
+                </button>
+
+                <button
+                  onClick={() => {
+                    if (confirm(`¿Seguro que deseas anular la ruta ${r.id}?(solo anulará paradas que no han sido completadas)`)) {
+                      anularRutaExistente(r.id);
+                    }
+                  }}
+                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
+                >
+                  Anular ruta
                 </button>
               </div>
             ))}

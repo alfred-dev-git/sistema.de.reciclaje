@@ -4,6 +4,7 @@ import { getCantRutas } from '../controllers/rutas.controller.js';
 import { asignarRuta } from '../controllers/rutas.controller.js';
 import { getParadasRecolector } from '../controllers/paradas.controller.js';
 import { cambiarRecolector } from '../controllers/rutas.controller.js';
+import { anularRuta } from "../controllers/rutas.controller.js";
 
 
 const router = Router();
@@ -16,5 +17,7 @@ router.post('/asignar', requireAuth, asignarRuta);
 
 router.post('/updaterecolector', requireAuth, cambiarRecolector);          
 
+
+router.post("/anularRuta", anularRuta);
 
 export default router;

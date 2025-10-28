@@ -1,13 +1,14 @@
+// src/components/rutas/rutas-map.tsx
 import React, { useCallback } from "react";
 import {
   GoogleMap,
   Marker,
   InfoWindow,
   Polyline,
-  useJsApiLoader,
 } from "@react-google-maps/api";
 import { PedidoAsignado } from "../../api/services/paradas.service";
 import { RutaAgrupada } from "../mapa/agrupador-rutas";
+import { useGoogleMapsLoader } from "./use-google-maps-loader";
 
 interface RutasMapProps {
   rutas: RutaAgrupada[];
@@ -41,18 +42,15 @@ export default function RutasMap({
   setPuntoSeleccionado,
   center,
 }: RutasMapProps) {
-  const { isLoaded, loadError } = useJsApiLoader({
-    id: "google-map-script",
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "",
-  });
+  const { isLoaded } = useGoogleMapsLoader();
 
   const handleMapClick = useCallback(() => {
     setPuntoSeleccionado(null);
   }, [setPuntoSeleccionado]);
 
-  // 🔹 Mostrar mensajes apropiados
-  if (loadError) return <p>Error al cargar el mapa</p>;
-  if (!isLoaded) return <p>Cargando mapa...</p>;
+  if (!isLoaded) {
+    return <p>Cargando mapa...</p>;
+  }
 
   return (
     <div className="relative">
@@ -102,14 +100,10 @@ export default function RutasMap({
                     key={p.idpedidos}
                     position={{ lat, lng }}
                     onClick={() => setPuntoSeleccionado(p)}
-                    icon={
-                      isLoaded
-                        ? {
-                            url: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`,
-                            scaledSize: new google.maps.Size(40, 40),
-                          }
-                        : undefined
-                    }
+                    icon={{
+                      url: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`,
+                      scaledSize: new google.maps.Size(40, 40),
+                    }}
                   />
                 );
               })
@@ -140,8 +134,7 @@ export default function RutasMap({
               lng: Number(puntoSeleccionado.longitud),
             }}
             onCloseClick={() => setPuntoSeleccionado(null)}
-            options={ isLoaded ? { pixelOffset: new google.maps.Size(0, -10) } : undefined }
-
+            options={{ pixelOffset: new google.maps.Size(0, -10) }}
           >
             <div style={{ lineHeight: "1.4" }}>
               <strong>
