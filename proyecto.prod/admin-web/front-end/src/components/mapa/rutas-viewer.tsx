@@ -1,6 +1,6 @@
 // src/components/rutas/RutasViewer.tsx
 import React from "react";
-import { useJsApiLoader } from "@react-google-maps/api";
+import { useGoogleMapsLoader } from "./use-google-maps-loader";
 import RutasMap from "./rutas-map";
 import ModalRecolector from "../Recolector";
 import { useRutas } from "./use-rutas";
@@ -22,9 +22,7 @@ export default function RutasViewer() {
     setPuntoSeleccionado,
   } = useRutas();
 
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-  });
+  const { isLoaded } = useGoogleMapsLoader(); // usa siempre el mismo loader
 
   const center = React.useMemo(() => {
     if (paradas.length > 0)

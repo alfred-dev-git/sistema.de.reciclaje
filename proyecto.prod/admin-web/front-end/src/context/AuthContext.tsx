@@ -41,7 +41,7 @@ const logout = async (silent = false) => {
 };
 
 
-  // 👇 Esto conecta el AuthContext con los interceptores del https
+  // Esto conecta el AuthContext con los interceptores del https
 useEffect(() => {
   setAuthContextRef({ logout: () => logout(true) });
 }, []);

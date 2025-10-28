@@ -15,7 +15,7 @@ const app = express();
 
 // 🔹 Configurar CORS dinámicamente (funciona en local y en Railway)
 const allowedOrigins = [
-  'http://localhost:5173',             // Vite local
+  'http://localhost:5173',             // Vitee local
   process.env.CORS_ORIGIN              // Frontend desplegado (ej: https://miapp-front.vercel.app)
 ].filter(Boolean); // elimina undefined
 

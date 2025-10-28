@@ -52,6 +52,7 @@ export default function Home() {
         <Card title="Movimientos del recolector" isHome={true}>
           <p>Hay {kpis?.recolectoresActivos ?? '...'} recolectores activos</p>
           <button
+            onClick={() => navigate("/seguimiento")}
           >
             🢂
           </button>

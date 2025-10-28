@@ -40,3 +40,24 @@ export const postAsignarRuta = async (payload: any): Promise<ApiResponse> => {
     };
   }
 };
+
+
+export const anularRuta = async (idRuta: number) => {
+  try {
+    const response = await https.post("/rutas/anularRuta", { idRuta });
+    return {
+      success: true,
+      message: "Ruta anulada correctamente",
+      data: response.data,
+    };
+  } catch (error: any) {
+    console.error("❌ Error al anular ruta:", error.response?.data || error.message);
+    return {
+      success: false,
+      message: error.response?.data?.message || "Error al anular la ruta",
+    };
+  }
+};
+
+
+
