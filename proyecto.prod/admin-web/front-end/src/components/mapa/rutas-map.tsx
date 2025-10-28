@@ -34,12 +34,27 @@ export default function RutasMap({
   }, [setPuntoSeleccionado]);
 
   return (
-    <div className="relative">
+    <div style={{
+      position: "relative",
+      borderRadius: "12px",
+      overflow: "hidden",
+      boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
+    }}>
       {rutaActiva && (
-        <div className="absolute top-2 left-2 bg-blue-600 text-white px-4 py-2 rounded shadow-md z-10">
+        <div style={{
+          position: "absolute",
+          top: "8px",
+          left: "8px",
+          background: "#2e703ed8",
+          color: "white",
+          padding: "8px 12px",
+          borderRadius: "8px",
+          zIndex: 10
+        }}>
           Ruta {rutaActiva} seleccionada
         </div>
-      )}
+      )
+      }
 
       <GoogleMap
         key={rutaActiva ?? 0} // 🔹 fuerza a re-montar el mapa al cambiar de ruta
@@ -132,6 +147,6 @@ export default function RutasMap({
           </InfoWindow>
         )}
       </GoogleMap>
-    </div>
+    </div >
   );
 }

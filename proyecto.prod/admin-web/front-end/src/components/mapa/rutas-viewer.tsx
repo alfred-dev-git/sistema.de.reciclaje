@@ -35,40 +35,74 @@ export default function RutasViewer() {
   if (!isLoaded) return <p>Cargando mapa...</p>;
 
   return (
-    <div className="p-4 flex flex-col gap-4">
-      {paradas.length > 0 ? (
-        <>
-          <div>
-            <h3 className="text-lg font-semibold">Total de paradas: {paradas.length}</h3>
-            <label className="font-medium">Elegí cómo agrupar las rutas:</label>
-            <select
-              className="border p-2 rounded w-64 ml-2"
-              onChange={(e) => handleSeleccion(Number(e.target.value))}
-              value={opcionSeleccionada ?? ""}
-            >
-              <option value="">Seleccioná una opción</option>
-              {opciones.map((n) => (
-                <option key={n} value={n}>{n} rutas</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Botones de rutas */}
-          {rutas.length > 0 && (
-            <div className="flex gap-2 flex-wrap mt-2">
-              {rutas.map((r) => (
-                <button
-                  key={r.id}
-                  onClick={() => setRutaActiva(r.id)}
-                  className={`px-4 py-2 rounded text-white font-medium ${
-                    rutaActiva === r.id ? "bg-blue-600" : "bg-gray-500 hover:bg-gray-600"
-                  }`}
-                >
-                  Ruta {r.id}
-                </button>
-              ))}
+    <div className="MapContainer">
+      {/* Panel lateral izquierdo */}
+      <div className="panel-lateral">
+        {paradas.length > 0 ? (
+          <>
+            <div className="container-info-rutas">
+              <h3 className="titulo">Total de paradas: {paradas.length}</h3>
+              <label className="font-medium">Elegí cómo agrupar las rutas:</label>
+              <select
+                onChange={(e) => handleSeleccion(Number(e.target.value))}
+                value={opcionSeleccionada ?? ""}
+              >
+                <option value="">Seleccioná una opción</option>
+                {opciones.map((n) => (
+                  <option key={n} value={n}>{n} rutas</option>
+                ))}
+              </select>
             </div>
-          )}
+
+            {/* Botones de rutas */}
+            {rutas.length > 0 && (
+              <div className="container-botones-rutas">
+                {rutas.map((r) => (
+                  <button
+                    key={r.id}
+                    onClick={() => setRutaActiva(r.id)}
+                    className="button button-ruta"
+                  >
+                    Ruta {r.id}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Lista de rutas */}
+            {rutas.length > 0 && (
+              <div>
+                <h4 className="titulo">Rutas generadas:</h4>
+                {rutas.map((ruta) => (
+                  <div key={ruta.id} className="">
+                    <div className="container-ruta-detalles">
+                      <h5 className="titulo">Ruta {ruta.id}</h5>
+                      <button
+                        onClick={() => handleAsignarRuta(ruta)}
+                        className="button button-ruta"
+                      >
+                        Asignar ruta
+                      </button>
+                    </div>
+                    <ul>
+                      {ruta.paradas.map((p) => (
+                        <li key={p.idpedidos}>
+                          {p.calle} {p.numero} ({p.latitud}, {p.longitud})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        ) : (
+          <p>No hay paradas aún...</p>
+        )}
+      </div>
+
+      {/* Mapa a la derecha */}
+      <div className="area-mapa">
         <RutasMap
           rutas={rutas}
           rutaActiva={rutaActiva}
@@ -76,37 +110,7 @@ export default function RutasViewer() {
           setPuntoSeleccionado={setPuntoSeleccionado}
           center={center}
         />
-
-          {/* Lista de rutas */}
-          {rutas.length > 0 && (
-            <div>
-              <h4 className="font-semibold mt-4">Rutas generadas:</h4>
-              {rutas.map((ruta) => (
-                <div key={ruta.id} className="border p-2 rounded mb-2">
-                  <div className="flex justify-between items-center mb-1">
-                    <h5 className="font-bold">Ruta {ruta.id}</h5>
-                    <button
-                      onClick={() => handleAsignarRuta(ruta)}
-                      className="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm"
-                    >
-                      Asignar ruta
-                    </button>
-                  </div>
-                  <ul className="ml-4 list-disc">
-                    {ruta.paradas.map((p) => (
-                      <li key={p.idpedidos}>
-                        {p.calle} {p.numero} ({p.latitud}, {p.longitud})
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      ) : (
-        <p>No hay paradas aún...</p>
-      )}
+      </div>
 
       <ModalRecolector
         mostrar={mostrarModal}

@@ -15,11 +15,6 @@ export default function App() {
           </div>
         </header>
 
-        <nav className="nav">
-          <Link to="/">Home</Link>
-          <Link to="/historial">Historial</Link>
-        </nav>
-
         <div
           style={{
             backgroundImage: `url(${background})`,

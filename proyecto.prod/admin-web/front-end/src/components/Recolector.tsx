@@ -47,9 +47,9 @@ export default function ModalRecolector({
   if (!mostrar) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-40 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-lg w-[400px] shadow-lg">
-        <h3 className="text-lg font-bold mb-2">Asignar Ruta</h3>
+    <div className="modal">
+      <div>
+        <h3 className="subtitulo">Asignar Ruta</h3>
 
         {loading ? (
           <p>Cargando recolectores...</p>
@@ -83,13 +83,13 @@ export default function ModalRecolector({
 
             <div className="flex justify-end gap-3">
               <button
-                className="bg-gray-400 hover:bg-gray-500 text-white px-3 py-1 rounded"
+                className="button button-modal"
                 onClick={onCerrar}
               >
                 Cancelar
               </button>
               <button
-                className="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded"
+                className="button button-modal"
                 disabled={!recolectorElegido}
                 onClick={() =>
                   recolectorElegido && onConfirmar(recolectorElegido)
