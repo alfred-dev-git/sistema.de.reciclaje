@@ -339,6 +339,10 @@ body {
     border-radius: 12px;
 }
 
+.table-wrap td {
+    color: #e9f3ea;
+}
+
 table {
     width: 100%;
     border-collapse: collapse;

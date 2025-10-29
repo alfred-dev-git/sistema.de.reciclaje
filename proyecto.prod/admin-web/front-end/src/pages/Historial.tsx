@@ -44,7 +44,7 @@ export default function Historial() {
           <input
             placeholder='Filtrar por nombre de usuario... (ej: "A")'
             value={q}
-            onChange={e=>setQ(e.target.value)}
+            onChange={e => setQ(e.target.value)}
           />
         </div>
 
