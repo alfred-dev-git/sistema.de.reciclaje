@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Image, } from "react-native";
 import { getCurrentUser } from "@/services/api/auth";
 import { getUserPhotoUrl, pickImageFromLibrary, uploadUserPhoto } from "@/services/api/user";
 import { router } from "expo-router";
-
+import { Ionicons } from "@expo/vector-icons";
 
 function initialsFrom(name?: string, last?: string) {
   const a = (name?.trim()?.[0] ?? "").toUpperCase();
@@ -35,6 +35,7 @@ export default function ProfileScreen() {
   const initials = initialsFrom(user?.nombre, user?.apellido);
 
   return (
+
     <View style={styles.container}>
       <View style={styles.header}>
         {photoUri ? (
@@ -49,17 +50,54 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.card}>
-        <Text style={styles.row}><Text style={styles.label}>Nombre:</Text> {user?.nombre ?? "-"}</Text>
-        <Text style={styles.row}><Text style={styles.label}>Apellido:</Text> {user?.apellido ?? "-"}</Text>
-        <Text style={styles.row}><Text style={styles.label}>Email:</Text> {user?.email ?? "-"}</Text>
-        <Text style={styles.row}><Text style={styles.label}>Teléfono:</Text> {user?.telefono ?? "-"}</Text>
-        <Text style={styles.row}><Text style={styles.label}>Fecha de nacimiento:</Text> {user?.fecha_nacimiento ?? "-"}</Text>
-        <Text style={styles.row}><Text style={styles.label}>Sexo:</Text> {user?.sexo ?? "-"}</Text>
-        {typeof user?.puntos === "number" ? (
-          <Text style={styles.row}><Text style={styles.label}>Puntos:</Text> {user.puntos}</Text>
-        ) : null}
+
+      <View style={styles.itemProfile}>
+        <View><Ionicons name="accessibility-outline" size={30} color="gray" /></View>
+        <View style={styles.ItemInfo}>
+          <Text style={styles.itemTitulo} >DNI:</Text>
+          <Text style={styles.itemSubtitulo} >{user?.nombre ?? "-"} {user?.apellido ?? "-"} </Text>
+        </View>
       </View>
+      <View style={styles.itemProfile}>
+        <View>
+          <Ionicons name="at-circle-outline" size={30} color="black" />
+        </View>
+        <View style={styles.ItemInfo}>
+          <Text style={styles.itemTitulo} >Email: </Text>
+          <Text style={styles.itemSubtitulo}>{user?.email ?? "-"}</Text>
+        </View>
+      </View>
+      <View style={styles.itemProfile}>
+        <View>
+          <Ionicons name="call-outline" size={30} color="black" />
+        </View>
+        <View style={styles.ItemInfo}>
+          <Text style={styles.itemTitulo}>Teléfono:</Text>
+          <Text style={styles.itemSubtitulo}> {user?.telefono ?? "-"}</Text>
+        </View>
+      </View>
+      <View style={styles.itemProfile}>
+        <View>
+          <Ionicons name="calendar-outline" size={30} color="black" />
+        </View>
+        <View style={styles.ItemInfo}>
+          <Text style={styles.itemTitulo}>Fecha de nacimiento:</Text>
+          <Text style={styles.itemSubtitulo}> {user?.fecha_nacimiento ?? "-"}</Text>
+        </View>
+      </View>
+
+      {typeof user?.puntos === "number" ? (
+        <View style={styles.itemProfile}>
+          <View>
+            <Ionicons name="star-outline" size={30} color="black" />
+          </View>
+          <View style={styles.ItemInfo}>
+            <Text style={styles.itemTitulo}>Puntos:</Text>
+            <Text style={styles.itemSubtitulo}>{user.puntos}</Text>
+          </View>
+        </View>
+      ) : null}
+
 
       <View style={styles.actions}>
         <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={() => { router.push("/(app)/profile/edit") }}>
@@ -73,25 +111,108 @@ export default function ProfileScreen() {
         </TouchableOpacity>
       </View>
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, paddingBottom: 90 },
-  header: { alignItems: "center", marginBottom: 16 },
-  avatar: { width: 120, height: 120, borderRadius: 60, backgroundColor: "#eee" },
-  avatarFallback: { alignItems: "center", justifyContent: "center", backgroundColor: "#1f7a44" },
-  avatarText: { color: "#fff", fontWeight: "800", fontSize: 42 },
-  editBtn: { marginTop: 10, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 8, backgroundColor: "#1f7a44" },
-  editBtnText: { color: "#fff", fontWeight: "700" },
-  card: { backgroundColor: "#fff", borderRadius: 10, padding: 14, gap: 6 },
-  row: { fontSize: 16 },
-  label: { fontWeight: "700" },
-  actions: { flexDirection: "row", gap: 12, marginTop: 16 },
-  btn: { flex: 1, alignItems: "center", justifyContent: "center", height: 44, borderRadius: 10 },
-  btnOutline: { borderWidth: 2, borderColor: "#1f7a44", backgroundColor: "#fff" },
-  btnFilled: { backgroundColor: "#1f7a44" },
-  btnText: { fontWeight: "700" },
-  btnTextOutline: { color: "#1f7a44" },
-  btnTextFilled: { color: "#fff" },
+  container:
+  {
+    flex: 1,
+    padding: 16,
+    paddingBottom: 90
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 16
+  },
+  avatar: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: "#eee"
+  },
+  avatarFallback: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#1f7a44"
+  },
+  avatarText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 42
+  },
+  editBtn: {
+    marginTop: 10,
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    backgroundColor: "#1f7a44"
+  },
+  editBtnText: {
+    color: "#fff",
+    fontWeight: "700"
+  },
+  actions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 16
+  },
+  btn: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    height: 44,
+    borderRadius: 10
+  },
+  btnOutline: {
+    borderWidth: 2,
+    borderColor: "#1f7a44",
+    backgroundColor: "#fff"
+  },
+  btnFilled: {
+    backgroundColor: "#1f7a44"
+  },
+  btnText: {
+    fontWeight: "700"
+  },
+  btnTextOutline: {
+    color: "#1f7a44"
+  },
+  btnTextFilled: {
+    color: "#fff"
+  },
+  titulo: {
+    fontSize: 32,
+    fontWeight: "bold",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  profileContainer: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  itemProfile: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 8,
+    gap: 12
+  },
+  itemTitulo: {
+    fontSize: 13,
+    color: "#666",
+    fontWeight: "medium",
+  },
+  itemSubtitulo: {
+    fontSize: 19,
+    fontWeight: "medium",
+  },
+  ItemInfo: {
+    padding: 18,
+    borderBottomWidth: 1,
+    borderBottomColor: "#ccc",
+    width: "100%"
+  }
 });

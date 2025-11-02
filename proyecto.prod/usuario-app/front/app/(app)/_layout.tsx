@@ -29,19 +29,38 @@ function Avatar({ uri, initials }: { uri?: string | null; initials: string }) {
     </View>
   );
 }
-
 export default function AppLayout() {
   return (
     <Drawer
-      screenOptions={{ headerShown: true }}
+      screenOptions={{
+        headerShown: true,
+        drawerActiveTintColor: "#1f7a44", // verde principal
+        drawerInactiveTintColor: "#333",
+        drawerLabelStyle: {
+          fontSize: 16,
+          fontWeight: "500",
+        },
+        drawerStyle: {
+          backgroundColor: "#fff",
+          borderTopRightRadius: 20,
+          borderBottomRightRadius: 20,
+          width: 270,
+        },
+      }}
       drawerContent={(props) => <CustomDrawerContent {...props} />}
     >
       <Drawer.Screen name="home" options={{ title: "Inicio" }} />
       <Drawer.Screen name="request/new" options={{ title: "Solicitar recolección" }} />
       <Drawer.Screen name="history/index" options={{ title: "Historial" }} />
       <Drawer.Screen name="profile/index" options={{ title: "Perfil" }} />
-      {/* Ruta oculta para formulario de direcciones */}
-      <Drawer.Screen name="addresses/new" options={{ title: "Agregar dirección", drawerItemStyle: { display: "none" } }} />
+      <Drawer.Screen
+        name="profile/edit"
+        options={{ title: "Editar perfil", drawerItemStyle: { display: "none" } }}
+      />
+      <Drawer.Screen
+        name="addresses/new"
+        options={{ title: "Agregar dirección", drawerItemStyle: { display: "none" } }}
+      />
     </Drawer>
   );
 }
@@ -103,19 +122,56 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 }
 
 const styles = StyleSheet.create({
-  scroll: { paddingTop: Platform.select({ ios: 20, android: 0 }) },
-  header: { flexDirection: "row", alignItems: "center", paddingHorizontal: 16, paddingTop: 24, paddingBottom: 12 },
-  avatar: { width: 80, height: 80, borderRadius: 40, backgroundColor: "#eee" },
-  avatarFallback: { alignItems: "center", justifyContent: "center", backgroundColor: "#1f7a44" },
-  avatarText: { color: "#fff", fontWeight: "800", fontSize: 28 },
+  scroll: {
+    paddingTop: Platform.select({ ios: 20, android: 0 }),
+    backgroundColor: "#fff",
+  },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingTop: 24,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#e0e0e0",
+  },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "#eee",
+  },
+  avatarFallback: {
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#1f7a44",
+  },
+  avatarText: {
+    color: "#fff",
+    fontWeight: "800",
+    fontSize: 28,
+  },
   editBtn: {
-    position: "absolute", right: -2, bottom: -2, width: 28, height: 28, borderRadius: 14,
-    backgroundColor: "#0a7", alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#fff",
+    position: "absolute",
+    right: -2,
+    bottom: -2,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "#1f7a44",
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 2,
+    borderColor: "#fff",
   },
   editBtnText: { color: "#fff", fontWeight: "bold" },
   userInfo: { marginLeft: 12, flex: 1 },
-  name: { fontSize: 18, fontWeight: "700" },
+  name: { fontSize: 18, fontWeight: "700", color: "#1f7a44" },
   email: { color: "#666", marginTop: 2 },
   points: { color: "#333", marginTop: 4, fontWeight: "600" },
-  footer: { marginTop: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: "#ddd" },
+  footer: {
+    marginTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#ddd",
+  },
 });

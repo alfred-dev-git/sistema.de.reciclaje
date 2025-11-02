@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, Image } from "react-native";
 import { router } from "expo-router";
 
 
@@ -11,6 +11,10 @@ export default function HomeScreen() {
     >
 
       <View style={styles.container}>
+        <Image
+          source={require('../../src/assets/logos/logo.png')}
+          style={styles.logo}
+        />
         <Text style={styles.title}>¡Hola!</Text>
         <TouchableOpacity style={styles.cta} onPress={() => router.push("/(app)/request/new")}>
           <Text style={styles.ctaText}>Solicitar recolección</Text>
@@ -22,8 +26,32 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 24, justifyContent: "center", alignItems: "center", paddingBottom: 90 },
-  title: { fontSize: 24, fontWeight: "700", marginBottom: 20 },
-  cta: { backgroundColor: "#0a7", paddingVertical: 14, paddingHorizontal: 24, borderRadius: 10 },
-  ctaText: { color: "#fff", fontWeight: "bold", fontSize: 16 },
+  container: {
+    flex: 1,
+    padding: 24,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingBottom: 90
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: "700",
+    marginBottom: 20
+  },
+  cta: {
+    backgroundColor: "#0a7",
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 10
+  },
+  ctaText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16
+  },
+  logo: {
+    width: 250,
+    height: 250,
+    marginBottom: 5,
+  },
 });

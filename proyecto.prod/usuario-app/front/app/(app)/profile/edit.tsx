@@ -10,6 +10,7 @@ import {
   Keyboard,
   Image,
   Text,
+  ImageBackground
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -170,83 +171,89 @@ export default function EditProfileScreen() {
   }
 
   return (
-    <KeyboardAvoidingView
+    <ImageBackground
+      source={require('@/assets/background/bg-dashboard.png')}
       style={{ flex: 1 }}
-      behavior={Platform.select({ ios: "padding", android: "height" })}
-      keyboardVerticalOffset={keyboardOffset}
+      resizeMode="cover"
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView
-          contentContainerStyle={[
-            styles.container,
-            { paddingBottom: 24 + insets.bottom },
-          ]}
-          keyboardShouldPersistTaps="handled"
-        >
-          <Text style={styles.title}>Editar datos</Text>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.select({ ios: "padding", android: "height" })}
+        keyboardVerticalOffset={keyboardOffset}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView
+            contentContainerStyle={[
+              styles.container,
+              { paddingBottom: 24 + insets.bottom },
+            ]}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Text style={styles.title}>Editar datos</Text>
 
-          {/* Avatar + Cambiar foto */}
-          <View style={styles.avatarRow}>
-            <Image
-              source={
-                avatarUri
-                  ? { uri: avatarUri }
-                  : require("@/assets/avatar-placeholder.png")
-              }
-              style={styles.avatar}
+            {/* Avatar + Cambiar foto */}
+            <View style={styles.avatarRow}>
+              <Image
+                source={
+                  avatarUri
+                    ? { uri: avatarUri }
+                    : require("@/assets/avatar-placeholder.png")
+                }
+                style={styles.avatar}
+              />
+              <Button title="Cambiar foto" onPress={onChangePhoto} />
+            </View>
+
+            <Input
+              label="DNI (sin puntos)"
+              value={dni}
+              onChangeText={(t) => setDni(t.replace(/\D+/g, ""))}
+              keyboardType="number-pad"
             />
-            <Button title="Cambiar foto" onPress={onChangePhoto} />
-          </View>
+            <Input label="Nombre" value={nombre} onChangeText={setNombre} />
+            <Input label="Apellido" value={apellido} onChangeText={setApellido} />
+            <Input
+              label="Teléfono"
+              value={telefono}
+              onChangeText={setTelefono}
+              keyboardType="phone-pad"
+            />
+            <Input
+              label="Fecha de nacimiento (YYYY-MM-DD)"
+              value={fechaNacimiento}
+              onChangeText={setFechaNacimiento}
+              placeholder="1990-05-10"
+            />
+            <Input
+              label="Municipio (ID numérico)"
+              value={municipioId}
+              onChangeText={(t) => setMunicipioId(t.replace(/\D+/g, ""))}
+              keyboardType="number-pad"
+            />
 
-          <Input
-            label="DNI (sin puntos)"
-            value={dni}
-            onChangeText={(t) => setDni(t.replace(/\D+/g, ""))}
-            keyboardType="number-pad"
-          />
-          <Input label="Nombre" value={nombre} onChangeText={setNombre} />
-          <Input label="Apellido" value={apellido} onChangeText={setApellido} />
-          <Input
-            label="Teléfono"
-            value={telefono}
-            onChangeText={setTelefono}
-            keyboardType="phone-pad"
-          />
-          <Input
-            label="Fecha de nacimiento (YYYY-MM-DD)"
-            value={fechaNacimiento}
-            onChangeText={setFechaNacimiento}
-            placeholder="1990-05-10"
-          />
-          <Input
-            label="Municipio (ID numérico)"
-            value={municipioId}
-            onChangeText={(t) => setMunicipioId(t.replace(/\D+/g, ""))}
-            keyboardType="number-pad"
-          />
+            <Text style={{ fontWeight: "700", marginTop: 8 }}>Sexo</Text>
+            <View style={styles.pickerWrap}>
+              <Picker
+                selectedValue={sexo}
+                onValueChange={(v) => setSexo(v as Sex)}
+              >
+                <Picker.Item label="Masculino" value="M" />
+                <Picker.Item label="Femenino" value="F" />
+                <Picker.Item label="Otro / Prefiero no decir" value="O" />
+              </Picker>
+            </View>
 
-          <Text style={{ fontWeight: "700", marginTop: 8 }}>Sexo</Text>
-          <View style={styles.pickerWrap}>
-            <Picker
-              selectedValue={sexo}
-              onValueChange={(v) => setSexo(v as Sex)}
-            >
-              <Picker.Item label="Masculino" value="M" />
-              <Picker.Item label="Femenino" value="F" />
-              <Picker.Item label="Otro / Prefiero no decir" value="O" />
-            </Picker>
-          </View>
+            <ErrorText>{errorMsg}</ErrorText>
 
-          <ErrorText>{errorMsg}</ErrorText>
-
-          <Button
-            title={saving ? "Guardando..." : "Guardar cambios"}
-            onPress={onSave}
-            disabled={saving}
-          />
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+            <Button
+              title={saving ? "Guardando..." : "Guardar cambios"}
+              onPress={onSave}
+              disabled={saving}
+            />
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
