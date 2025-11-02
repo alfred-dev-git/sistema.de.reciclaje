@@ -3,7 +3,7 @@ import * as SecureStore from "expo-secure-store";
 
 const API_BASE =
   process.env.EXPO_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-  "http://192.168.0.25:3000/api"; // ajustá si usás otra IP/puerto
+  "http://10.0.2.2:3000/api"; // ajustá si usás otra IP/puerto
 
 type Json = Record<string, any>;
 

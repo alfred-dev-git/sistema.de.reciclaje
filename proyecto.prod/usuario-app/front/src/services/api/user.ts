@@ -1,6 +1,8 @@
 // src/services/api/user.ts
 import * as ImagePicker from "expo-image-picker";
-import { BASE_URL, getToken } from "./http";
+import { getToken } from "./http";
+
+const BASE_URL = process.env.BASE_URL ?? "http://localhost:3000";
 
 export function getUserPhotoUrl(userId: number) {
   // Evitar caché con timestamp
