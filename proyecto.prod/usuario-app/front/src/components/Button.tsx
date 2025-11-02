@@ -27,6 +27,13 @@ export function Button({ title, onPress, disabled, loading, style }: Props) {
 }
 
 const styles = StyleSheet.create({
-  btn: { backgroundColor: "#0a7", paddingVertical: 14, borderRadius: 12, alignItems: "center" },
+  btn: {
+    backgroundColor: '#2e7040',
+    padding: 15,
+    borderRadius: 20,
+    alignItems: 'center',
+    marginBottom: 10,
+
+  },
   text: { color: "#fff", fontSize: 16, fontWeight: "700" },
 });

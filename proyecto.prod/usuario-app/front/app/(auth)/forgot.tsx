@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { View, StyleSheet, Alert } from "react-native";
+import { View, ImageBackground, StyleSheet, Alert } from "react-native";
 import { Input } from "@/components/Input";
 import { Button } from "@/components/Button";
 import { requestPasswordReset } from "@/services/api/auth";
@@ -24,13 +24,29 @@ export default function ForgotScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <Input label="E-mail" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
-      <Button title={loading ? "Enviando..." : "Enviar código"} onPress={onSend} disabled={loading} />
-    </View>
+    <ImageBackground
+      source={require('../../src/assets/background/background.jpg')}
+      style={styles.background}
+      resizeMode="cover"
+    >
+      <View style={styles.container}>
+        <View style={styles.formContainer}>
+          <Input label="E-mail" autoCapitalize="none" keyboardType="email-address" value={email} onChangeText={setEmail} />
+          <Button title={loading ? "Enviando..." : "Enviar código"} onPress={onSend} disabled={loading} />
+        </View>
+      </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, justifyContent: "center", gap: 12 },
+  background: {
+    flex: 1,
+  },
+  formContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 20,
+    borderRadius: 20,
+  }
 });

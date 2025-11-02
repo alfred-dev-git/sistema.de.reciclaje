@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { View, Text, StyleSheet, FlatList, ActivityIndicator } from "react-native";
 import { getCurrentUser } from "@/services/api/auth";
 import { getHistorial } from "@/services/api/requests";
-import { BottomBar } from "@/components/BottomBar";
+
 
 type Item = {
   idpedidos: number;
@@ -48,7 +48,6 @@ export default function HistoryScreen() {
       <View style={styles.center}>
         <ActivityIndicator />
         <Text>Cargando historial…</Text>
-        <BottomBar />
       </View>
     );
   }
@@ -88,7 +87,7 @@ export default function HistoryScreen() {
         contentContainerStyle={{ paddingBottom: 100 }}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
       />
-      <BottomBar />
+
     </View>
   );
 }

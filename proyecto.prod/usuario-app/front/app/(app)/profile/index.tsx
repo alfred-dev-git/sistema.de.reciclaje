@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Image } from "react-native";
 import { getCurrentUser } from "@/services/api/auth";
 import { getUserPhotoUrl, pickImageFromLibrary, uploadUserPhoto } from "@/services/api/user";
 import { router } from "expo-router";
-import { BottomBar } from "@/components/BottomBar";
+
 
 function initialsFrom(name?: string, last?: string) {
   const a = (name?.trim()?.[0] ?? "").toUpperCase();
@@ -62,7 +62,7 @@ export default function ProfileScreen() {
       </View>
 
       <View style={styles.actions}>
-        <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={() => {router.push("/(app)/profile/edit")}}>
+        <TouchableOpacity style={[styles.btn, styles.btnOutline]} onPress={() => { router.push("/(app)/profile/edit") }}>
           <Text style={[styles.btnText, styles.btnTextOutline]}>Editar datos</Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -72,8 +72,6 @@ export default function ProfileScreen() {
           <Text style={[styles.btnText, styles.btnTextFilled]}>Agregar dirección</Text>
         </TouchableOpacity>
       </View>
-
-      <BottomBar />
     </View>
   );
 }

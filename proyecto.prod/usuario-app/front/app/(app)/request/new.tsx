@@ -6,7 +6,6 @@ import { router } from "expo-router";
 import { listUserAddresses } from "@/services/api/addresses";
 import { listResiduos, createPedido } from "@/services/api/requests";
 import { getCurrentUser } from "@/services/api/auth";
-import { BottomBar } from "@/components/BottomBar";
 
 type Option = { label: string; value: number };
 
@@ -126,7 +125,6 @@ export default function RequestNewScreen() {
       <View style={styles.center}>
         <ActivityIndicator />
         <Text>Cargando...</Text>
-        <BottomBar />
       </View>
     );
   }
@@ -176,7 +174,6 @@ export default function RequestNewScreen() {
         {saving ? "Guardando..." : "Confirmar pedido"}
       </Text>
 
-      <BottomBar />
     </View>
   );
 }

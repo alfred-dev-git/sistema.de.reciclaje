@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
   View, StyleSheet, Alert, KeyboardAvoidingView, Platform,
-  ScrollView, TouchableWithoutFeedback, Keyboard, Text
+  ScrollView, TouchableWithoutFeedback, Keyboard, Text, ImageBackground
 } from "react-native";
 import { Link, router } from "expo-router";
 import { Input } from "@/components/Input";
@@ -92,55 +92,75 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={{ flex: 1 }}
-      behavior={Platform.select({ ios: "padding", android: "height" })}
-      keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+    <ImageBackground
+      source={require('../../src/assets/background/background.jpg')}
+      style={styles.background}
+      resizeMode="cover"
     >
-      <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
-        <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-          <View style={styles.container}>
-            <Input
-              label="DNI"
-              placeholder="dni sin puntos"
-              keyboardType="number-pad"
-              value={form.dni}
-              onChangeText={(t) => setField("dni", t.replace(/\D+/g, ""))}
-              error={errors.dni}
-            />
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.select({ ios: "padding", android: "height" })}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 80 : 0}
+      >
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+          <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+            <View style={styles.container}>
+              <View style={styles.formContainer}>
+                <Input
+                  label="DNI"
+                  placeholder="dni sin puntos"
+                  keyboardType="number-pad"
+                  value={form.dni}
+                  onChangeText={(t) => setField("dni", t.replace(/\D+/g, ""))}
+                  error={errors.dni}
+                />
 
-            <Input label="Nombre" value={form.nombre} onChangeText={(t) => setField("nombre", t)} error={errors.nombre} />
-            <Input label="Apellido" value={form.apellido} onChangeText={(t) => setField("apellido", t)} error={errors.apellido} />
-            <Input label="Email" autoCapitalize="none" keyboardType="email-address" value={form.email} onChangeText={(t) => setField("email", t)} error={errors.email} />
-            <PasswordInput label="Contraseña" value={form.password} onChangeText={(t) => setField("password", t)} error={errors.password} />
+                <Input label="Nombre" value={form.nombre} onChangeText={(t) => setField("nombre", t)} error={errors.nombre} />
+                <Input label="Apellido" value={form.apellido} onChangeText={(t) => setField("apellido", t)} error={errors.apellido} />
+                <Input label="Email" autoCapitalize="none" keyboardType="email-address" value={form.email} onChangeText={(t) => setField("email", t)} error={errors.email} />
+                <PasswordInput label="Contraseña" value={form.password} onChangeText={(t) => setField("password", t)} error={errors.password} />
 
-            <Input label="Teléfono" keyboardType="phone-pad" value={form.telefono} onChangeText={(t) => setField("telefono", t)} error={errors.telefono} />
-            <Input label="Fecha de nacimiento (YYYY-MM-DD)" placeholder="1990-05-10" value={form.fecha_nacimiento} onChangeText={(t) => setField("fecha_nacimiento", t)} error={errors.fecha_nacimiento} />
+                <Input label="Teléfono" keyboardType="phone-pad" value={form.telefono} onChangeText={(t) => setField("telefono", t)} error={errors.telefono} />
+                <Input label="Fecha de nacimiento (YYYY-MM-DD)" placeholder="1990-05-10" value={form.fecha_nacimiento} onChangeText={(t) => setField("fecha_nacimiento", t)} error={errors.fecha_nacimiento} />
 
-            <Text style={{ fontWeight: "700", marginTop: 8 }}>Sexo</Text>
-            <Picker
-              selectedValue={form.sexo}
-              onValueChange={(v) => setField("sexo", v as Form["sexo"])}
-            >
-              <Picker.Item label="Masculino" value="M" />
-              <Picker.Item label="Femenino" value="F" />
-              <Picker.Item label="Otro / Prefiero no decir" value="O" />
-            </Picker>
-            {errors.sexo ? <ErrorText>{errors.sexo}</ErrorText> : null}
+                <Text style={{ fontWeight: "700", marginTop: 8 }}>Sexo</Text>
+                <Picker
+                  selectedValue={form.sexo}
+                  onValueChange={(v) => setField("sexo", v as Form["sexo"])}
+                >
+                  <Picker.Item label="Masculino" value="M" />
+                  <Picker.Item label="Femenino" value="F" />
+                  <Picker.Item label="Otro / Prefiero no decir" value="O" />
+                </Picker>
+                {errors.sexo ? <ErrorText>{errors.sexo}</ErrorText> : null}
 
-            <ErrorText>{submitError}</ErrorText>
-            <Button title={loading ? "Creando..." : "Crear cuenta"} onPress={onRegister} loading={loading} disabled={loading} />
+                <ErrorText>{submitError}</ErrorText>
+                <Button title={loading ? "Creando..." : "Crear cuenta"} onPress={onRegister} loading={loading} disabled={loading} />
 
-            <View style={{ height: 12 }} />
-            <Link href="/(auth)/login">¿Ya tenés cuenta? Iniciá sesión</Link>
-          </View>
-        </ScrollView>
-      </TouchableWithoutFeedback>
-    </KeyboardAvoidingView>
+                <View style={{ height: 12 }} />
+                <Link href="/(auth)/login">¿Ya tenés cuenta? Iniciá sesión</Link>
+              </View>
+            </View>
+          </ScrollView>
+        </TouchableWithoutFeedback>
+      </KeyboardAvoidingView>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
   scroll: { flexGrow: 1 },
-  container: { flex: 1, padding: 20, justifyContent: "center" },
+  container: {
+    flex: 1,
+    justifyContent: 'center',
+    margin: 10,
+  },
+  formContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    padding: 20,
+    borderRadius: 20,
+  },
+  background: {
+    flex: 1,
+  }
 });

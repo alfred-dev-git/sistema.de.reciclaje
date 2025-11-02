@@ -1,16 +1,23 @@
-import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from "react-native";
 import { router } from "expo-router";
-import { BottomBar } from "@/components/BottomBar";
+
 
 export default function HomeScreen() {
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>¡Hola!</Text>
-      <TouchableOpacity style={styles.cta} onPress={() => router.push("/(app)/request/new")}>
-        <Text style={styles.ctaText}>Solicitar recolección</Text>
-      </TouchableOpacity>
-      <BottomBar />
-    </View>
+    <ImageBackground
+      source={require('../../src/assets/background/bg-dashboard.png')}
+      style={{ flex: 1 }}
+      resizeMode="cover"
+    >
+
+      <View style={styles.container}>
+        <Text style={styles.title}>¡Hola!</Text>
+        <TouchableOpacity style={styles.cta} onPress={() => router.push("/(app)/request/new")}>
+          <Text style={styles.ctaText}>Solicitar recolección</Text>
+        </TouchableOpacity>
+
+      </View>
+    </ImageBackground>
   );
 }
 
