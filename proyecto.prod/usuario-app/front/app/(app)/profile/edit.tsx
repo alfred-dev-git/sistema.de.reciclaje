@@ -10,7 +10,8 @@ import {
   Keyboard,
   Image,
   Text,
-  ImageBackground
+  ImageBackground,
+  TouchableOpacity,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
@@ -37,21 +38,17 @@ export default function EditProfileScreen() {
   const headerHeight = useHeaderHeight();
 
   const [userId, setUserId] = useState<number | null>(null);
-
-  // Estado del formulario
-  const [dni, setDni] = useState<string>("");
-  const [nombre, setNombre] = useState<string>("");
-  const [apellido, setApellido] = useState<string>("");
-  const [telefono, setTelefono] = useState<string>("");
-  const [fechaNacimiento, setFechaNacimiento] = useState<string>(""); // YYYY-MM-DD
-  const [municipioId, setMunicipioId] = useState<string>(""); // numérico en string
+  const [dni, setDni] = useState("");
+  const [nombre, setNombre] = useState("");
+  const [apellido, setApellido] = useState("");
+  const [telefono, setTelefono] = useState("");
+  const [fechaNacimiento, setFechaNacimiento] = useState("");
+  const [municipioId, setMunicipioId] = useState("");
   const [sexo, setSexo] = useState<Sex>("O");
-
-  const [avatarUri, setAvatarUri] = useState<string | undefined>(undefined);
-
+  const [avatarUri, setAvatarUri] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | undefined>(undefined);
+  const [errorMsg, setErrorMsg] = useState<string | undefined>();
 
   useEffect(() => {
     (async () => {
@@ -60,11 +57,7 @@ export default function EditProfileScreen() {
         if (!me?.id && !me?.idusuario) throw new Error("Sesión inválida");
         const id = Number(me.id ?? me.idusuario);
         setUserId(id);
-
-        // Pre-cargar foto si tenés endpoint de lectura por URL
         setAvatarUri(getUserPhotoUrl ? getUserPhotoUrl(id) : undefined);
-
-        // Prellenar
         setDni(me.dni ? String(me.dni) : "");
         setNombre(me.nombre ?? "");
         setApellido(me.apellido ?? "");
@@ -86,10 +79,8 @@ export default function EditProfileScreen() {
 
   const onSave = async () => {
     if (!userId) return;
-
     setErrorMsg(undefined);
 
-    // Validaciones mínimas
     if (!nombre || !apellido) {
       setErrorMsg("Nombre y apellido son requeridos.");
       return;
@@ -98,17 +89,11 @@ export default function EditProfileScreen() {
       setErrorMsg("Fecha de nacimiento debe ser YYYY-MM-DD.");
       return;
     }
-    if (sexo && !["M", "F", "O"].includes(sexo)) {
-      setErrorMsg("Sexo inválido.");
-      return;
-    }
 
     try {
       setSaving(true);
-
-      // Armamos body con solo lo que queremos actualizar
       const body: Record<string, any> = {
-        dni: dni ? String(dni).replace(/\D+/g, "") : undefined,
+        dni: dni ? dni.replace(/\D+/g, "") : undefined,
         nombre: nombre || undefined,
         apellido: apellido || undefined,
         telefono: telefono || undefined,
@@ -116,21 +101,15 @@ export default function EditProfileScreen() {
         municipio_idmunicipio: municipioId ? Number(municipioId) : undefined,
         sexo: sexo || undefined,
       };
-
-      // Quitamos undefineds para no tocar campos que no querés cambiar
       Object.keys(body).forEach((k) => body[k] === undefined && delete body[k]);
 
       const resp = await api.put<{ user: any }>(`/users/${userId}`, body);
-      const updated = resp.user;
-
-      // Guardar en SecureStore para que el resto de la app lo vea
-      await SecureStore.setItemAsync("current_user", JSON.stringify(updated));
+      await SecureStore.setItemAsync("current_user", JSON.stringify(resp.user));
 
       Alert.alert("Listo", "Datos actualizados.");
       router.back();
     } catch (e: any) {
-      const msg =
-        e?.message ?? e?.data?.error ?? "No se pudieron actualizar los datos.";
+      const msg = e?.message ?? "No se pudieron actualizar los datos.";
       setErrorMsg(msg);
       Alert.alert("Error", msg);
     } finally {
@@ -143,14 +122,11 @@ export default function EditProfileScreen() {
       if (!userId) return;
       const asset = await pickImageFromLibrary();
       if (!asset?.uri) return;
-
-      await uploadUserPhoto(userId, asset.uri); // usa tu endpoint /users/:id/photo
-      // Forzamos refresh visual (bust cache)
+      await uploadUserPhoto(userId, asset.uri);
       const bust = Date.now();
       setAvatarUri(
         getUserPhotoUrl ? `${getUserPhotoUrl(userId)}?t=${bust}` : asset.uri
       );
-
       Alert.alert("Listo", "Foto actualizada.");
     } catch (e: any) {
       Alert.alert("Error", e?.message ?? "No se pudo actualizar la foto.");
@@ -164,18 +140,20 @@ export default function EditProfileScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.center, { paddingBottom: 24 + insets.bottom }]}>
-        <Text>Cargando…</Text>
+      <View style={[styles.center]}>
+        <Text style={{ color: "#fff" }}>Cargando…</Text>
       </View>
     );
   }
 
   return (
     <ImageBackground
-      source={require('@/assets/background/bg-dashboard.png')}
-      style={{ flex: 1 }}
+      source={require("@/assets/background/bg-dashboard2.png")}
+      style={styles.background}
       resizeMode="cover"
     >
+      <View style={styles.overlay} />
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.select({ ios: "padding", android: "height" })}
@@ -189,67 +167,77 @@ export default function EditProfileScreen() {
             ]}
             keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.title}>Editar datos</Text>
+            <View style={styles.card}>
+              <Text style={styles.title}>Editar perfil</Text>
 
-            {/* Avatar + Cambiar foto */}
-            <View style={styles.avatarRow}>
-              <Image
-                source={
-                  avatarUri
-                    ? { uri: avatarUri }
-                    : require("@/assets/avatar-placeholder.png")
-                }
-                style={styles.avatar}
+              <View style={styles.avatarRow}>
+                <Image
+                  source={
+                    avatarUri
+                      ? { uri: avatarUri }
+                      : require("@/assets/avatar-placeholder.png")
+                  }
+                  style={styles.avatar}
+                />
+                <TouchableOpacity
+                  style={styles.photoButton}
+                  onPress={onChangePhoto}
+                >
+                  <Text style={styles.photoButtonText}>Cambiar foto</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Input
+                label="DNI (sin puntos)"
+                value={dni}
+                onChangeText={(t) => setDni(t.replace(/\D+/g, ""))}
+                keyboardType="number-pad"
               />
-              <Button title="Cambiar foto" onPress={onChangePhoto} />
-            </View>
+              <Input label="Nombre" value={nombre} onChangeText={setNombre} />
+              <Input label="Apellido" value={apellido} onChangeText={setApellido} />
+              <Input
+                label="Teléfono"
+                value={telefono}
+                onChangeText={setTelefono}
+                keyboardType="phone-pad"
+              />
+              <Input
+                label="Fecha de nacimiento (YYYY-MM-DD)"
+                value={fechaNacimiento}
+                onChangeText={setFechaNacimiento}
+                placeholder="1990-05-10"
+              />
+              <Input
+                label="Municipio (ID numérico)"
+                value={municipioId}
+                onChangeText={(t) => setMunicipioId(t.replace(/\D+/g, ""))}
+                keyboardType="number-pad"
+              />
 
-            <Input
-              label="DNI (sin puntos)"
-              value={dni}
-              onChangeText={(t) => setDni(t.replace(/\D+/g, ""))}
-              keyboardType="number-pad"
-            />
-            <Input label="Nombre" value={nombre} onChangeText={setNombre} />
-            <Input label="Apellido" value={apellido} onChangeText={setApellido} />
-            <Input
-              label="Teléfono"
-              value={telefono}
-              onChangeText={setTelefono}
-              keyboardType="phone-pad"
-            />
-            <Input
-              label="Fecha de nacimiento (YYYY-MM-DD)"
-              value={fechaNacimiento}
-              onChangeText={setFechaNacimiento}
-              placeholder="1990-05-10"
-            />
-            <Input
-              label="Municipio (ID numérico)"
-              value={municipioId}
-              onChangeText={(t) => setMunicipioId(t.replace(/\D+/g, ""))}
-              keyboardType="number-pad"
-            />
+              <Text style={styles.label}>Sexo</Text>
+              <View style={styles.pickerWrap}>
+                <Picker
+                  selectedValue={sexo}
+                  onValueChange={(v) => setSexo(v as Sex)}
+                >
+                  <Picker.Item label="Masculino" value="M" />
+                  <Picker.Item label="Femenino" value="F" />
+                  <Picker.Item label="Otro / Prefiero no decir" value="O" />
+                </Picker>
+              </View>
 
-            <Text style={{ fontWeight: "700", marginTop: 8 }}>Sexo</Text>
-            <View style={styles.pickerWrap}>
-              <Picker
-                selectedValue={sexo}
-                onValueChange={(v) => setSexo(v as Sex)}
+              <ErrorText>{errorMsg}</ErrorText>
+
+              <TouchableOpacity
+                style={[styles.saveBtn, saving && { opacity: 0.6 }]}
+                disabled={saving}
+                onPress={onSave}
               >
-                <Picker.Item label="Masculino" value="M" />
-                <Picker.Item label="Femenino" value="F" />
-                <Picker.Item label="Otro / Prefiero no decir" value="O" />
-              </Picker>
+                <Text style={styles.saveBtnText}>
+                  {saving ? "Guardando..." : "Guardar cambios"}
+                </Text>
+              </TouchableOpacity>
             </View>
-
-            <ErrorText>{errorMsg}</ErrorText>
-
-            <Button
-              title={saving ? "Guardando..." : "Guardar cambios"}
-              onPress={onSave}
-              disabled={saving}
-            />
           </ScrollView>
         </TouchableWithoutFeedback>
       </KeyboardAvoidingView>
@@ -258,27 +246,99 @@ export default function EditProfileScreen() {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: "center", justifyContent: "center" },
-  container: { padding: 16 },
-  title: { fontSize: 18, fontWeight: "700", marginBottom: 12 },
+  background: { flex: 1 },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.4)",
+  },
+  container: {
+    flexGrow: 1,
+    justifyContent: "center",
+    padding: 24,
+  },
+  card: {
+    backgroundColor: "rgba(255,255,255,0.95)",
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.15,
+    shadowOffset: { width: 0, height: 6 },
+    shadowRadius: 10,
+    elevation: 8,
+  },
+  title: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#0A7",
+    marginBottom: 16,
+    textAlign: "center",
+  },
   avatarRow: {
     flexDirection: "row",
     alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
     gap: 12,
-    marginBottom: 8,
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: "#0A7",
     backgroundColor: "#eee",
   },
+  photoButton: {
+    backgroundColor: "#0A7",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    shadowColor: "#0A7",
+    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  photoButtonText: {
+    color: "#fff",
+    fontWeight: "700",
+  },
+  label: {
+    fontWeight: "700",
+    marginTop: 12,
+    marginBottom: 4,
+    color: "#333",
+  },
   pickerWrap: {
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 8,
-    overflow: "hidden",
-    marginTop: 4,
+    borderRadius: 10,
     backgroundColor: "#fff",
+    overflow: "hidden",
+    marginBottom: 16,
+  },
+  saveBtn: {
+    backgroundColor: "#0A7",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 8,
+    shadowColor: "#00C897",
+    shadowOpacity: 0.4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    elevation: 6,
+  },
+  saveBtnText: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 16,
+  },
+  center: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#0A7",
   },
 });

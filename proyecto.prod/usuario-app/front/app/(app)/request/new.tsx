@@ -117,7 +117,7 @@ export default function RequestNewScreen() {
 
   return (
     <ImageBackground
-      source={require("@/assets/background/bg-dashboard.png")}
+      source={require("@/assets/background/bg-dashboard1.png")}
       style={styles.background}
       resizeMode="cover"
     >

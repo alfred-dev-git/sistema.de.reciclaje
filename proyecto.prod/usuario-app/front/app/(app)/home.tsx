@@ -5,7 +5,7 @@ import { router } from "expo-router";
 export default function HomeScreen() {
   return (
     <ImageBackground
-      source={require('../../src/assets/background/bg-dashboard.png')}
+      source={require('../../src/assets/background/bg-dashboard1.png')}
       style={{ flex: 1 }}
       resizeMode="cover"
     >

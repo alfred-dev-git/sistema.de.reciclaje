@@ -33,6 +33,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     marginBottom: 10,
+    marginTop: 10,
 
   },
   text: { color: "#fff", fontSize: 16, fontWeight: "700" },
