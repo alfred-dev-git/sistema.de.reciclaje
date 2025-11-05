@@ -12,7 +12,7 @@ export const obtenerCronogramaDB = async () => {
     FROM cronograma_recoleccion c
     INNER JOIN tipo_reciclable tr 
         ON c.tipo_reciclable_idtipo_reciclable = tr.idtipo_reciclable
-    WHERE c.estado = 1
+    WHERE c.activo = 1
     ORDER BY 
         c.dia_semana ASC,
         c.semana_mes ASC;

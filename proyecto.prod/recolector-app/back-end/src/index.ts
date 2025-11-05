@@ -14,17 +14,17 @@ dotenv.config()
 
 const app = express()
 
-// //cors dev
-// app.use(cors({
-//   origin: 'http://localhost:5173', //luego cambiar a HTTPS y el nombre del domisnio 'https://midominio.com',
-//   credentials: true
-// }));
-
-// cors prod
+//cors dev
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: 'http://localhost:5173', //luego cambiar a HTTPS y el nombre del domisnio 'https://midominio.com',
   credentials: true
-}))
+}));
+
+// // cors prod
+// app.use(cors({
+//   origin: process.env.CORS_ORIGIN || '*',
+//   credentials: true
+// }))
 
 app.use(express.json())
 app.use(cookieParser())
@@ -39,14 +39,14 @@ app.use('/api/perfil', perfilRoutes)
 app.use('/api/cronograma', cronogramaRoutes)
 
 
-// const PORT = Number(process.env.PORT) || 3000;
-// app.listen(PORT, () => {
-//   console.log(`Servidor backend corriendo en el puerto ${PORT}`)
-  
-// })
-
-// 🔹 Railway usa su propio PORT
-const PORT = Number(process.env.PORT) || 8080
-app.listen(PORT, '0.0.0.0', () => {
+const PORT = Number(process.env.PORT) || 3000;
+app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en el puerto ${PORT}`)
+  
 })
+
+// // 🔹 Railway usa su propio PORT
+// const PORT = Number(process.env.PORT) || 8080
+// app.listen(PORT, '0.0.0.0', () => {
+//   console.log(`Servidor backend corriendo en el puerto ${PORT}`)
+// })

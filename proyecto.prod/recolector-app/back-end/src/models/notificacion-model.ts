@@ -10,7 +10,7 @@ export const getNotificacion = async () => {
     INNER JOIN cronograma_recoleccion c 
       ON n.cronograma_recoleccion_idcronograma_recoleccion = c.idcronograma_recoleccion
     WHERE 
-      c.estado = 1
+      c.activo = 1
       AND n.fecha_envio >= (CURDATE() - INTERVAL 3 DAY)
     ORDER BY n.fecha_envio DESC;
   `);
