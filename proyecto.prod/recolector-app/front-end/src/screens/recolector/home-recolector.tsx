@@ -13,6 +13,7 @@ import {
   useRoute,
   useFocusEffect,
 } from "@react-navigation/native";
+import BackgorundContainer from "../../components/layout";
 
 import HeaderRecolector from "../../components/headerComponent";
 import {
@@ -152,76 +153,181 @@ const HomeRecolector: React.FC = () => {
           source={require("../../../assets/images/truck-icon.png")}
           style={styles.icon}
         />
-        <View>
-          <Text style={styles.fecha}>
-            {new Date(item.fecha_entrega).toLocaleDateString()}
-          </Text>
-          <Text style={styles.direccion}>
-            {item.calle} {item.numero}
-          </Text>
-          <Text
-            style={[
-              styles.puntos,
-              { color: item.total_puntos > 0 ? "green" : "black" },
-            ]}
-          >
-            {item.total_puntos} puntos
-          </Text>
-          <Text style={[styles.estado, { color }]}>{label}</Text>
+        <View style={styles.historialInfo}>
+          <View>
+            <Text style={styles.fecha}>
+              {new Date(item.fecha_entrega).toLocaleDateString()}
+            </Text>
+            <Text style={styles.direccion}>
+              {item.calle} {item.numero}
+            </Text>
+          </View>
+          <View>
+            <Text
+              style={[
+                styles.puntos,
+                { color: item.total_puntos > 0 ? "green" : "black" },
+              ]}
+            >
+              {item.total_puntos} puntos
+            </Text>
+            <Text style={[styles.estado, { color }]}>{label}</Text>
+          </View>
         </View>
       </View>
     );
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      {renderHeader()}
-      <View style={{ flex: 1, maxHeight: 350 }}>
-        <FlatList
-          data={historial}
-          keyExtractor={(item) => item.idpedidos.toString()}
-          renderItem={renderHistorialItem}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          showsVerticalScrollIndicator
-        />
+    <BackgorundContainer>
+      <View style={{ flex: 1 }}>
+        {renderHeader()}
+        <View style={{ flex: 1, maxHeight: 350 }}>
+          <FlatList
+            data={historial}
+            keyExtractor={(item) => item.idpedidos.toString()}
+            renderItem={renderHistorialItem}
+            contentContainerStyle={{ paddingBottom: 20 }}
+            showsVerticalScrollIndicator
+          />
+        </View>
       </View>
-    </View>
+    </BackgorundContainer>
   );
 };
 
 export default HomeRecolector;
 
 const styles = StyleSheet.create({
-  safeContainer: { flex: 1, backgroundColor: "#f8faed" },
-  header: { flexDirection: "row", paddingTop: 40, paddingBottom: 15, paddingHorizontal: 20, justifyContent: "space-between", alignItems: "center", borderBottomWidth: 1, borderColor: "green", borderRadius: 20, backgroundColor: "transparent" },
-  headerItem: { padding: 10, borderRadius: 100, backgroundColor: "#307043" },
-  logoContainer: { flex: 1, alignItems: "center", justifyContent: "center" },
-  logo: { width: 220, height: 90, resizeMode: "contain" },
-  bienvenidaContainer: { padding: 15, alignItems: "center", justifyContent: "center", textAlign: "center" },
-  bienvenida: { fontSize: 18, fontWeight: "bold" },
-  card: { marginHorizontal: 15, marginVertical: 10, padding: 15, borderRadius: 10 },
-  sectionTitle: { fontSize: 16, fontWeight: "bold", marginBottom: 10 },
-  item: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", backgroundColor: "#307043", padding: 18, marginBottom: 8, borderRadius: 25 },
-  iconContainer: { backgroundColor: "#f1f3e6", padding: 12, alignItems: "center", justifyContent: "center", borderRadius: 25 },
-  infoTitle: { fontSize: 16, fontWeight: "bold", color: "#ffffff" },
-  infoSubtitle: { fontSize: 13, color: "#ffffff" },
-  botonVer: { backgroundColor: "#f1f3e6", paddingVertical: 9, paddingHorizontal: 15, borderRadius: 25, alignItems: "center", justifyContent: "center" },
-  botonTexto: { color: "#307043", fontWeight: "bold" },
+  safeContainer: {
+    flex: 1,
+    backgroundColor: "#f8faed"
+  },
+  header: {
+    flexDirection: "row",
+    paddingTop: 40, paddingBottom: 15,
+    paddingHorizontal: 20,
+    justifyContent: "space-between",
+    alignItems: "center",
+    borderBottomWidth: 1,
+    borderColor: "green",
+    borderRadius: 20,
+    backgroundColor: "transparent"
+  },
+  headerItem: {
+    padding: 10,
+    borderRadius: 100,
+    backgroundColor: "#307043"
+  },
+  logoContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  logo: {
+    width: 220,
+    height: 90,
+    resizeMode: "contain"
+  },
+  bienvenidaContainer: {
+    padding: 15,
+    alignItems: "center",
+    justifyContent: "center",
+    textAlign: "center"
+  },
+  bienvenida: {
+    fontSize: 18,
+    fontWeight: "bold"
+  },
+  card: {
+    marginHorizontal: 15,
+    marginVertical: 10,
+    padding: 15,
+    borderRadius: 10
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    marginBottom: 10
+  },
+  item: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#307043",
+    padding: 18,
+    marginBottom: 8,
+    borderRadius: 25
+  },
+  iconContainer: {
+    backgroundColor: "#f1f3e6",
+    padding: 12,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 25
+  },
+  infoTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#ffffff"
+  },
+  infoSubtitle: {
+    fontSize: 13,
+    color: "#ffffff"
+  },
+  botonVer: {
+    backgroundColor: "#f1f3e6",
+    paddingVertical: 9,
+    paddingHorizontal: 15,
+    borderRadius: 25,
+    alignItems: "center",
+    justifyContent: "center"
+  },
+  botonTexto: {
+    color: "#307043",
+    fontWeight: "bold"
+  },
 
   historialItem: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    padding: 15,
+    padding: 20,
     marginHorizontal: 15,
     marginVertical: 6,
-    borderRadius: 10,
+    borderRadius: 18,
   },
-  icon: { width: 40, height: 40, marginRight: 10 },
-  fecha: { fontSize: 14, fontWeight: "bold", color: "#555" },
-  direccion: { fontSize: 12, color: "#333" },
-  puntos: { fontSize: 12, color: "green" },
-  estado: { fontSize: 12, fontWeight: "bold" },
+  historialInfo: {
+    marginLeft: 6,
+    borderLeftWidth: 1,
+    borderLeftColor: "#ccc",
+    paddingLeft: 10, flex: 1,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  icon: {
+    width: 40,
+    height: 40,
+    marginRight: 10
+  },
+  fecha: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#555"
+  },
+  direccion: {
+    fontSize: 12,
+    color: "#333"
+  },
+  puntos: {
+    fontSize: 12,
+    color: "green"
+  },
+  estado: {
+    fontSize: 12,
+    fontWeight: "bold"
+  },
   notificacion: {
     fontSize: 14,
     color: "#307043",
