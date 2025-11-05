@@ -12,10 +12,9 @@ import {
   useNavigation,
   useRoute,
   useFocusEffect,
-  DrawerActions,
 } from "@react-navigation/native";
 
-import { handleLogout } from "../../utils/logout-util";
+import HeaderRecolector from "../../components/headerComponent";
 import {
   obtenerParadasAgrupadas,
   RutaCalculada,
@@ -35,11 +34,6 @@ const HomeRecolector: React.FC = () => {
 
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-
-  // Función para abrir el Drawer
-  const abrirDrawer = () => {
-    navigation.dispatch(DrawerActions.openDrawer());
-  };
 
   useFocusEffect(
     React.useCallback(() => {
@@ -83,29 +77,7 @@ const HomeRecolector: React.FC = () => {
 
   const renderHeader = () => (
     <View>
-      {/* Header */}
-      <View style={styles.header}>
-        <View style={styles.headerItem}>
-          <TouchableOpacity onPress={abrirDrawer}>
-            <Ionicons name="menu" size={28} color="#fff" />
-          </TouchableOpacity>
-        </View>
-
-        <View style={styles.logoContainer}>
-          <Image
-            source={require("../../../assets/logos/logo-2.png")}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-        </View>
-
-        <View style={styles.headerItem}>
-          <TouchableOpacity onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={24} color="#fff" />
-          </TouchableOpacity>
-        </View>
-      </View>
-
+      <HeaderRecolector />
       {/* Bienvenida */}
       <View style={styles.bienvenidaContainer}>
         <Text style={styles.bienvenida}>Bienvenido Recolector 👋</Text>
@@ -251,9 +223,9 @@ const styles = StyleSheet.create({
   puntos: { fontSize: 12, color: "green" },
   estado: { fontSize: 12, fontWeight: "bold" },
   notificacion: {
-  fontSize: 14,
-  color: "#307043",
-  marginTop: 5,
-  textAlign: "center",
-},
+    fontSize: 14,
+    color: "#307043",
+    marginTop: 5,
+    textAlign: "center",
+  },
 });
