@@ -83,26 +83,19 @@ const HomeRecolector: React.FC = () => {
       <View style={styles.bienvenidaContainer}>
         <Text style={styles.bienvenida}>Bienvenido Recolector 👋</Text>
 
-        {notificaciones.length > 0 && (
-          <View style={{ marginTop: 5 }}>
-            {notificaciones.map((n, idx) => (
-              <View
-                key={idx}
-                style={{ marginBottom: 4, flexDirection: "row", flexWrap: "wrap" }}
-              >
-                <Text style={styles.notificacion}>Aviso! {n.titulo}:</Text>
-                <Text
-                  style={[
-                    styles.notificacion,
-                    { fontWeight: "bold", marginLeft: 4 },
-                  ]}
-                >
-                  {n.mensaje}
-                </Text>
-              </View>
-            ))}
-          </View>
-        )}
+      {notificaciones.length > 0 && (
+        <View style={styles.notificacionContainer}>
+          {notificaciones.map((n, idx) => (
+            <View key={idx} style={styles.notificacionBox}>
+              <Text style={styles.notificacionTitulo}>Aviso!</Text>
+              <Text style={styles.notificacionMensaje} numberOfLines={0}>
+                {n.mensaje}
+              </Text>
+            </View>
+          ))}
+        </View>
+      )}
+
       </View>
 
       {/* Rutas */}
@@ -328,10 +321,39 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: "bold"
   },
-  notificacion: {
-    fontSize: 14,
-    color: "#307043",
-    marginTop: 5,
-    textAlign: "center",
-  },
+
+  notificacionContainer: {
+  marginTop: 10,
+  alignItems: "center",
+  justifyContent: "center",
+  width: "90%",
+  alignSelf: "center",
+},
+notificacionBox: {
+  backgroundColor: "#eaf5ea",
+  borderRadius: 12,
+  paddingVertical: 8,
+  paddingHorizontal: 15,
+  marginBottom: 8,
+  width: "100%",
+  alignItems: "center",
+  justifyContent: "center",
+},
+
+notificacionTitulo: {
+  fontSize: 14,
+  fontWeight: "bold",
+  color: "#307043",
+  marginBottom: 2,
+  textAlign: "center",
+},
+
+notificacionMensaje: {
+  fontSize: 14,
+  color: "#307043",
+  textAlign: "center",
+  flexWrap: "wrap",
+  flexShrink: 1,
+  width: "100%",
+},
 });
