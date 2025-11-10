@@ -1,1 +1,0 @@
-se podria validar lo que el usuario va tipeando, o corregir minusculas espacios y demas errores de tipeo

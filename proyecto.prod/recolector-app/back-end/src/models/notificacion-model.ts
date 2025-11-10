@@ -11,7 +11,7 @@ export const getNotificacion = async () => {
       ON n.cronograma_recoleccion_idcronograma_recoleccion = c.idcronograma_recoleccion
     WHERE 
       c.activo = 1
-      AND n.fecha_envio >= (CURDATE() - INTERVAL 3 DAY)
+      AND n.fecha_envio >= (CURDATE() - INTERVAL 1 DAY)
     ORDER BY n.fecha_envio DESC;
   `);
 

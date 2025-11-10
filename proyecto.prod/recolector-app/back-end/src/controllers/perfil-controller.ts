@@ -1,9 +1,69 @@
 import { Request, Response } from "express";
-import { obtenerPerfilDB, actualizarFotoPerfilRutaDB  } from "../models/perfil-model.js";
+import { obtenerPerfilDB, actualizarFotoPerfilRutaDB, obtenerMunicipiosDB, crearUsuarioDB } from "../models/perfil-model.js";
+
+export const crearUsuario = async (req: Request, res: Response): Promise<void> => {
+  try {
+    let {
+      dni,
+      nombre,
+      apellido,
+      email,
+      telefono,
+      fecha_nacimiento,
+      idmunicipio,
+      password,
+    } = req.body;
+
+    email = email?.trim().toLowerCase();
+    password = password?.trim();
+
+    // Crear el usuario
+    const nuevoUsuario = await crearUsuarioDB({
+      dni,
+      nombre,
+      apellido,
+      email,
+      telefono,
+      fecha_nacimiento,
+      idmunicipio,
+      password,
+    });
+
+    if (!nuevoUsuario) {
+      res.status(500).json({ message: "Error al registrar usuario" });
+      return;
+    }
+
+    res.status(201).json({
+      message: "Usuario creado correctamente",
+      data: nuevoUsuario,
+    });
+   } catch (error: any) {
+    console.error("❌ Error al crear usuario:", error.message);
+
+    // Detectar error de duplicado
+    if (error.message.includes("correo") || error.message.includes("teléfono")) {
+      res.status(409).json({
+        code: "DUPLICATE",
+        message: "El DNI, correo o teléfono ya están registrados",
+      });
+      return;
+    }
+
+    // Otros errores
+    res.status(500).json({
+      code: "SERVER_ERROR",
+      message: "Error interno del servidor",
+    });
+  }
+};
+
+
 // GET /api/perfil
 export const getPerfil = async (req: Request, res: Response): Promise<void> => {
   try {
     const idRecolector = req.user!.id; 
+    console.log("🔍 Obteniendo perfil para recolector ID:", idRecolector);
     const perfil = await obtenerPerfilDB(idRecolector);
 
     if (!perfil) {
@@ -18,6 +78,22 @@ export const getPerfil = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
+export const getMunicipios = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const municipios = await obtenerMunicipiosDB();
+    res.json({
+      success: true,
+      message: "Municipios obtenidos correctamente",
+      data: municipios,
+    });
+  } catch (error: any) {
+    console.error("❌ Error al obtener municipios:", error.message);
+    res.status(500).json({
+      success: false,
+      message: "Error interno del servidor",
+    });
+  }
+};
 // POST /api/perfil/foto
 export const updateFotoPerfil = async (req: Request, res: Response): Promise<void> => {
   try {

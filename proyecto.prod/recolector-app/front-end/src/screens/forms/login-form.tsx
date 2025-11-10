@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -10,20 +10,23 @@ import {
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
-} from 'react-native';
-import { loginUsuario } from '../../api/services/login-service';
-import { saveToken, saveUser } from '../../auth/auth';
-import { navigate } from '../../navigation/refglobal-navigation';
-import { verificarRol } from '../../utils/verificarRol';
+} from "react-native";
+import { loginUsuario } from "../../api/services/login-service";
+import { saveToken, saveUser } from "../../auth/auth";
+import { navigate } from "../../navigation/refglobal-navigation";
+import { verificarRol } from "../../utils/verificarRol";
+import ModalMunicipio from "./municipio-select"; // 👈 nuevo import
 
 const LoginForm: React.FC = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showMunicipioModal, setShowMunicipioModal] = useState(false); 
+  const [municipioSeleccionado, setMunicipioSeleccionado] = useState<{ id: number; descripcion: string } | null>(null);
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
-      Alert.alert('Campos requeridos', 'Por favor ingrese email y contraseña.');
+      Alert.alert("Campos requeridos", "Por favor ingrese email y contraseña.");
       return;
     }
 
@@ -36,41 +39,55 @@ const LoginForm: React.FC = () => {
         await saveUser(response.user);
 
         if (verificarRol(response.user)) {
-          navigate('RecolectorNavigation' as any);
+          navigate("RecolectorNavigation" as any);
         } else {
-          Alert.alert('Acceso denegado', 'No tienes permisos para acceder.');
+          Alert.alert("Acceso denegado", "No tienes permisos para acceder.");
         }
       } else {
-        Alert.alert('Error', response.mensaje || 'Credenciales incorrectas.');
+        Alert.alert("Error", response.mensaje || "Credenciales incorrectas.");
       }
     } catch (error) {
-      console.error('ERROR GENERAL:', error);
-      Alert.alert('Error inesperado', 'Ocurrió un problema al intentar iniciar sesión.');
+      console.error("ERROR GENERAL:", error);
+      Alert.alert(
+        "Error inesperado",
+        "Ocurrió un problema al intentar iniciar sesión."
+      );
     } finally {
       setLoading(false);
     }
   };
 
+  const handleAbrirModalMunicipio = () => {
+    setShowMunicipioModal(true);
+  };
+
+  const handleMunicipioConfirmado = (municipio: { id: number; descripcion: string }) => {
+    setMunicipioSeleccionado(municipio);
+    setShowMunicipioModal(false);
+    navigate("Register" as any, { municipioId: municipio.id, municipioDesc: municipio.descripcion });
+  };
+
   return (
     <ImageBackground
-      source={require('../../../assets/background/background.jpg')}
+      source={require("../../../assets/background/background.jpg")}
       style={styles.background}
       resizeMode="cover"
     >
       <KeyboardAvoidingView
         style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.container}>
           <View>
-            <View style={{ alignItems: 'center' }}>
+            <View style={{ alignItems: "center" }}>
               <Image
-                source={require('../../../assets/logos/logo.png')}
+                source={require("../../../assets/logos/logo.png")}
                 style={styles.logo}
               />
             </View>
             <View style={styles.formContainer}>
               <Text style={styles.title}>Iniciar Sesión</Text>
+
               <TextInput
                 placeholder="Correo electrónico"
                 value={email}
@@ -79,7 +96,6 @@ const LoginForm: React.FC = () => {
                 keyboardType="email-address"
                 style={styles.input}
                 textContentType="emailAddress"
-                accessibilityLabel="Correo electrónico"
                 editable={!loading}
               />
               <TextInput
@@ -89,30 +105,30 @@ const LoginForm: React.FC = () => {
                 secureTextEntry
                 style={styles.input}
                 textContentType="password"
-                accessibilityLabel="Contraseña"
                 editable={!loading}
               />
+
               <TouchableOpacity
                 style={[styles.boton, loading && styles.botonDisabled]}
                 onPress={handleLogin}
                 disabled={loading}
-                accessibilityLabel="Entrar"
               >
-                <Text style={styles.botonTexto}>{loading ? 'Entrando...' : 'Entrar'}</Text>
+                <Text style={styles.botonTexto}>
+                  {loading ? "Entrando..." : "Entrar"}
+                </Text>
               </TouchableOpacity>
+
               <TouchableOpacity
                 style={[styles.boton, styles.botonSecundario]}
-                onPress={() => navigate('Home' as any)}
+                onPress={() => navigate("Home" as any)}
                 disabled={loading}
-                accessibilityLabel="Ir al Home"
               >
                 <Text style={styles.botonTexto}>Ir al Home</Text>
               </TouchableOpacity>
+
               <View style={styles.registerContainer}>
-                <Text style={styles.registerText}>
-                  ¿No tenés una cuenta?{' '}
-                </Text>
-                <TouchableOpacity onPress={() => navigate('Register' as any)}>
+                <Text style={styles.registerText}>¿No tenés una cuenta? </Text>
+                <TouchableOpacity onPress={handleAbrirModalMunicipio}>
                   <Text style={styles.registerLink}>Registrate</Text>
                 </TouchableOpacity>
               </View>
@@ -120,7 +136,15 @@ const LoginForm: React.FC = () => {
           </View>
         </View>
       </KeyboardAvoidingView>
-    </ImageBackground >
+
+      {/* Modal de municipio */}
+    <ModalMunicipio
+      visible={showMunicipioModal}
+      onCancel={() => setShowMunicipioModal(false)} // ✅ cambia onClose → onCancel
+      onConfirm={handleMunicipioConfirmado}
+    />
+
+    </ImageBackground>
   );
 };
 

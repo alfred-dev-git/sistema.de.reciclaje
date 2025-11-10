@@ -6,20 +6,14 @@ import {
   StyleSheet,
   FlatList,
   Image,
+  RefreshControl,
+  ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import {
-  useNavigation,
-  useRoute,
-  useFocusEffect,
-} from "@react-navigation/native";
+import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import BackgorundContainer from "../../components/layout";
-
 import HeaderRecolector from "../../components/headerComponent";
-import {
-  obtenerParadasAgrupadas,
-  RutaCalculada,
-} from "../../api/services/paradas-service";
+import { obtenerParadasAgrupadas, RutaCalculada } from "../../api/services/paradas-service";
 import { getHistorial } from "../../api/services/historial-service";
 import { getNotificacion } from "../../api/services/notificacion-service";
 
@@ -32,35 +26,41 @@ const HomeRecolector: React.FC = () => {
   const [rutas, setRutas] = useState<RutaCalculada[]>([]);
   const [historial, setHistorial] = useState<any[]>([]);
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
+  const [refreshing, setRefreshing] = useState(false);
 
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
 
+  const cargarDatos = async () => {
+    try {
+      setRefreshing(true);
+
+      if (route.params?.rutasActualizadas) {
+        setRutas(route.params.rutasActualizadas);
+        navigation.setParams({ rutasActualizadas: undefined });
+      } else {
+        const rutasObtenidas = await obtenerParadasAgrupadas();
+        setRutas(rutasObtenidas);
+      }
+
+      const historialRes = await getHistorial();
+      if (historialRes.success) setHistorial(historialRes.data);
+
+      const notificacionRes = await getNotificacion();
+      if (notificacionRes.success && Array.isArray(notificacionRes.data)) {
+        setNotificaciones(notificacionRes.data);
+      }
+    } catch (error) {
+      console.warn("Error al cargar rutas/historial/notificación:", error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   useFocusEffect(
     React.useCallback(() => {
-      const cargarDatos = async () => {
-        try {
-          if (route.params?.rutasActualizadas) {
-            setRutas(route.params.rutasActualizadas);
-            navigation.setParams({ rutasActualizadas: undefined });
-          } else {
-            const rutasObtenidas = await obtenerParadasAgrupadas();
-            setRutas(rutasObtenidas);
-          }
-
-          const historialRes = await getHistorial();
-          if (historialRes.success) setHistorial(historialRes.data);
-
-          const notificacionRes = await getNotificacion();
-          if (notificacionRes.success && Array.isArray(notificacionRes.data)) {
-            setNotificaciones(notificacionRes.data);
-          }
-        } catch (error) {
-          console.warn("Error al cargar rutas/historial/notificación:", error);
-        }
-      };
       cargarDatos();
-    }, [route.params?.rutasActualizadas, navigation])
+    }, [route.params?.rutasActualizadas])
   );
 
   const getEstadoInfo = (estado: number) => {
@@ -75,68 +75,6 @@ const HomeRecolector: React.FC = () => {
         return { label: "Desconocido", color: "gray" };
     }
   };
-
-  const renderHeader = () => (
-    <View>
-      <HeaderRecolector />
-      {/* Bienvenida */}
-      <View style={styles.bienvenidaContainer}>
-        <Text style={styles.bienvenida}>Bienvenido Recolector 👋</Text>
-
-      {notificaciones.length > 0 && (
-        <View style={styles.notificacionContainer}>
-          {notificaciones.map((n, idx) => (
-            <View key={idx} style={styles.notificacionBox}>
-              <Text style={styles.notificacionTitulo}>Aviso!</Text>
-              <Text style={styles.notificacionMensaje} numberOfLines={0}>
-                {n.mensaje}
-              </Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      </View>
-
-      {/* Rutas */}
-      <View style={styles.card}>
-        <Text style={styles.sectionTitle}>Rutas Asignadas</Text>
-        {rutas.map((ruta, index) => (
-          <View key={index} style={styles.item}>
-            <View style={{ flexDirection: "row" }}>
-              <View style={styles.iconContainer}>
-                <Ionicons name="leaf" size={24} color="#307043" />
-              </View>
-              <View style={{ marginLeft: 15 }}>
-                <Text style={styles.infoTitle}>Recorrido {index + 1}</Text>
-                <Text style={styles.infoSubtitle}>
-                  {ruta.paradas.length} Paradas asignadas
-                </Text>
-              </View>
-            </View>
-
-            <TouchableOpacity
-              style={styles.botonVer}
-              onPress={() =>
-                navigation.navigate("RutaAsignada", {
-                  rutaSeleccionada: index,
-                  rutas,
-                })
-              }
-            >
-              <Ionicons name="eye" size={10} color="green" />
-              <Text style={styles.botonTexto}>Ver</Text>
-            </TouchableOpacity>
-          </View>
-        ))}
-      </View>
-
-      {/* Historial título */}
-      <Text style={[styles.sectionTitle, { marginLeft: 15 }]}>
-        Recolecciones del Mes
-      </Text>
-    </View>
-  );
 
   const renderHistorialItem = ({ item }: any) => {
     const { label, color } = getEstadoInfo(item.estado);
@@ -173,18 +111,79 @@ const HomeRecolector: React.FC = () => {
 
   return (
     <BackgorundContainer>
-      <View style={{ flex: 1 }}>
-        {renderHeader()}
-        <View style={{ flex: 1, maxHeight: 350 }}>
-          <FlatList
-            data={historial}
-            keyExtractor={(item) => item.idpedidos.toString()}
-            renderItem={renderHistorialItem}
-            contentContainerStyle={{ paddingBottom: 20 }}
-            showsVerticalScrollIndicator
-          />
+      <ScrollView
+        style={{ flex: 1 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={cargarDatos} />
+        }
+      >
+        <HeaderRecolector />
+
+        {/* Bienvenida */}
+        <View style={styles.bienvenidaContainer}>
+          <Text style={styles.bienvenida}>Bienvenido Recolector 👋</Text>
+
+          {notificaciones.length > 0 && (
+            <View style={styles.notificacionContainer}>
+              {notificaciones.map((n, idx) => (
+                <View key={idx} style={styles.notificacionBox}>
+                  <Text style={styles.notificacionTitulo}>Aviso!</Text>
+                  <Text style={styles.notificacionMensaje} numberOfLines={0}>
+                    {n.mensaje}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
-      </View>
+
+        {/* Rutas */}
+        <View style={styles.card}>
+          <Text style={styles.sectionTitle}>Rutas Asignadas</Text>
+          {rutas.map((ruta, index) => (
+            <View key={index} style={styles.item}>
+              <View style={{ flexDirection: "row" }}>
+                <View style={styles.iconContainer}>
+                  <Ionicons name="leaf" size={24} color="#307043" />
+                </View>
+                <View style={{ marginLeft: 15 }}>
+                  <Text style={styles.infoTitle}>Recorrido {index + 1}</Text>
+                  <Text style={styles.infoSubtitle}>
+                    {ruta.paradas.length} Paradas asignadas
+                  </Text>
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={styles.botonVer}
+                onPress={() =>
+                  navigation.navigate("RutaAsignada", {
+                    rutaSeleccionada: index,
+                    rutas,
+                  })
+                }
+              >
+                <Ionicons name="eye" size={10} color="green" />
+                <Text style={styles.botonTexto}>Ver</Text>
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+
+        {/* Historial */}
+        <Text style={[styles.sectionTitle, { marginLeft: 15 }]}>
+          Recolecciones del Mes
+        </Text>
+
+        <FlatList
+          data={historial}
+          keyExtractor={(item) => item.idpedidos.toString()}
+          renderItem={renderHistorialItem}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          showsVerticalScrollIndicator
+          scrollEnabled={false} // importante para que funcione bien dentro del ScrollView
+        />
+      </ScrollView>
     </BackgorundContainer>
   );
 };

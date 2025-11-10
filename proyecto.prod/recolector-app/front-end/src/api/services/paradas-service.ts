@@ -82,7 +82,7 @@ export async function obtenerParadasAgrupadas(): Promise<RutaCalculada[]> {
     const rutas: RutaCalculada[] = [];
 
     for (const grupo of subgrupos) {
-      if (grupo.length < 2) continue;
+      if (grupo.length === 0) continue;
 
       const origin = `${grupo[0].latitude},${grupo[0].longitude}`;
       const destination = `${grupo[grupo.length - 1].latitude},${
