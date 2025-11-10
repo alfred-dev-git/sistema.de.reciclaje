@@ -8,6 +8,7 @@ import authRoutes from './routes/auth.routes.js';
 import pedidosRoutes from './routes/pedidos.routes.js';
 import paradasRoutes from './routes/paradas.routes.js';
 import cronogramaRoutes from './routes/cronograma.routes.js';
+import reciclablesRoutes from './routes/reciclables.routes.js';
 import rutasRoutes from './routes/rutas.routes.js';
 
 
@@ -15,7 +16,7 @@ const app = express();
 
 // 🔹 Configurar CORS dinámicamente (funciona en local y en Railway)
 const allowedOrigins = [
-  'http://localhost:5173',             // Vite local
+  'http://localhost:5173',             // Vitee local
   process.env.CORS_ORIGIN              // Frontend desplegado (ej: https://miapp-front.vercel.app)
 ].filter(Boolean); // elimina undefined
 
@@ -33,6 +34,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api', pedidosRoutes);
 app.use('/api', paradasRoutes);
 app.use('/api/cronograma', cronogramaRoutes);
+app.use('/api/reciclables', reciclablesRoutes);
 app.use('/api/rutas', rutasRoutes);
 
 

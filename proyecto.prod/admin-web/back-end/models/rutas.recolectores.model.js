@@ -97,3 +97,63 @@ export const asignarRutaARecolector = async (idrecolector, pedidos) => {
     connection.release();
   }
 };
+
+
+/**
+ * Cambia el recolector asignado a una ruta específica.
+ * @param {number} idRuta - ID de la ruta asignada
+ * @param {number} idRecolector - Nuevo ID del recolector
+ */
+export const cambiarRecolectorRuta = async (idRuta, idRecolector) => {
+  try {
+    // 1️⃣ Verificamos si ya tiene asignado el mismo recolector
+    const [check] = await pool.query(
+      `SELECT recolector_idrecolector 
+       FROM rutas_asignadas 
+       WHERE idrutas_asignadas = ?`,
+      [idRuta]
+    );
+
+    if (check.length === 0) {
+      return {
+        success: false,
+        message: "No se encontró la ruta especificada",
+      };
+    }
+
+    const recolectorActual = check[0].recolector_idrecolector;
+    if (recolectorActual === idRecolector) {
+      return {
+        success: false,
+        message: "El recolector ya tiene esta ruta asignada",
+      };
+    }
+
+    // 2️⃣ Si no es el mismo, hacemos el UPDATE
+    const [result] = await pool.query(
+      `UPDATE rutas_asignadas 
+       SET recolector_idrecolector = ? 
+       WHERE idrutas_asignadas = ?`,
+      [idRecolector, idRuta]
+    );
+
+    if (result.affectedRows === 0) {
+      return {
+        success: false,
+        message: "No se pudo actualizar la ruta",
+      };
+    }
+
+    return {
+      success: true,
+      message: "Recolector actualizado correctamente",
+    };
+  } catch (error) {
+    console.error("❌ Error en cambiarRecolectorRuta:", error);
+    return {
+      success: false,
+      message: "Error interno al cambiar el recolector",
+      error,
+    };
+  }
+};

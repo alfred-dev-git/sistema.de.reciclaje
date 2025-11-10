@@ -1,7 +1,14 @@
+// src/components/rutas/rutas-map.tsx
 import React, { useCallback } from "react";
-import { GoogleMap, Marker, InfoWindow, Polyline } from "@react-google-maps/api";
+import {
+  GoogleMap,
+  Marker,
+  InfoWindow,
+  Polyline,
+} from "@react-google-maps/api";
 import { PedidoAsignado } from "../../api/services/paradas.service";
 import { RutaAgrupada } from "../mapa/agrupador-rutas";
+import { useGoogleMapsLoader } from "./use-google-maps-loader";
 
 interface RutasMapProps {
   rutas: RutaAgrupada[];
@@ -17,8 +24,15 @@ const containerStyle = {
 };
 
 const colores = [
-  "red", "blue", "green", "orange", "purple",
-  "pink", "yellow", "cyan", "magenta",
+  "red",
+  "blue",
+  "green",
+  "orange",
+  "purple",
+  "pink",
+  "yellow",
+  "cyan",
+  "magenta",
 ];
 
 export default function RutasMap({
@@ -28,10 +42,15 @@ export default function RutasMap({
   setPuntoSeleccionado,
   center,
 }: RutasMapProps) {
-  // 🔹 Limpiar selección al hacer click en el mapa vacío
+  const { isLoaded } = useGoogleMapsLoader();
+
   const handleMapClick = useCallback(() => {
     setPuntoSeleccionado(null);
   }, [setPuntoSeleccionado]);
+
+  if (!isLoaded) {
+    return <p>Cargando mapa...</p>;
+  }
 
   return (
     <div style={{
@@ -57,14 +76,13 @@ export default function RutasMap({
       }
 
       <GoogleMap
-        key={rutaActiva ?? 0} // 🔹 fuerza a re-montar el mapa al cambiar de ruta
+        key={rutaActiva ?? 0}
         mapContainerStyle={containerStyle}
         center={center}
         zoom={12}
         options={{ gestureHandling: "greedy" }}
         onClick={handleMapClick}
       >
-        {/* 🔸 Marcadores de la ruta activa */}
         {rutaActiva &&
           rutas
             .filter((r) => r.id === rutaActiva)
@@ -106,7 +124,6 @@ export default function RutasMap({
               })
             )}
 
-        {/* 🔹 Línea de la ruta activa */}
         {rutaActiva &&
           rutas
             .filter((r) => r.id === rutaActiva)
@@ -125,7 +142,6 @@ export default function RutasMap({
               />
             ))}
 
-        {/* InfoWindow (tooltip del punto seleccionado) */}
         {puntoSeleccionado && (
           <InfoWindow
             position={{

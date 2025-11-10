@@ -90,7 +90,7 @@ export const getHomeKpis = async (_req, res) => {
       WHERE estado_ruta = 0;
     `);
 
-    // 2️⃣ Recolectores activos (que tienen rutas con pedidos en los últimos 7 días)
+    // 2️⃣ Recolectores activos (que tienen pedidos activos y con ruta asignada)
     const [recolectoresActivos] = await pool.query(`
       SELECT COUNT(DISTINCT ra.recolector_idrecolector) AS n
       FROM rutas_asignadas ra
@@ -98,15 +98,19 @@ export const getHomeKpis = async (_req, res) => {
         ON pr.rutas_asignadas_idrutas_asignadas = ra.idrutas_asignadas
       INNER JOIN pedidos p 
         ON p.idpedidos = pr.pedidos_idpedidos
-      WHERE p.fecha_emision >= DATE_SUB(CURDATE(), INTERVAL 7 DAY);
+      WHERE p.estado_ruta = 1 
+        AND p.estado = 0;
     `);
 
-    // 3️⃣ Enviar KPIs como JSON
+
+
+    // 4️⃣ Enviar KPIs como JSON
     res.json({
       rutasSinAsignar: sinAsignar[0].n,
       recolectoresActivos: recolectoresActivos[0].n,
-      fechasActivas: 0 // placeholder para futuros KPIs
+      fechasActivas: 0 // placeholder
     });
+
   } catch (err) {
     console.error("❌ Error obteniendo KPIs:", err);
     res.status(500).json({ error: "Error obteniendo KPIs" });
