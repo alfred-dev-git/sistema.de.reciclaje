@@ -24,6 +24,7 @@ router.post(
   asyncHandler(async (req: Request, res: Response) => {
     const {
       dni,
+      cuit,
       nombre,
       apellido,
       email,
@@ -33,7 +34,7 @@ router.post(
       sexo,
       rol_idrol,
       municipio_idmunicipio,
-      puntos,
+      foto_perfil,
     } = req.body ?? {};
 
     if (
@@ -55,6 +56,7 @@ router.post(
     const emailNorm = String(email).trim().toLowerCase();
     const db = getDB();
 
+    // Validar duplicado
     const [dup] = await db.query(
       `SELECT 1 FROM usuario WHERE email = ? LIMIT 1`,
       [emailNorm]
@@ -68,15 +70,19 @@ router.post(
     const muni = Number.isFinite(Number(municipio_idmunicipio))
       ? Number(municipio_idmunicipio)
       : 1;
-    const pts = Number.isFinite(Number(puntos)) ? Number(puntos) : 0;
+    const puntos = 0;
+    const activo = 1;
 
     const [result] = await db.execute(
-      `INSERT INTO usuario
-       (dni, nombre, apellido, email, password, telefono, fecha_nacimiento, rol_idrol,
-        municipio_idmunicipio, puntos, sexo)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `
+      INSERT INTO usuario
+        (DNI, CUIT, nombre, apellido, email, password, telefono, fecha_nacimiento,
+         rol_idrol, municipio_idmunicipio, foto_perfil, puntos, sexo, activo)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `,
       [
         String(dni),
+        cuit ? String(cuit) : null,
         nombre,
         apellido,
         emailNorm,
@@ -85,8 +91,10 @@ router.post(
         String(fecha_nacimiento),
         rol,
         muni,
-        pts,
+        foto_perfil ?? null,
+        puntos,
         String(sexo),
+        activo,
       ]
     );
 
@@ -102,8 +110,9 @@ router.post(
       fecha_nacimiento: String(fecha_nacimiento),
       rol_idrol: rol,
       municipio_idmunicipio: muni,
-      puntos: pts,
+      puntos,
       sexo: String(sexo),
+      activo,
     };
 
     const token = signToken({ uid: id });
@@ -113,7 +122,7 @@ router.post(
 
 /**
  * POST /api/auth/login
- * Verifica rol_idrol === 3
+ * Solo permite ingresar si usuario.activo = 1 y rol_idrol = 3
  */
 router.post(
   "/login",
@@ -127,18 +136,25 @@ router.post(
     const db = getDB();
 
     const [rows] = await db.query(
-      `SELECT
-         idusuario, dni, nombre, apellido, email, telefono,
-         password AS password_hash,
-         puntos, rol_idrol, municipio_idmunicipio, fecha_nacimiento, sexo
-       FROM usuario
-       WHERE email = ?
-       LIMIT 1`,
+      `
+      SELECT
+        idusuario, DNI, CUIT, nombre, apellido, email, telefono,
+        password AS password_hash,
+        puntos, rol_idrol, municipio_idmunicipio,
+        fecha_nacimiento, sexo, foto_perfil, activo
+      FROM usuario
+      WHERE email = ?
+      LIMIT 1
+      `,
       [emailNorm]
     );
 
     const row = (rows as any[])[0];
     if (!row) return res.status(401).json({ error: "Credenciales inválidas" });
+
+    if (Number(row.activo) !== 1) {
+      return res.status(403).json({ error: "Tu cuenta está inactiva. Contactá con soporte." });
+    }
 
     const ok = await bcrypt.compare(String(password), String(row.password_hash));
     if (!ok) return res.status(401).json({ error: "Credenciales inválidas" });
@@ -149,7 +165,8 @@ router.post(
 
     const user = {
       id: row.idusuario,
-      dni: row.dni,
+      dni: row.DNI,
+      cuit: row.CUIT,
       nombre: row.nombre,
       apellido: row.apellido,
       email: row.email,
@@ -159,12 +176,15 @@ router.post(
       municipio_idmunicipio: row.municipio_idmunicipio,
       fecha_nacimiento: row.fecha_nacimiento,
       sexo: row.sexo,
+      foto_perfil: row.foto_perfil,
+      activo: row.activo,
     };
 
     const token = signToken({ uid: user.id });
     res.json({ user, token });
   })
 );
+
 
 /**
  * POST /api/auth/forgot

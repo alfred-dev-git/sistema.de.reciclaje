@@ -5,7 +5,16 @@ import { getDB } from "@/config/db";
 
 const router = Router();
 
-
+/**
+ * POST /api/detalle-pedido
+ * Crea el detalle de un pedido ya existente.
+ * Body:
+ *  - pedidos_idpedidos (number, requerido)
+ *  - fecha_entrega (string, opcional; default: CURDATE())
+ *  - cant_bolson (number, requerido)
+ *  - total_puntos (number, requerido)
+ *  - observaciones (string, opcional)
+ */
 router.post(
   "/",
   asyncHandler(async (req: Request, res: Response) => {
@@ -13,68 +22,56 @@ router.post(
 
     const pedidos_idpedidos =
       body.pedidos_idpedidos == null ? null : Number(body.pedidos_idpedidos);
-    const tipo_reciclable_idtipo_reciclable =
-      body.tipo_reciclable_idtipo_reciclable == null
-        ? null
-        : Number(body.tipo_reciclable_idtipo_reciclable);
-    const puntoRecoleccion =
-      body.puntoRecoleccion == null ? null : Number(body.puntoRecoleccion);
 
-    if (!pedidos_idpedidos || !tipo_reciclable_idtipo_reciclable || !puntoRecoleccion) {
-      return res.status(400).json({
-        error:
-          "pedidos_idpedidos, tipo_reciclable_idtipo_reciclable y puntoRecoleccion son obligatorios",
-      });
-    }
+    const cant_bolson =
+      body.cant_bolson == null || Number.isNaN(Number(body.cant_bolson))
+        ? null
+        : Number(body.cant_bolson);
+
+    const total_puntos =
+      body.total_puntos == null || Number.isNaN(Number(body.total_puntos))
+        ? null
+        : Number(body.total_puntos);
+
+    const fecha_entrega =
+      body.fecha_entrega && typeof body.fecha_entrega === "string"
+        ? body.fecha_entrega
+        : null;
 
     const observaciones =
       body.observaciones == null || body.observaciones === ""
         ? null
         : String(body.observaciones);
 
-    const peso_kg =
-      body.peso_kg == null || Number.isNaN(Number(body.peso_kg))
-        ? 0
-        : Number(body.peso_kg);
-
-    const id_recolector =
-      body.id_recolector == null || body.id_recolector === ""
-        ? null
-        : Number(body.id_recolector);
-
-    const orden =
-      body.orden == null || Number.isNaN(Number(body.orden))
-        ? null
-        : Number(body.orden);
+    if (!pedidos_idpedidos || !cant_bolson || !total_puntos) {
+      return res.status(400).json({
+        error: "Los campos pedidos_idpedidos, cant_bolson y total_puntos son obligatorios",
+      });
+    }
 
     const db = getDB();
 
-    const [[ped]]: any = await db.query(
-      `SELECT idpedidos FROM pedidos WHERE idpedidos = ?`,
+    // Validar que el pedido exista
+    const [[pedido]]: any = await db.query(
+      `SELECT idpedidos FROM pedidos WHERE idpedidos = ? LIMIT 1`,
       [pedidos_idpedidos]
     );
-    if (!ped) return res.status(400).json({ error: "Pedido inexistente" });
 
-    const [[tip]]: any = await db.query(
-      `SELECT idtipo_reciclable FROM tipo_reciclable WHERE idtipo_reciclable = ?`,
-      [tipo_reciclable_idtipo_reciclable]
-    );
-    if (!tip) return res.status(400).json({ error: "Tipo de residuo inexistente" });
+    if (!pedido) {
+      return res.status(400).json({ error: "El pedido no existe" });
+    }
 
-    const [[addr]]: any = await db.query(
-      `SELECT iddirecciones FROM direcciones WHERE iddirecciones = ?`,
-      [puntoRecoleccion]
-    );
-    if (!addr) return res.status(400).json({ error: "Dirección inexistente" });
-
+    // Insertar detalle del pedido
     const [result] = await db.execute(
-      `INSERT INTO detalle_pedido
-        (orden, observaciones, peso_kg, pedidos_idpedidos, tipo_reciclable_idtipo_reciclable, id_recolector, puntoRecoleccion)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [orden, observaciones, peso_kg, pedidos_idpedidos, tipo_reciclable_idtipo_reciclable, id_recolector, puntoRecoleccion]
+      `
+      INSERT INTO detalle_pedido
+        (fecha_entrega, cant_bolson, total_puntos, observaciones, pedidos_idpedidos)
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [fecha_entrega ?? new Date(), cant_bolson, total_puntos, observaciones, pedidos_idpedidos]
     );
 
-    res.status(201).json({ id: (result as any).insertId });
+    res.status(201).json({ iddetalle_pedido: (result as any).insertId });
   })
 );
 

@@ -70,3 +70,12 @@ export async function getHistorial(userId: number) {
   );
   return Array.isArray(res) ? res : (res.items ?? []);
 }
+// Traer detalle completo de un pedido
+export async function getDetallePedido(idPedido: number) {
+  return api.get(`/pedidos/detalle/${idPedido}`);
+}
+
+// Cancelar un pedido (envía el id del pedido)
+export async function cancelarPedido(idPedido: number) {
+  return api.put(`/pedidos/${idPedido}/cancelar`);
+}

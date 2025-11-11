@@ -1,13 +1,20 @@
 import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, FlatList, ActivityIndicator } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  ActivityIndicator,
+  TouchableOpacity,
+} from "react-native";
 import { getCurrentUser } from "@/services/api/auth";
 import { getHistorial } from "@/services/api/requests";
 
-
 type Item = {
   idpedidos: number;
-  fecha_emision: string; // 'YYYY-MM-DD'
-  estado?: number;       // 1,2,3
+  fecha_emision: string;
+  estado?: number;
+  estado_ruta?: number;
   id_direccion: number;
   calle?: string | null;
   numero?: string | null;
@@ -15,16 +22,17 @@ type Item = {
   longitud?: number | string | null;
   tipo_id: number;
   tipo_descripcion: string;
-  fecha_entrega?: string | null; // puede venir null
+  fecha_entrega?: string | null;
 };
 
 const statusMap: Record<number, { label: string; bg: string; fg: string }> = {
-  1: { label: "Retirado", bg: "#16a34a", fg: "#fff" },   // verde
-  2: { label: "Cancelado", bg: "#dc2626", fg: "#fff" },  // rojo
-  3: { label: "En proceso", bg: "#f59e0b", fg: "#000" }, // amarillo
+  0: { label: "Sin asignar", bg: "#9ca3af", fg: "#000" }, // gris
+  1: { label: "Completado", bg: "#16a34a", fg: "#fff" },  // verde
+  2: { label: "Cancelado", bg: "#dc2626", fg: "#fff" },   // rojoo
+  3: { label: "En proceso", bg: "#f59e0b", fg: "#000" },  // amarillo
 };
 
-export default function HistoryScreen() {
+export default function HistoryScreen({ navigation }: any) {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Item[]>([]);
 
@@ -53,33 +61,40 @@ export default function HistoryScreen() {
   }
 
   const renderItem = ({ item }: { item: Item }) => {
-    const status = statusMap[item.estado ?? 3] ?? statusMap[3];
-    const dir =
-      item.calle
-        ? `${item.calle} ${item.numero ?? ""}`.trim()
-        : `(${Number(item.latitud ?? 0).toFixed(5)}, ${Number(item.longitud ?? 0).toFixed(5)})`;
+    const status = statusMap[item.estado ?? 0] ?? statusMap[0];
+    const direccion = item.calle
+      ? `${item.calle} ${item.numero ?? ""}`.trim()
+      : `(${Number(item.latitud ?? 0).toFixed(5)}, ${Number(item.longitud ?? 0).toFixed(5)})`;
 
     return (
       <View style={styles.card}>
         <View style={styles.rowBetween}>
-          <Text style={styles.title}>{item.tipo_descripcion}</Text>
+          <Text style={styles.title}>N° de orden: {item.idpedidos}</Text>
           <View style={[styles.badge, { backgroundColor: status.bg }]}>
-            <Text style={[styles.badgeText, { color: status.fg }]}>
-              {status.label}
-            </Text>
+            <Text style={[styles.badgeText, { color: status.fg }]}>{status.label}</Text>
           </View>
         </View>
 
-        <Text style={styles.line}>📍 {dir}</Text>
         <Text style={styles.line}>📅 Emisión: {item.fecha_emision}</Text>
-        <Text style={styles.line}>🗓️ Retiro: {item.fecha_entrega ?? "-"}</Text>
+        <Text style={styles.line}>📍 Dirección: {direccion}</Text>
+        <Text style={styles.line}>♻️ Tipo: {item.tipo_descripcion}</Text>
+        <Text style={styles.line}>🗓️ Fecha de entrega: {item.fecha_entrega ?? "-"}</Text>
+
+        {item.estado === 1 && (
+          <TouchableOpacity
+            style={styles.detailButton}
+            onPress={() => navigation.navigate("DetallePedido", { id: item.idpedidos })}
+          >
+            <Text style={styles.detailButtonText}>Ver detalle</Text>
+          </TouchableOpacity>
+        )}
       </View>
     );
   };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.header}>Historial</Text>
+      <Text style={styles.header}>Historial en el mes</Text>
       <FlatList
         data={items}
         keyExtractor={(it) => String(it.idpedidos)}
@@ -87,14 +102,13 @@ export default function HistoryScreen() {
         contentContainerStyle={{ paddingBottom: 100 }}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
       />
-
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   center: { flex: 1, alignItems: "center", justifyContent: "center", gap: 8, paddingBottom: 90 },
-  container: { flex: 1, padding: 16, paddingBottom: 90 },
+  container: { flex: 1, padding: 16, paddingBottom: 90, backgroundColor: "#f9fafb" },
   header: { fontSize: 20, fontWeight: "700", marginBottom: 12 },
   card: {
     borderRadius: 10,
@@ -102,10 +116,19 @@ const styles = StyleSheet.create({
     borderColor: "#ddd",
     padding: 12,
     backgroundColor: "#fff",
+    elevation: 2,
   },
   rowBetween: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   title: { fontSize: 16, fontWeight: "700" },
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
   badgeText: { fontWeight: "700", fontSize: 12 },
-  line: { marginTop: 6 },
+  line: { marginTop: 6, color: "#111827" },
+  detailButton: {
+    marginTop: 10,
+    backgroundColor: "#2563eb",
+    paddingVertical: 6,
+    borderRadius: 8,
+    alignItems: "center",
+  },
+  detailButtonText: { color: "#fff", fontWeight: "700" },
 });
