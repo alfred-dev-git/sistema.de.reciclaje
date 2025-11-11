@@ -24,7 +24,7 @@ export default function SeguimientoRutas() {
 
   const [loading, setLoading] = useState(false);
 
-  // 📦 cuando cambia el recolector seleccionado, cargamos sus rutas
+  // 📦 cargar rutas cuando cambia el recolector
   useEffect(() => {
     const fetchRutas = async () => {
       if (!recolectorSeleccionado?.idrecolector) return;
@@ -36,7 +36,7 @@ export default function SeguimientoRutas() {
     fetchRutas();
   }, [recolectorSeleccionado]);
 
-  // 💾 cuando se confirma un recolector (ya sea para selección o cambio)
+  // 💾 confirmar selección o cambio de recolector
   const handleConfirmarRecolector = async (recolector: RutasPendientesItem) => {
     if (rutaParaCambio !== null) {
       await actualizarRecolectorRuta(rutaParaCambio, recolector);
@@ -60,82 +60,100 @@ export default function SeguimientoRutas() {
   }, [rutas]);
 
   return (
-    <div className="p-6">
-      <h2 className="text-xl font-semibold mb-4">Seguimiento de rutas</h2>
+    <div className="MapContainer">
+      {/*Panel lateral*/}
+      <div className="panel-lateral">
+        <div className="container-info-rutas">
+          <h3 className="titulo">Seguimiento de rutas</h3>
 
-      <button
-        onClick={() => setMostrarModal(true)}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-      >
-        Seleccionar recolector
-      </button>
+          {!recolectorSeleccionado ? (
+            <button
+              onClick={() => setMostrarModal(true)}
+              className="button button-ruta"
+            >
+              Seleccionar recolector
+            </button>
+          ) : (
+            <>
+              <div className="info-recolector">
+                <p>
+                  Recolector: {recolectorSeleccionado.recolector}
+                </p>
+                <p>
+                  Teléfono: {recolectorSeleccionado.telefono}
+                </p>
+              </div>
 
-      {recolectorSeleccionado && (
-        <div className="mt-3">
-          <p className="font-medium">
-            Recolector seleccionado: {recolectorSeleccionado.recolector}
-          </p>
-          <p className="text-sm text-gray-600">
-            Teléfono: {recolectorSeleccionado.telefono}
-          </p>
+              <button
+                onClick={() => setMostrarModal(true)}
+                className="button button-secundario"
+              >
+                Cambiar recolector
+              </button>
+            </>
+          )}
         </div>
-      )}
 
-      {loading ? (
-        <p className="mt-4">Cargando rutas...</p>
-      ) : rutas.length > 0 ? (
-        <>
-          <div className="flex flex-wrap gap-2 mt-4">
+        {loading ? (
+          <p className="mt-4">Cargando rutas...</p>
+        ) : rutas.length > 0 ? (
+          <div className="container-botones-rutas">
             {rutas.map((r) => (
-              <div key={r.id} className="flex items-center gap-2">
+              <div key={r.id} className="container-ruta-detalles">
                 <button
                   onClick={() => setRutaActiva(r.id)}
-                  className={`px-4 py-2 rounded text-white font-medium ${
-                    rutaActiva === r.id
-                      ? "bg-blue-600"
-                      : "bg-gray-500 hover:bg-gray-600"
+                  className={`button button-ruta ${
+                    rutaActiva === r.id ? "button-activa" : ""
                   }`}
                 >
                   Ruta {r.id}
                 </button>
 
-                <button
-                  onClick={() => {
-                    setRutaParaCambio(r.id);
-                    setMostrarModal(true);
-                  }}
-                  className="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
-                >
-                  Cambiar recolector
-                </button>
-
-                <button
-                  onClick={() => {
-                    if (confirm(`¿Seguro que deseas anular la ruta ${r.id}?(solo anulará paradas que no han sido completadas)`)) {
-                      anularRutaExistente(r.id);
-                    }
-                  }}
-                  className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded"
-                >
-                  Anular ruta
-                </button>
+                <div className="acciones-ruta">
+                  <button
+                    onClick={() => {
+                      setRutaParaCambio(r.id);
+                      setMostrarModal(true);
+                    }}
+                    className="button button-amarillo"
+                  >
+                    Cambiar recolector
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (
+                        confirm(
+                          `¿Seguro que deseas anular la ruta ${r.id}? (solo anulará paradas no completadas)`
+                        )
+                      ) {
+                        anularRutaExistente(r.id);
+                      }
+                    }}
+                    className="button button-rojo"
+                  >
+                    Anular
+                  </button>
+                </div>
               </div>
             ))}
           </div>
+        ) : (
+          recolectorSeleccionado && (
+            <p>No hay rutas activas.</p>
+          )
+        )}
+      </div>
 
-          <div className="mt-4">
-            <RutasMap
-              rutas={rutas}
-              rutaActiva={rutaActiva}
-              puntoSeleccionado={puntoSeleccionado}
-              setPuntoSeleccionado={setPuntoSeleccionado}
-              center={center}
-            />
-          </div>
-        </>
-      ) : (
-        recolectorSeleccionado && <p className="mt-4">No hay rutas activas.</p>
-      )}
+      {/* Área del mapa */}
+      <div className="area-mapa">
+        <RutasMap
+          rutas={rutas}
+          rutaActiva={rutaActiva}
+          puntoSeleccionado={puntoSeleccionado}
+          setPuntoSeleccionado={setPuntoSeleccionado}
+          center={center}
+        />
+      </div>
 
       <ModalRecolector
         mostrar={mostrarModal}

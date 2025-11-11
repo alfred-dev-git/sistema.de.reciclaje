@@ -114,7 +114,11 @@ body {
     padding: 16px;
     box-sizing: border-box;
 }
-
+.acciones-ruta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
 .container-info-rutas {
     margin: 5px;
 }
@@ -198,12 +202,12 @@ body {
     margin-bottom: 16px;
     box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
     backdrop-filter: blur(5px);
-    gap: 12px;
+    gap: 3px;
 }
 
 .card.card-home {
-    width: 282px;
-    height: 270px;
+    width: 288px;
+    height: 276px;
 }
 
 .card p {
