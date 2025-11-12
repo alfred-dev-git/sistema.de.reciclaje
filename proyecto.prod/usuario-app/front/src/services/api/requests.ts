@@ -3,7 +3,15 @@ import { api } from "./http";
 
 export type Residuo = { id: number; descripcion: string };
 
-// Conservamos listResiduos.
+export type CronogramaItem = {
+  id: number;
+  dia_semana: number;
+  semana_mes: number;
+  hora_inicio: string;
+  hora_fin: string;
+  tipo_reciclable: string;
+};
+
 // Soporta respuestas tipo {items: []} o array directo por si el backend cambia.
 export async function listResiduos(): Promise<Residuo[]> {
   const res = await api.get<{ items?: any[] } | any[]>("/residuos");
@@ -11,6 +19,20 @@ export async function listResiduos(): Promise<Residuo[]> {
   return items.map((r) => ({
     id: Number(r.id ?? r.idtipo_reciclable),
     descripcion: String(r.descripcion ?? ""),
+  }));
+}
+
+export async function listCronograma(): Promise<CronogramaItem[]> {
+  const res = await api.get<{ items?: any[] } | any[]>("/residuos/cronograma");
+  const items = Array.isArray(res) ? res : (res.items ?? []);
+
+  return items.map((r) => ({
+    id: Number(r.id ?? 0),
+    dia_semana: Number(r.dia_semana ?? 0),
+    semana_mes: Number(r.semana_mes ?? 0),
+    hora_inicio: String(r.hora_inicio ?? ""),
+    hora_fin: String(r.hora_fin ?? ""),
+    tipo_reciclable: String(r.tipo_reciclable ?? ""),
   }));
 }
 

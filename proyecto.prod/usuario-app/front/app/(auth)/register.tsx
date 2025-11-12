@@ -10,6 +10,11 @@ import { Button } from "@/components/Button";
 import { ErrorText } from "@/components/ErrorText";
 import { register as registerApi } from "@/services/api/auth";
 import { Picker } from "@react-native-picker/picker";
+import {
+  esTelefonoValido,
+  esDniValido,
+  esMayorDeEdad,
+} from "./inputs";
 
 type Form = {
   dni: string;
@@ -42,22 +47,50 @@ export default function RegisterScreen() {
     setErrors((e) => ({ ...e, [key]: undefined }));
   };
 
-  const validate = () => {
-    const e: Partial<Record<keyof Form, string>> = {};
-    if (!form.dni) e.dni = "Requerido";
-    if (!/^\d+$/.test(form.dni)) e.dni = "Solo números (sin puntos)";
-    if (!form.nombre) e.nombre = "Requerido";
-    if (!form.apellido) e.apellido = "Requerido";
-    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email);
-    if (!emailOk) e.email = "Email inválido";
-    if (form.password.length < 6) e.password = "Mínimo 6 caracteres";
-    if (!form.telefono) e.telefono = "Requerido";
-    const dateOk = /^\d{4}-\d{2}-\d{2}$/.test(form.fecha_nacimiento);
-    if (!dateOk) e.fecha_nacimiento = "Formato YYYY-MM-DD";
-    if (!["M", "F", "O"].includes(form.sexo)) e.sexo = "Seleccioná una opción";
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
+const validate = () => {
+  const e: Partial<Record<keyof Form, string>> = {};
+
+  if (!form.email || !form.nombre || !form.apellido || !form.dni || !form.password || !form.telefono || !form.fecha_nacimiento) {
+    Alert.alert("Campos incompletos", "Por favor complete todos los campos.");
+    return false;
+  }
+
+  if (form.nombre.length < 4 || form.apellido.length < 4 || form.password.length < 6) {
+    Alert.alert("Error", "Nombre, apellido y contraseña deben tener al menos 4 caracteres.");
+    return false;
+  }
+
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+    e.email = "Email inválido";
+  }
+
+  if (!esDniValido(form.dni)) {
+    e.dni = "El DNI debe tener entre 7 y 9 números.";
+  }
+
+  if (!esTelefonoValido(form.telefono)) {
+    e.telefono = "Número de teléfono inválido (puede incluir +54 o 549).";
+  }
+
+  // validar fecha y mayoría de edad
+  const fechaOk = /^\d{4}-\d{2}-\d{2}$/.test(form.fecha_nacimiento);
+  if (!fechaOk) {
+    e.fecha_nacimiento = "Formato de fecha incorrecto (YYYY-MM-DD)";
+  } else {
+    const fecha = new Date(form.fecha_nacimiento);
+    if (!esMayorDeEdad(fecha)) {
+      e.fecha_nacimiento = "Debes ser mayor de 18 años para registrarte.";
+    }
+  }
+
+  if (!["M", "F", "O"].includes(form.sexo)) {
+    e.sexo = "Seleccioná una opción válida";
+  }
+
+  setErrors(e);
+  return Object.keys(e).length === 0;
+};
+
 
   const onRegister = async () => {
     setSubmitError(undefined);
@@ -112,15 +145,16 @@ export default function RegisterScreen() {
                   keyboardType="number-pad"
                   value={form.dni}
                   onChangeText={(t) => setField("dni", t.replace(/\D+/g, ""))}
+                  maxLength={9}
                   error={errors.dni}
                 />
 
                 <Input label="Nombre" value={form.nombre} onChangeText={(t) => setField("nombre", t)} error={errors.nombre} />
                 <Input label="Apellido" value={form.apellido} onChangeText={(t) => setField("apellido", t)} error={errors.apellido} />
                 <Input label="Email" autoCapitalize="none" keyboardType="email-address" value={form.email} onChangeText={(t) => setField("email", t)} error={errors.email} />
-                <PasswordInput label="Contraseña" value={form.password} onChangeText={(t) => setField("password", t)} error={errors.password} />
+                <PasswordInput label="Contraseña (max 12 caracteres)" value={form.password} onChangeText={(t) => setField("password", t)}maxLength={12} error={errors.password} />
 
-                <Input label="Teléfono" keyboardType="phone-pad" value={form.telefono} onChangeText={(t) => setField("telefono", t)} error={errors.telefono} />
+                <Input label="Teléfono" keyboardType="phone-pad" value={form.telefono} onChangeText={(t) => setField("telefono", t)} maxLength={15} error={errors.telefono} />
                 <Input label="Fecha de nacimiento (YYYY-MM-DD)" placeholder="1990-05-10" value={form.fecha_nacimiento} onChangeText={(t) => setField("fecha_nacimiento", t)} error={errors.fecha_nacimiento} />
 
                 <Text style={{ fontWeight: "700", marginTop: 8 }}>Sexo</Text>

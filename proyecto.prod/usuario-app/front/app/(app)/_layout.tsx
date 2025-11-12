@@ -52,16 +52,22 @@ export default function AppLayout() {
       <Drawer.Screen name="home" options={{ title: "Inicio" }} />
       <Drawer.Screen name="request/new" options={{ title: "Solicitar recolección" }} />
       <Drawer.Screen name="history/index" options={{ title: "Historial" }} />
+      <Drawer.Screen name="schedule/cronograma" options={{ title: "Cronograma", drawerLabel: "Cronograma" }}/>
       <Drawer.Screen name="profile/index" options={{ title: "Perfil" }} />
       <Drawer.Screen
         name="profile/edit"
         options={{ title: "Editar perfil", drawerItemStyle: { display: "none" } }}
       />
       <Drawer.Screen
+        name="history/detalle"
+        options={{ drawerItemStyle: { display: "none" } }}
+      />
+      <Drawer.Screen
         name="addresses/new"
         options={{ title: "Agregar dirección", drawerItemStyle: { display: "none" } }}
       />
     </Drawer>
+    
   );
 }
 

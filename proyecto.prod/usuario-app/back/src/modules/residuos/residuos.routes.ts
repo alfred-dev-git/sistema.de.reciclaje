@@ -14,4 +14,32 @@ router.get("/", asyncHandler(async (_req, res) => {
   res.json({ items: rows });
 }));
 
+
+router.get(
+  "/cronograma",
+  asyncHandler(async (_req, res) => {
+    const db = getDB();
+    const [rows] = await db.query(
+      `
+      SELECT 
+        c.idcronograma_recoleccion AS id,
+        c.dia_semana,
+        c.semana_mes,
+        c.hora_inicio,
+        c.hora_fin,
+        tr.descripcion AS tipo_reciclable
+      FROM cronograma_recoleccion c
+      INNER JOIN tipo_reciclable tr 
+        ON c.tipo_reciclable_idtipo_reciclable = tr.idtipo_reciclable
+      WHERE c.activo = 1
+      ORDER BY 
+        c.dia_semana ASC,
+        c.semana_mes ASC;
+      `
+    );
+
+    res.json({ items: rows });
+  })
+);
+
 export default router;

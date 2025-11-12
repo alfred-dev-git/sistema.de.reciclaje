@@ -140,6 +140,7 @@ router.get(
   })
 );
 
+
 /**
  * GET /api/pedidos/detalle/:idPedido
  * Devuelve el detalle completo de un pedido
@@ -154,7 +155,6 @@ router.get(
 
     const db = getDB();
 
-    // Pedido base
     const [[pedido]]: any = await db.query(
       `
       SELECT
@@ -185,28 +185,25 @@ router.get(
       return res.status(404).json({ error: "Pedido no encontrado" });
     }
 
-    // Detalle asociado
-    const [detalles] = await db.query(
+    const [[detalle]]: any = await db.query(
       `
       SELECT
-        iddetalle_pedido,
-        fecha_entrega,
+        DATE_FORMAT(fecha_entrega, '%Y-%m-%d') AS fecha_entrega,
         cant_bolson,
         total_puntos,
         observaciones
       FROM detalle_pedido
       WHERE pedidos_idpedidos = ?
       ORDER BY fecha_entrega DESC
+      LIMIT 1
       `,
       [idPedido]
     );
 
-    res.json({
-      pedido,
-      detalles,
-    });
+    res.json({ ...pedido, ...detalle });
   })
 );
+
 
 // 🔹 Cancelar pedido (estado = 2)
 router.put(

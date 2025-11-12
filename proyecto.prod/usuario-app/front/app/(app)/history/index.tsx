@@ -6,9 +6,11 @@ import {
   FlatList,
   ActivityIndicator,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { getCurrentUser } from "@/services/api/auth";
-import { getHistorial } from "@/services/api/requests";
+import { getHistorial, cancelarPedido } from "@/services/api/requests";
+import DetallePedidoModal from "./detalle";
 
 type Item = {
   idpedidos: number;
@@ -22,34 +24,70 @@ type Item = {
   longitud?: number | string | null;
   tipo_id: number;
   tipo_descripcion: string;
-  fecha_entrega?: string | null;
 };
 
 const statusMap: Record<number, { label: string; bg: string; fg: string }> = {
-  0: { label: "Sin asignar", bg: "#9ca3af", fg: "#000" }, // gris
-  1: { label: "Completado", bg: "#16a34a", fg: "#fff" },  // verde
-  2: { label: "Cancelado", bg: "#dc2626", fg: "#fff" },   // rojoo
-  3: { label: "En proceso", bg: "#f59e0b", fg: "#000" },  // amarillo
+  0: { label: "Sin asignar", bg: "#9ca3af", fg: "#000" },
+  1: { label: "Completado", bg: "#16a34a", fg: "#fff" },
+  2: { label: "Cancelado", bg: "#dc2626", fg: "#fff" },
+  3: { label: "En proceso", bg: "#f59e0b", fg: "#000" },
 };
 
-export default function HistoryScreen({ navigation }: any) {
+export default function HistoryScreen() {
   const [loading, setLoading] = useState(true);
   const [items, setItems] = useState<Item[]>([]);
+  const [detalleVisible, setDetalleVisible] = useState(false);
+  const [pedidoSeleccionado, setPedidoSeleccionado] = useState<number | null>(null);
+
+  const abrirModal = (id: number) => {
+    setPedidoSeleccionado(id);
+    setDetalleVisible(true);
+  };
+
+  const cerrarModal = () => {
+    setDetalleVisible(false);
+    setPedidoSeleccionado(null);
+  };
+
+  const cargarHistorial = async () => {
+    try {
+      const u = await getCurrentUser();
+      const uid = Number(u?.id ?? u?.idusuario);
+      if (!Number.isFinite(uid)) return;
+      const data = await getHistorial(uid);
+      setItems(Array.isArray(data) ? (data as Item[]) : []);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    (async () => {
-      try {
-        const u = await getCurrentUser();
-        const uid = Number(u?.id ?? u?.idusuario);
-        if (!Number.isFinite(uid)) return;
-
-        const data = await getHistorial(uid);
-        setItems(Array.isArray(data) ? (data as Item[]) : []);
-      } finally {
-        setLoading(false);
-      }
-    })();
+    cargarHistorial();
   }, []);
+
+  const handleCancelarPedido = async (idPedido: number) => {
+    Alert.alert(
+      "Cancelar pedido",
+      "¿Estás seguro de que querés cancelar este pedido?",
+      [
+        { text: "No", style: "cancel" },
+        {
+          text: "Sí, cancelar",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await cancelarPedido(idPedido);
+              Alert.alert("Éxito", "El pedido fue cancelado correctamente.");
+              // recargar historial
+              cargarHistorial();
+            } catch (e) {
+              Alert.alert("Error", "No se pudo cancelar el pedido.");
+            }
+          },
+        },
+      ]
+    );
+  };
 
   if (loading) {
     return (
@@ -78,14 +116,25 @@ export default function HistoryScreen({ navigation }: any) {
         <Text style={styles.line}>📅 Emisión: {item.fecha_emision}</Text>
         <Text style={styles.line}>📍 Dirección: {direccion}</Text>
         <Text style={styles.line}>♻️ Tipo: {item.tipo_descripcion}</Text>
-        <Text style={styles.line}>🗓️ Fecha de entrega: {item.fecha_entrega ?? "-"}</Text>
 
-        {item.estado === 1 && (
+      {item.estado === 1 && (
+        <TouchableOpacity
+          style={styles.detailButton}
+          onPress={() => {
+            setPedidoSeleccionado(item.idpedidos);
+            setDetalleVisible(true);
+          }}
+        >
+          <Text style={styles.detailButtonText}>Ver detalle</Text>
+        </TouchableOpacity>
+      )}
+
+        {(item.estado === 0 || item.estado === 3) && (
           <TouchableOpacity
-            style={styles.detailButton}
-            onPress={() => navigation.navigate("DetallePedido", { id: item.idpedidos })}
+            style={[styles.detailButton, { backgroundColor: "#dc2626" }]}
+            onPress={() => handleCancelarPedido(item.idpedidos)}
           >
-            <Text style={styles.detailButtonText}>Ver detalle</Text>
+            <Text style={styles.detailButtonText}>Cancelar pedido</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -102,6 +151,16 @@ export default function HistoryScreen({ navigation }: any) {
         contentContainerStyle={{ paddingBottom: 100 }}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
       />
+
+      {/* Modal detalle */}
+      {pedidoSeleccionado && (
+        <DetallePedidoModal
+          visible={detalleVisible}
+          idPedido={pedidoSeleccionado}
+          onClose={() => setDetalleVisible(false)}
+        />
+)}
+
     </View>
   );
 }
