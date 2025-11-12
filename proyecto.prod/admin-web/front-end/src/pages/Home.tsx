@@ -59,6 +59,21 @@ export default function Home() {
         </Card>
         <Card title="Administrar solicitud puntos" isHome={true}>
           <p>Próximamente…</p>
+          <button        
+          >
+            🢂
+          </button>
+        </Card>
+                <Card title="Lista de usuarios" isHome={true}>
+          <p>Próximamente…</p>
+          <button
+            onClick={() => navigate("/lista-usuarios")}
+          >
+            🢂
+          </button>
+        </Card>
+                <Card title="Administrar tipo de reciclables" isHome={true}>
+          <p>Próximamente…</p>
           <button
           >
             🢂

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { getTiposReciclable } from "../../api/services/reciclables.service";
+import "./cronograma.css";
 
 interface EditarFechaModalProps {
   visible: boolean;
@@ -54,9 +55,7 @@ export const EditarFechaModal: React.FC<EditarFechaModalProps> = ({
 
     // Si vino con descripción, busca el ID correspondiente
     if (isNaN(Number(idTipo))) {
-      const encontrado = tiposReciclable.find(
-        (t) => t.descripcion === idTipo
-      );
+      const encontrado = tiposReciclable.find((t) => t.descripcion === idTipo);
       idTipo = encontrado ? encontrado.idtipo_reciclable : "";
     }
 
@@ -113,6 +112,7 @@ export const EditarFechaModal: React.FC<EditarFechaModalProps> = ({
           name="dia_semana"
           value={String(form.dia_semana)}
           onChange={handleChange}
+          className="select-editar"
         >
           <option value="1">1 - Lunes</option>
           <option value="2">2 - Martes</option>
@@ -128,6 +128,7 @@ export const EditarFechaModal: React.FC<EditarFechaModalProps> = ({
           name="semana_mes"
           value={String(form.semana_mes)}
           onChange={handleChange}
+          className="select-editar"
         >
           <option value="1">1 - Primera</option>
           <option value="2">2 - Segunda</option>
@@ -141,6 +142,7 @@ export const EditarFechaModal: React.FC<EditarFechaModalProps> = ({
           name="hora_inicio"
           value={form.hora_inicio}
           onChange={handleChange}
+          className="select-editar"
         />
 
         <label>Hora de fin:</label>
@@ -153,6 +155,7 @@ export const EditarFechaModal: React.FC<EditarFechaModalProps> = ({
             borderColor:
               form.hora_fin && form.hora_fin <= form.hora_inicio ? "red" : "",
           }}
+          className="select-editar"
         />
         {form.hora_fin && form.hora_fin <= form.hora_inicio && (
           <small style={{ color: "red" }}>
@@ -162,6 +165,7 @@ export const EditarFechaModal: React.FC<EditarFechaModalProps> = ({
 
         <label>Tipo de reciclable:</label>
         <select
+          className="select-editar"
           name="tipo_reciclable_idtipo_reciclable"
           value={String(form.tipo_reciclable_idtipo_reciclable)}
           onChange={handleChange}
@@ -181,7 +185,7 @@ export const EditarFechaModal: React.FC<EditarFechaModalProps> = ({
           style={{
             marginTop: "1rem",
             display: "flex",
-            justifyContent: "flex-end",
+            justifyContent: "space-around",
             gap: "0.5rem",
           }}
         >
@@ -208,11 +212,7 @@ export const EditarFechaModal: React.FC<EditarFechaModalProps> = ({
 // 🎨 estilos
 const btn = (color: string): React.CSSProperties => ({
   backgroundColor:
-    color === "green"
-      ? "#4CAF50"
-      : color === "red"
-      ? "#F44336"
-      : "#ccc",
+    color === "green" ? "#4CAF50" : color === "red" ? "#F44336" : "#ccc",
   color: "white",
   border: "none",
   padding: "0.5rem 1rem",
