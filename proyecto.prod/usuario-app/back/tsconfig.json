@@ -1,17 +1,16 @@
 {
   "compilerOptions": {
     "target": "ES2020",
-    "module": "ESNext",
-    "moduleResolution": "Bundler",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
     "strict": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
     "outDir": "dist",
     "types": ["node"],
-
-    "baseUrl": ".",              // ⬅️ importa
-    "paths": {                   // ⬅️ importa
+    "baseUrl": ".",
+    "paths": {
       "@/*": ["src/*"]
     }
   },

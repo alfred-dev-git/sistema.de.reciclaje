@@ -1,9 +1,14 @@
 // src/services/api/http.ts
 import * as SecureStore from "expo-secure-store";
 
-const API_BASE =
-  process.env.EXPO_PUBLIC_API_URL?.replace(/\/+$/, "") ||
-  "http://10.0.2.2:3000/api"; // ajustá si usás otra IP/puerto
+const API_BASE = process.env.EXPO_PUBLIC_API_URL?.replace(/\/+$/, "");
+
+if (!API_BASE) {
+  // Esto hace que si la variable no existe, explote inmediatamente
+  throw new Error(
+    "❌ No se encontró direccion API."
+  );
+}
 
 type Json = Record<string, any>;
 
@@ -11,15 +16,20 @@ async function request(path: string, init: RequestInit = {}) {
   const url = `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
 
   const token = await SecureStore.getItemAsync("auth_token");
+
   const headers: Record<string, string> = {
     "Content-Type": "application/json",
     ...(init.headers as Record<string, string> | undefined),
   };
-  if (token) headers.Authorization = `Bearer ${token}`;
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
 
   const resp = await fetch(url, { ...init, headers });
 
   let data: any = null;
+
   try {
     data = await resp.json();
   } catch {

@@ -8,13 +8,14 @@ import { Input } from "@/components/Input";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Button } from "@/components/Button";
 import { ErrorText } from "@/components/ErrorText";
-import { register as registerApi } from "@/services/api/auth";
+import { register as registerApi , listMunicipios} from "@/services/api/auth";
 import { Picker } from "@react-native-picker/picker";
 import {
   esTelefonoValido,
   esDniValido,
   esMayorDeEdad,
 } from "./inputs";
+import { useEffect } from "react";
 
 type Form = {
   dni: string;
@@ -25,6 +26,7 @@ type Form = {
   telefono: string;
   fecha_nacimiento: string; // "YYYY-MM-DD"
   sexo: "M" | "F" | "O";
+ municipio_idmunicipio?: number | null;
 };
 
 export default function RegisterScreen() {
@@ -37,18 +39,36 @@ export default function RegisterScreen() {
     telefono: "",
     fecha_nacimiento: "",
     sexo: "O",
+    municipio_idmunicipio: null,
   });
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({});
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
+  const [municipios, setMunicipios] = useState<any[]>([]);
+  const [municipioSeleccionado, setMunicipioSeleccionado] = useState<number | null>(null);
+    // ⬅ ESTE ES EL LUGAR CORRECTO
+  useEffect(() => {
+    const cargarMunicipios = async () => {
+      try {
+        const data = await listMunicipios();
+        console.log("MUNICIPIOS CARGADOS:", data);
+        setMunicipios(data);
+      } catch (err) {
+        console.error("Error al cargar municipios", err);
+        Alert.alert("Error", "No se pudieron cargar los municipios.");
+      }
+    };
 
+    cargarMunicipios();
+  }, []);
   const setField = <K extends keyof Form>(key: K, value: Form[K]) => {
     setForm((f) => ({ ...f, [key]: value }));
     setErrors((e) => ({ ...e, [key]: undefined }));
   };
 
-const validate = () => {
-  const e: Partial<Record<keyof Form, string>> = {};
+  const validate = () => {
+    const e: Partial<Record<keyof Form, string>> = {};
+
 
   if (!form.email || !form.nombre || !form.apellido || !form.dni || !form.password || !form.telefono || !form.fecha_nacimiento) {
     Alert.alert("Campos incompletos", "Por favor complete todos los campos.");
@@ -86,6 +106,10 @@ const validate = () => {
   if (!["M", "F", "O"].includes(form.sexo)) {
     e.sexo = "Seleccioná una opción válida";
   }
+  if (!municipioSeleccionado) {
+    Alert.alert("Municipio requerido", "Debes seleccionar un municipio.");
+    return false;
+  }
 
   setErrors(e);
   return Object.keys(e).length === 0;
@@ -108,7 +132,7 @@ const validate = () => {
         telefono: form.telefono,
         fecha_nacimiento: form.fecha_nacimiento,
         sexo: form.sexo,
-        // Si querés enviar explícitos:
+        municipio_idmunicipio: municipioSeleccionado,        // Si querés enviar explícitos:
         // rol_idrol: 2,
         // municipio_idmunicipio: 1,
         // puntos: 0,
@@ -122,6 +146,7 @@ const validate = () => {
     } finally {
       setLoading(false);
     }
+
   };
 
   return (
@@ -148,6 +173,27 @@ const validate = () => {
                   maxLength={9}
                   error={errors.dni}
                 />
+                <Text style={{ fontWeight: "700", marginTop: 8 }}>Municipio</Text>
+                <Picker
+                  selectedValue={municipioSeleccionado}
+                  onValueChange={(v) => {
+                    const id = Number(v);
+                    setMunicipioSeleccionado(id);
+                    setField("municipio_idmunicipio", id);
+                  }}
+                >
+                  <Picker.Item label="Seleccione un municipio..." value={null} />
+
+                  {municipios.map((m) => (
+                    <Picker.Item
+                      key={m.id}
+                      label={m.descripcion}
+                      value={m.id}
+                    />
+                  ))}
+                </Picker>
+
+
 
                 <Input label="Nombre" value={form.nombre} onChangeText={(t) => setField("nombre", t)} error={errors.nombre} />
                 <Input label="Apellido" value={form.apellido} onChangeText={(t) => setField("apellido", t)} error={errors.apellido} />

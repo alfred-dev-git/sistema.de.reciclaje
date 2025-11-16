@@ -101,3 +101,14 @@ export async function getDetallePedido(idPedido: number) {
 export async function cancelarPedido(idPedido: number) {
   return api.put(`/pedidos/${idPedido}/cancelar`);
 }
+
+
+//GEOCODING PARA PRODUCCIÓN
+// export async function autocompleteDireccion(input: string) {
+//   // el back ya espera ?input=...
+//   return api.get(`/addresses/google/autocomplete?input=${encodeURIComponent(input)}`);
+// }
+
+// export async function geocodeDireccion(address: string) {
+//   return api.get(`/addresses/google/geocode?address=${encodeURIComponent(address)}`);
+// }

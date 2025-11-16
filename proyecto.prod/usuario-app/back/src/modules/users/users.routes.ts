@@ -16,6 +16,7 @@ router.get(
   "/users/:id",
   asyncHandler(async (req: Request, res: Response) => {
     const id = Number(req.params.id);
+    console.log("ID recibido back:", id);
     if (!Number.isFinite(id)) return res.status(400).json({ error: "id inválido" });
 
     const db = getDB();

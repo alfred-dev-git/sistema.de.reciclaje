@@ -8,7 +8,6 @@ import {
   ScrollView,
   TouchableWithoutFeedback,
   Keyboard,
-  Image,
   Text,
   ImageBackground,
   TouchableOpacity,
@@ -16,19 +15,11 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { router } from "expo-router";
-
 import { Input } from "@/components/Input";
-import { Button } from "@/components/Button";
 import { ErrorText } from "@/components/ErrorText";
-
 import * as SecureStore from "expo-secure-store";
-import { getCurrentUser } from "@/services/api/auth";
+import { getCurrentUser, listMunicipios } from "@/services/api/auth";
 import { api } from "@/services/api/http";
-import {
-  getUserPhotoUrl,
-  uploadUserPhoto,
-  pickImageFromLibrary,
-} from "@/services/api/user";
 import { Picker } from "@react-native-picker/picker";
 
 type Sex = "M" | "F" | "O";
@@ -45,10 +36,23 @@ export default function EditProfileScreen() {
   const [fechaNacimiento, setFechaNacimiento] = useState("");
   const [municipioId, setMunicipioId] = useState("");
   const [sexo, setSexo] = useState<Sex>("O");
-  const [avatarUri, setAvatarUri] = useState<string | undefined>();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | undefined>();
+  const [municipios, setMunicipios] = useState<{ id: number; descripcion: string }[]>([]);
+    useEffect(() => {
+    const cargarMunicipios = async () => {
+      try {
+        const data = await listMunicipios();
+        setMunicipios(data);
+      } catch (err) {
+        console.error("Error cargando municipios", err);
+        Alert.alert("Error", "No se pudieron cargar los municipios.");
+      }
+    };
+
+    cargarMunicipios();
+  }, []);
 
   useEffect(() => {
     (async () => {
@@ -57,7 +61,6 @@ export default function EditProfileScreen() {
         if (!me?.id && !me?.idusuario) throw new Error("Sesión inválida");
         const id = Number(me.id ?? me.idusuario);
         setUserId(id);
-        setAvatarUri(getUserPhotoUrl ? getUserPhotoUrl(id) : undefined);
         setDni(me.dni ? String(me.dni) : "");
         setNombre(me.nombre ?? "");
         setApellido(me.apellido ?? "");
@@ -117,21 +120,6 @@ export default function EditProfileScreen() {
     }
   };
 
-  const onChangePhoto = async () => {
-    try {
-      if (!userId) return;
-      const asset = await pickImageFromLibrary();
-      if (!asset?.uri) return;
-      await uploadUserPhoto(userId, asset.uri);
-      const bust = Date.now();
-      setAvatarUri(
-        getUserPhotoUrl ? `${getUserPhotoUrl(userId)}?t=${bust}` : asset.uri
-      );
-      Alert.alert("Listo", "Foto actualizada.");
-    } catch (e: any) {
-      Alert.alert("Error", e?.message ?? "No se pudo actualizar la foto.");
-    }
-  };
 
   const keyboardOffset = Platform.select({
     ios: headerHeight,
@@ -170,23 +158,14 @@ export default function EditProfileScreen() {
             <View style={styles.card}>
               <Text style={styles.title}>Editar perfil</Text>
 
-              <View style={styles.avatarRow}>
-                <Image
-                  source={
-                    avatarUri
-                      ? { uri: avatarUri }
-                      : require("@/assets/avatar-placeholder.png")
-                  }
-                  style={styles.avatar}
-                />
-                <TouchableOpacity
-                  style={styles.photoButton}
-                  onPress={onChangePhoto}
-                >
-                  <Text style={styles.photoButtonText}>Cambiar foto</Text>
-                </TouchableOpacity>
+              {/* Avatar con inicial */}
+            <View style={styles.avatarRow}>
+              <View style={styles.avatarFallback}>
+                <Text style={styles.avatarText}>
+                  {(nombre?.trim()?.[0] ?? "U").toUpperCase()}
+                </Text>
               </View>
-
+            </View>
               <Input
                 label="DNI (sin puntos)"
                 value={dni}
@@ -207,12 +186,22 @@ export default function EditProfileScreen() {
                 onChangeText={setFechaNacimiento}
                 placeholder="1990-05-10"
               />
-              <Input
-                label="Municipio (ID numérico)"
-                value={municipioId}
-                onChangeText={(t) => setMunicipioId(t.replace(/\D+/g, ""))}
-                keyboardType="number-pad"
-              />
+              <Text style={styles.label}>Municipio</Text>
+
+              <View style={styles.pickerWrap}>
+                <Picker
+                  selectedValue={municipioId ? Number(municipioId) : null}
+                  onValueChange={(v) => {
+                    setMunicipioId(String(v));
+                  }}
+                >
+                  <Picker.Item label="Seleccione un municipio..." value={null} />
+
+                  {municipios.map((m) => (
+                    <Picker.Item key={m.id} label={m.descripcion} value={m.id} />
+                  ))}
+                </Picker>
+              </View>
 
               <Text style={styles.label}>Sexo</Text>
               <View style={styles.pickerWrap}>
@@ -288,21 +277,6 @@ const styles = StyleSheet.create({
     borderColor: "#0A7",
     backgroundColor: "#eee",
   },
-  photoButton: {
-    backgroundColor: "#0A7",
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    shadowColor: "#0A7",
-    shadowOpacity: 0.3,
-    shadowOffset: { width: 0, height: 3 },
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  photoButtonText: {
-    color: "#fff",
-    fontWeight: "700",
-  },
   label: {
     fontWeight: "700",
     marginTop: 12,
@@ -341,4 +315,18 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "#0A7",
   },
+  avatarFallback: {
+  width: 80,
+  height: 80,
+  borderRadius: 40,
+  backgroundColor: "#0A7",
+  alignItems: "center",
+  justifyContent: "center"
+},
+avatarText: {
+  fontSize: 36,
+  fontWeight: "800",
+  color: "#fff"
+}
+
 });

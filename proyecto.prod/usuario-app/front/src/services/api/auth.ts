@@ -13,9 +13,29 @@ export type RegisterReq = {
   fecha_nacimiento: string; // "YYYY-MM-DD"
   sexo: "M" | "F" | "O";    // o el código que uses
   rol_idrol?: number;       // default 3 si no envías
-  municipio_idmunicipio?: number; // default 1 si no envías
+  municipio_idmunicipio?: number | null; // default 1 si no envías
   puntos?: number;          // default 0 si no envías
 };
+
+export type Municipio = {
+  id: number;
+  descripcion: string;
+};
+
+// GET /municipios
+export async function listMunicipios(): Promise<Municipio[]> {
+  const res = await api.get("/auth/municipios");
+
+  const items = res.items ?? [];
+
+  return items.map((m: any) => ({
+    id: Number(m.id),
+    descripcion: String(m.descripcion),
+  }));
+}
+
+
+
 
 export async function login(body: LoginReq) {
   const resp = await api.post<{ user: any; token: string }>("/auth/login", body);

@@ -14,6 +14,19 @@ function genCode(len = 6) {
   return s;
 }
 
+router.get(
+  "/municipios",
+  asyncHandler(async (req: Request, res: Response) => {
+    const db = getDB();
+    const [rows] = await db.query(
+      `SELECT idmunicipio AS id, descripcion
+       FROM municipio
+       ORDER BY descripcion ASC`
+    );
+
+    res.json({ items: rows });
+  })
+);
 /**
  * POST /api/auth/register
  * Requeridos: dni, nombre, apellido, email, password, telefono, fecha_nacimiento, sexo
@@ -33,7 +46,7 @@ router.post(
       fecha_nacimiento,
       sexo,
       rol_idrol,
-      municipio_idmunicipio,
+      municipio_idmunicipio, // ← viene del body
       foto_perfil,
     } = req.body ?? {};
 
@@ -65,14 +78,16 @@ router.post(
       return res.status(409).json({ error: "Email ya registrado" });
     }
 
+    // Hash
     const hash = await bcrypt.hash(String(password), 10);
-    const rol = Number.isFinite(Number(rol_idrol)) ? Number(rol_idrol) : 3;
-    const muni = Number.isFinite(Number(municipio_idmunicipio))
-      ? Number(municipio_idmunicipio)
-      : 1;
+
+    // Defaults
+    const rol = Number(rol_idrol) || 3;
+    const muni = Number(municipio_idmunicipio);
     const puntos = 0;
     const activo = 1;
 
+    // Insert usuario
     const [result] = await db.execute(
       `
       INSERT INTO usuario
@@ -119,6 +134,7 @@ router.post(
     res.status(201).json({ user, token });
   })
 );
+
 
 /**
  * POST /api/auth/login

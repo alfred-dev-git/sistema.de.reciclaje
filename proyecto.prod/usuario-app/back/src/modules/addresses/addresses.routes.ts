@@ -2,6 +2,7 @@ import { Router } from "express";
 import type { Request, Response } from "express";
 import { asyncHandler } from "@/utils/asyncHandler";
 import { getDB } from "@/config/db";
+import axios from "axios";
 
 const router = Router();
 
@@ -66,5 +67,66 @@ router.post(
     res.status(201).json({ id: insertId });
   })
 );
+
+/**
+ * GET /api/addresses/google/autocomplete?input=...
+ * Llama a Google Places Autocomplete y devuelve predictions
+ */
+router.get(
+  "/addresses/google/autocomplete",
+  asyncHandler(async (req: Request, res: Response) => {
+    console.log("LLEGUE A GOOGLE");
+    const input = String(req.query.input ?? "");
+    if (!input.trim()) {
+      return res.json({ predictions: [] });
+    }
+
+    const KEY = process.env.GOOGLE_MAPS_API_KEY;
+    if (!KEY) {
+      console.error("GOOGLE_MAPS_API_KEY missing en .env");
+      return res.status(500).json({ error: "Google API key missing" });
+    }
+
+    const url =
+      "https://maps.googleapis.com/maps/api/place/autocomplete/json" +
+      `?input=${encodeURIComponent(input)}` +
+      "&types=address" +
+      "&language=es" +
+      "&components=country:ar" +
+      `&key=${KEY}`;
+
+    try {
+      const response = await axios.get(url);
+      return res.json(response.data);
+    } catch (error: any) {
+      console.error("Error Google Places:", error?.response?.data || error?.message);
+      return res.status(500).json({ error: "Failed Google request" });
+    }
+  })
+);
+
+//PARA GEOCODING DE DIRECCIONES en produccion
+// router.get(
+//   "/addresses/google/geocode",
+//   asyncHandler(async (req, res) => {
+//     const address = String(req.query.address ?? "");
+//     if (!address.trim()) return res.status(400).json({ error: "Address missing" });
+
+//     const KEY = process.env.GOOGLE_MAPS_API_KEY;
+
+//     const url =
+//       "https://maps.googleapis.com/maps/api/geocode/json" +
+//       `?address=${encodeURIComponent(address)}` +
+//       `&key=${KEY}`;
+
+//     try {
+//       const response = await axios.get(url);
+//       return res.json(response.data);
+//     } catch (err) {
+//       return res.status(500).json({ error: "Failed Google request" });
+//     }
+//   })
+// );
+
 
 export default router;

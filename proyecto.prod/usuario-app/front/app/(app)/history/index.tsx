@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  RefreshControl,
 } from "react-native";
 import { getCurrentUser } from "@/services/api/auth";
 import { getHistorial, cancelarPedido } from "@/services/api/requests";
@@ -35,6 +36,7 @@ const statusMap: Record<number, { label: string; bg: string; fg: string }> = {
 
 export default function HistoryScreen() {
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false); // ⬅️ nuevo
   const [items, setItems] = useState<Item[]>([]);
   const [detalleVisible, setDetalleVisible] = useState(false);
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState<number | null>(null);
@@ -61,6 +63,16 @@ export default function HistoryScreen() {
     }
   };
 
+  // 🔄 Recarga manual
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await cargarHistorial();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
     cargarHistorial();
   }, []);
@@ -78,7 +90,6 @@ export default function HistoryScreen() {
             try {
               await cancelarPedido(idPedido);
               Alert.alert("Éxito", "El pedido fue cancelado correctamente.");
-              // recargar historial
               cargarHistorial();
             } catch (e) {
               Alert.alert("Error", "No se pudo cancelar el pedido.");
@@ -117,17 +128,14 @@ export default function HistoryScreen() {
         <Text style={styles.line}>📍 Dirección: {direccion}</Text>
         <Text style={styles.line}>♻️ Tipo: {item.tipo_descripcion}</Text>
 
-      {item.estado === 1 && (
-        <TouchableOpacity
-          style={styles.detailButton}
-          onPress={() => {
-            setPedidoSeleccionado(item.idpedidos);
-            setDetalleVisible(true);
-          }}
-        >
-          <Text style={styles.detailButtonText}>Ver detalle</Text>
-        </TouchableOpacity>
-      )}
+        {item.estado === 1 && (
+          <TouchableOpacity
+            style={styles.detailButton}
+            onPress={() => abrirModal(item.idpedidos)}
+          >
+            <Text style={styles.detailButtonText}>Ver detalle</Text>
+          </TouchableOpacity>
+        )}
 
         {(item.estado === 0 || item.estado === 3) && (
           <TouchableOpacity
@@ -144,23 +152,25 @@ export default function HistoryScreen() {
   return (
     <View style={styles.container}>
       <Text style={styles.header}>Historial en el mes</Text>
+
       <FlatList
         data={items}
         keyExtractor={(it) => String(it.idpedidos)}
         renderItem={renderItem}
         contentContainerStyle={{ paddingBottom: 100 }}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
       />
 
-      {/* Modal detalle */}
       {pedidoSeleccionado && (
         <DetallePedidoModal
           visible={detalleVisible}
           idPedido={pedidoSeleccionado}
-          onClose={() => setDetalleVisible(false)}
+          onClose={cerrarModal}
         />
-)}
-
+      )}
     </View>
   );
 }
