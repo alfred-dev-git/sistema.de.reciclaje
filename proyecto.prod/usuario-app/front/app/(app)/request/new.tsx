@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   ImageBackground,
   TouchableOpacity,
+  RefreshControl,
 } from "react-native";
 import { Picker } from "@react-native-picker/picker";
 import { router } from "expo-router";
@@ -14,6 +15,7 @@ import { router } from "expo-router";
 import { listUserAddresses } from "@/services/api/addresses";
 import { listResiduos, createPedido } from "@/services/api/requests";
 import { getCurrentUser } from "@/services/api/auth";
+import { ScrollView } from "react-native-gesture-handler";
 
 type Option = { label: string; value: number };
 type AddressApi = {
@@ -38,6 +40,7 @@ function toArray<T = any>(v: any): T[] {
 }
 
 export default function RequestNewScreen() {
+  const [refreshing, setRefreshing] = useState(false);
   const [userId, setUserId] = useState<number | null>(null);
   const [addressOpts, setAddressOpts] = useState<Option[]>([]);
   const [residuoOpts, setResiduoOpts] = useState<Option[]>([]);
@@ -114,69 +117,121 @@ export default function RequestNewScreen() {
       </View>
     );
   }
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const u = await getCurrentUser();
+      if (!u) throw new Error("Sesión no encontrada");
+      const uid = Number(u.id ?? u.idusuario);
+      setUserId(uid);
+
+      const [addressesResp, residuosResp] = await Promise.all([
+        listUserAddresses(uid),
+        listResiduos(),
+      ]);
+
+      const addresses = toArray<AddressApi>(addressesResp);
+      const residuos = toArray<ResiduoApi>(residuosResp);
+
+      const addrOpts = addresses.map((a) => {
+        const id = Number(a.iddirecciones ?? a.id);
+        const base = a.calle ? `${a.calle} ${a.numero ?? ""}`.trim() : "Lat/Lon";
+        return { label: base, value: id };
+      });
+
+      const resOpts = residuos.map((r) => ({
+        label: r.descripcion,
+        value: Number(r.idtipo_reciclable ?? r.id),
+      }));
+
+      setAddressOpts(addrOpts);
+      setResiduoOpts(resOpts);
+      if (addrOpts[0]) setAddressId(addrOpts[0].value);
+      if (resOpts[0]) setResiduoId(resOpts[0].value);
+    } catch (e: any) {
+      Alert.alert("Error", e?.message ?? "No se pudo cargar datos");
+    } finally {
+      setLoading(false);
+    }
+  };
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadData();
+    setRefreshing(false);
+  }
 
   return (
-    <ImageBackground
-      source={require("@/assets/background/bg-dashboard1.png")}
-      style={styles.background}
-      resizeMode="cover"
+    <ScrollView
+      contentContainerStyle={{ flexGrow: 1 }}
+      refreshControl={
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+        />
+      }
     >
-      <View style={styles.overlay}>
-        <View style={styles.card}>
-          <Text style={styles.title}>Nueva Recolección</Text>
+      <ImageBackground
+        source={require("@/assets/background/bg-dashboard1.png")}
+        style={styles.background}
+        resizeMode="cover"
+      >
+        <View style={styles.overlay}>
+          <View style={styles.card}>
+            <Text style={styles.title}>Nueva Recolección</Text>
 
-          <Text style={styles.label}>Dirección</Text>
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={addressId}
-              onValueChange={(v) => setAddressId(v as number | undefined)}
-              style={styles.picker}
+            <Text style={styles.label}>Dirección</Text>
+            <View style={styles.pickerWrapper}>
+              <Picker
+                selectedValue={addressId}
+                onValueChange={(v) => setAddressId(v as number | undefined)}
+                style={styles.picker}
+              >
+                <Picker.Item
+                  label={
+                    addressOpts.length > 0 ? "Seleccionar..." : "No hay direcciones"
+                  }
+                  value={undefined}
+                />
+                {addressOpts.map((opt) => (
+                  <Picker.Item key={opt.value} label={opt.label} value={opt.value} />
+                ))}
+              </Picker>
+            </View>
+
+            <Text style={styles.label}>Tipo de residuo</Text>
+            <View style={styles.pickerWrapper}>
+              <Picker
+                selectedValue={residuoId}
+                onValueChange={(v) => setResiduoId(v as number | undefined)}
+                style={styles.picker}
+              >
+                <Picker.Item
+                  label={
+                    residuoOpts.length > 0
+                      ? "Seleccionar..."
+                      : "No hay tipos disponibles"
+                  }
+                  value={undefined}
+                />
+                {residuoOpts.map((opt) => (
+                  <Picker.Item key={opt.value} label={opt.label} value={opt.value} />
+                ))}
+              </Picker>
+            </View>
+
+            <TouchableOpacity
+              onPress={onSubmit}
+              disabled={saving}
+              style={[styles.btn, saving && { opacity: 0.6 }]}
             >
-              <Picker.Item
-                label={
-                  addressOpts.length > 0 ? "Seleccionar..." : "No hay direcciones"
-                }
-                value={undefined}
-              />
-              {addressOpts.map((opt) => (
-                <Picker.Item key={opt.value} label={opt.label} value={opt.value} />
-              ))}
-            </Picker>
+              <Text style={styles.btnText}>
+                {saving ? "Guardando..." : "Confirmar pedido"}
+              </Text>
+            </TouchableOpacity>
           </View>
-
-          <Text style={styles.label}>Tipo de residuo</Text>
-          <View style={styles.pickerWrapper}>
-            <Picker
-              selectedValue={residuoId}
-              onValueChange={(v) => setResiduoId(v as number | undefined)}
-              style={styles.picker}
-            >
-              <Picker.Item
-                label={
-                  residuoOpts.length > 0
-                    ? "Seleccionar..."
-                    : "No hay tipos disponibles"
-                }
-                value={undefined}
-              />
-              {residuoOpts.map((opt) => (
-                <Picker.Item key={opt.value} label={opt.label} value={opt.value} />
-              ))}
-            </Picker>
-          </View>
-
-          <TouchableOpacity
-            onPress={onSubmit}
-            disabled={saving}
-            style={[styles.btn, saving && { opacity: 0.6 }]}
-          >
-            <Text style={styles.btnText}>
-              {saving ? "Guardando..." : "Confirmar pedido"}
-            </Text>
-          </TouchableOpacity>
         </View>
-      </View>
-    </ImageBackground>
+      </ImageBackground>
+    </ScrollView>
   );
 }
 

@@ -1,14 +1,16 @@
 import { useState } from "react";
 import {
   View, StyleSheet, Alert, KeyboardAvoidingView, Platform,
-  ScrollView, TouchableWithoutFeedback, Keyboard, Text, ImageBackground
+  ScrollView, TouchableWithoutFeedback, Keyboard, Text, ImageBackground,
+  TouchableOpacity,
 } from "react-native";
+import DateTimePicker from '@react-native-community/datetimepicker';
 import { Link, router } from "expo-router";
 import { Input } from "@/components/Input";
 import { PasswordInput } from "@/components/PasswordInput";
 import { Button } from "@/components/Button";
 import { ErrorText } from "@/components/ErrorText";
-import { register as registerApi , listMunicipios} from "@/services/api/auth";
+import { register as registerApi, listMunicipios } from "@/services/api/auth";
 import { Picker } from "@react-native-picker/picker";
 import {
   esTelefonoValido,
@@ -26,7 +28,7 @@ type Form = {
   telefono: string;
   fecha_nacimiento: string; // "YYYY-MM-DD"
   sexo: "M" | "F" | "O";
- municipio_idmunicipio?: number | null;
+  municipio_idmunicipio?: number | null;
 };
 
 export default function RegisterScreen() {
@@ -41,12 +43,25 @@ export default function RegisterScreen() {
     sexo: "O",
     municipio_idmunicipio: null,
   });
+  const [showDatePicker, setShowDatePicker] = useState(false);
+  const [date, setDate] = useState(new Date());
+  const onChangeDate = (event: any, selectedDate?: Date) => {
+    setShowDatePicker(false);
+
+    if (selectedDate) {
+      setDate(selectedDate);
+
+      const iso = selectedDate.toISOString().split("T")[0];
+      setField("fecha_nacimiento", iso);
+    }
+  };
+
   const [errors, setErrors] = useState<Partial<Record<keyof Form, string>>>({});
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState<string | undefined>();
   const [municipios, setMunicipios] = useState<any[]>([]);
   const [municipioSeleccionado, setMunicipioSeleccionado] = useState<number | null>(null);
-    // ⬅ ESTE ES EL LUGAR CORRECTO
+  // ⬅ ESTE ES EL LUGAR CORRECTO
   useEffect(() => {
     const cargarMunicipios = async () => {
       try {
@@ -70,50 +85,50 @@ export default function RegisterScreen() {
     const e: Partial<Record<keyof Form, string>> = {};
 
 
-  if (!form.email || !form.nombre || !form.apellido || !form.dni || !form.password || !form.telefono || !form.fecha_nacimiento) {
-    Alert.alert("Campos incompletos", "Por favor complete todos los campos.");
-    return false;
-  }
-
-  if (form.nombre.length < 4 || form.apellido.length < 4 || form.password.length < 6) {
-    Alert.alert("Error", "Nombre, apellido y contraseña deben tener al menos 4 caracteres.");
-    return false;
-  }
-
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
-    e.email = "Email inválido";
-  }
-
-  if (!esDniValido(form.dni)) {
-    e.dni = "El DNI debe tener entre 7 y 9 números.";
-  }
-
-  if (!esTelefonoValido(form.telefono)) {
-    e.telefono = "Número de teléfono inválido (puede incluir +54 o 549).";
-  }
-
-  // validar fecha y mayoría de edad
-  const fechaOk = /^\d{4}-\d{2}-\d{2}$/.test(form.fecha_nacimiento);
-  if (!fechaOk) {
-    e.fecha_nacimiento = "Formato de fecha incorrecto (YYYY-MM-DD)";
-  } else {
-    const fecha = new Date(form.fecha_nacimiento);
-    if (!esMayorDeEdad(fecha)) {
-      e.fecha_nacimiento = "Debes ser mayor de 18 años para registrarte.";
+    if (!form.email || !form.nombre || !form.apellido || !form.dni || !form.password || !form.telefono || !form.fecha_nacimiento) {
+      Alert.alert("Campos incompletos", "Por favor complete todos los campos.");
+      return false;
     }
-  }
 
-  if (!["M", "F", "O"].includes(form.sexo)) {
-    e.sexo = "Seleccioná una opción válida";
-  }
-  if (!municipioSeleccionado) {
-    Alert.alert("Municipio requerido", "Debes seleccionar un municipio.");
-    return false;
-  }
+    if (form.nombre.length < 4 || form.apellido.length < 4 || form.password.length < 6) {
+      Alert.alert("Error", "Nombre, apellido y contraseña deben tener al menos 4 caracteres.");
+      return false;
+    }
 
-  setErrors(e);
-  return Object.keys(e).length === 0;
-};
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      e.email = "Email inválido";
+    }
+
+    if (!esDniValido(form.dni)) {
+      e.dni = "El DNI debe tener entre 7 y 9 números.";
+    }
+
+    if (!esTelefonoValido(form.telefono)) {
+      e.telefono = "Número de teléfono inválido (puede incluir +54 o 549).";
+    }
+
+    // validar fecha y mayoría de edad
+    const fechaOk = /^\d{4}-\d{2}-\d{2}$/.test(form.fecha_nacimiento);
+    if (!fechaOk) {
+      e.fecha_nacimiento = "Formato de fecha incorrecto (YYYY-MM-DD)";
+    } else {
+      const fecha = new Date(form.fecha_nacimiento);
+      if (!esMayorDeEdad(fecha)) {
+        e.fecha_nacimiento = "Debes ser mayor de 18 años para registrarte.";
+      }
+    }
+
+    if (!["M", "F", "O"].includes(form.sexo)) {
+      e.sexo = "Seleccioná una opción válida";
+    }
+    if (!municipioSeleccionado) {
+      Alert.alert("Municipio requerido", "Debes seleccionar un municipio.");
+      return false;
+    }
+
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
 
   const onRegister = async () => {
@@ -198,10 +213,47 @@ export default function RegisterScreen() {
                 <Input label="Nombre" value={form.nombre} onChangeText={(t) => setField("nombre", t)} error={errors.nombre} />
                 <Input label="Apellido" value={form.apellido} onChangeText={(t) => setField("apellido", t)} error={errors.apellido} />
                 <Input label="Email" autoCapitalize="none" keyboardType="email-address" value={form.email} onChangeText={(t) => setField("email", t)} error={errors.email} />
-                <PasswordInput label="Contraseña (max 12 caracteres)" value={form.password} onChangeText={(t) => setField("password", t)}maxLength={12} error={errors.password} />
+                <PasswordInput label="Contraseña (max 12 caracteres)" value={form.password} onChangeText={(t) => setField("password", t)} maxLength={12} error={errors.password} />
 
                 <Input label="Teléfono" keyboardType="phone-pad" value={form.telefono} onChangeText={(t) => setField("telefono", t)} maxLength={15} error={errors.telefono} />
-                <Input label="Fecha de nacimiento (YYYY-MM-DD)" placeholder="1990-05-10" value={form.fecha_nacimiento} onChangeText={(t) => setField("fecha_nacimiento", t)} error={errors.fecha_nacimiento} />
+
+                <Text style={{ fontWeight: "700", marginTop: 8 }}>Fecha de nacimiento</Text>
+
+                <TouchableOpacity
+                  onPress={() => setShowDatePicker(true)}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    borderWidth: 1,
+                    borderColor: "#999",
+                    borderRadius: 25,
+                    paddingHorizontal: 12,
+                    paddingVertical: 10,
+                    backgroundColor: "#fff",
+                    marginTop: 5,
+                    marginBottom: 10,
+                  }}
+                >
+                  <Text style={{ fontSize: 16, color: "#333" }}>
+                    {form.fecha_nacimiento
+                      ? form.fecha_nacimiento
+                      : "Seleccionar fecha"}
+                  </Text>
+                </TouchableOpacity>
+
+                {errors.fecha_nacimiento && (
+                  <ErrorText>{errors.fecha_nacimiento}</ErrorText>
+                )}
+                {showDatePicker && (
+                  <DateTimePicker
+                    value={date}
+                    mode="date"
+                    display={Platform.OS === "ios" ? "spinner" : "default"}
+                    onChange={onChangeDate}
+                    maximumDate={new Date()}  // no permite fechas futuras
+                  />
+                )}
+
 
                 <Text style={{ fontWeight: "700", marginTop: 8 }}>Sexo</Text>
                 <Picker

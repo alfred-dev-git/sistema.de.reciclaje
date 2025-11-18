@@ -3,6 +3,11 @@
 # dependencies
 node_modules/
 
+# Archivos de configuración y secretos
+.env
+.env.*
+!.env.example
+
 # Expo
 .expo/
 dist/

@@ -7,9 +7,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   Alert,
+  ImageBackground,
 } from "react-native";
 import { listCronograma } from "@/services/api/requests";
 import { Ionicons } from "@expo/vector-icons";
+
 
 interface CronogramaItem {
   id: number;
@@ -84,69 +86,75 @@ const CronogramaRecoleccion: React.FC = () => {
 
   return (
     <ScrollView>
-      <View style={styles.container}>
-        <Text style={styles.title}>🗓 Cronograma de Recolección</Text>
+      <ImageBackground
+        source={require("@/assets/background/bg-dashboard1.png")}
+        style={styles.background}
+        resizeMode="cover">
+        <View style={styles.container}>
+          <Text style={styles.title}>🗓 Cronograma de Recolección</Text>
 
-        {/* Filtro por semana */}
-        <View style={styles.filterContainer}>
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              semanaSeleccionada === null && styles.filterActive,
-            ]}
-            onPress={() => setSemanaSeleccionada(null)}
-          >
-            <Text style={[styles.filterText, semanaSeleccionada === null && styles.filterTextActive]}>
-              Todas
-            </Text>
-          </TouchableOpacity>
-
-          {[1, 2, 3, 4].map((semana) => (
+          {/* Filtro por semana */}
+          <View style={styles.filterContainer}>
             <TouchableOpacity
-              key={semana}
               style={[
                 styles.filterButton,
-                semanaSeleccionada === semana && styles.filterActive,
+                semanaSeleccionada === null && styles.filterActive,
               ]}
-              onPress={() => setSemanaSeleccionada(semana)}
+              onPress={() => setSemanaSeleccionada(null)}
             >
-              <Text
-                style={[
-                  styles.filterText,
-                  semanaSeleccionada === semana && styles.filterTextActive,
-                ]}
-              >
-                {obtenerNombreSemana(semana)}
+              <Text style={[styles.filterText, semanaSeleccionada === null && styles.filterTextActive]}>
+                Todas
               </Text>
             </TouchableOpacity>
+
+            {[1, 2, 3, 4].map((semana) => (
+              <TouchableOpacity
+                key={semana}
+                style={[
+                  styles.filterButton,
+                  semanaSeleccionada === semana && styles.filterActive,
+                ]}
+                onPress={() => setSemanaSeleccionada(semana)}
+              >
+                <Text
+                  style={[
+                    styles.filterText,
+                    semanaSeleccionada === semana && styles.filterTextActive,
+                  ]}
+                >
+                  {obtenerNombreSemana(semana)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* Lista del cronograma */}
+          {datosFiltrados.map((item) => (
+            <TouchableOpacity key={item.id} style={styles.card}>
+              <Ionicons name="bicycle" size={34} color="#55b947" />
+              <View style={{ gap: 6 }}>
+                <Text style={styles.day}>
+                  📅 {obtenerNombreSemana(item.semana_mes)} - {obtenerNombreDia(item.dia_semana)}
+                </Text>
+                <Text>🕒 {item.hora_inicio} - {item.hora_fin}</Text>
+                <Text>♻️ Tipo reciclable: {item.tipo_reciclable}</Text>
+              </View>
+            </TouchableOpacity>
           ))}
+
+          {datosFiltrados.length === 0 && (
+            <Text style={{ color: "#555", marginTop: 20 }}>
+              No hay recolecciones para esta semana.
+            </Text>
+          )}
         </View>
-
-        {/* Lista del cronograma */}
-        {datosFiltrados.map((item) => (
-          <TouchableOpacity key={item.id} style={styles.card}>
-            <Ionicons name="bicycle" size={34} color="#55b947" />
-            <View style={{ gap: 6 }}>
-              <Text style={styles.day}>
-                📅 {obtenerNombreSemana(item.semana_mes)} - {obtenerNombreDia(item.dia_semana)}
-              </Text>
-              <Text>🕒 {item.hora_inicio} - {item.hora_fin}</Text>
-              <Text>♻️ Tipo reciclable: {item.tipo_reciclable}</Text>
-            </View>
-          </TouchableOpacity>
-        ))}
-
-        {datosFiltrados.length === 0 && (
-          <Text style={{ color: "#555", marginTop: 20 }}>
-            No hay recolecciones para esta semana.
-          </Text>
-        )}
-      </View>
-    </ScrollView>
+      </ImageBackground>
+    </ScrollView >
   );
 };
 
 const styles = StyleSheet.create({
+  background: { flex: 1, width: "100%", height: "100%" },
   container: {
     padding: 16,
     alignItems: "center",

@@ -52,7 +52,7 @@ export default function AppLayout() {
       <Drawer.Screen name="home" options={{ title: "Inicio" }} />
       <Drawer.Screen name="request/new" options={{ title: "Solicitar recolección" }} />
       <Drawer.Screen name="history/index" options={{ title: "Historial" }} />
-      <Drawer.Screen name="schedule/cronograma" options={{ title: "Cronograma", drawerLabel: "Cronograma" }}/>
+      <Drawer.Screen name="schedule/cronograma" options={{ title: "Cronograma", drawerLabel: "Cronograma" }} />
       <Drawer.Screen name="profile/index" options={{ title: "Perfil" }} />
       <Drawer.Screen
         name="profile/edit"
@@ -67,7 +67,7 @@ export default function AppLayout() {
         options={{ title: "Agregar dirección", drawerItemStyle: { display: "none" } }}
       />
     </Drawer>
-    
+
   );
 }
 
@@ -107,9 +107,6 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
       <View style={styles.header}>
         <View style={{ width: 80, height: 80 }}>
           <Avatar uri={photoUri} initials={initials} />
-          <TouchableOpacity style={styles.editBtn} onPress={onEditPhoto}>
-            <Text style={styles.editBtnText}>✎</Text>
-          </TouchableOpacity>
         </View>
         <View style={styles.userInfo}>
           <Text style={styles.name}>{user ? `${user.nombre} ${user.apellido}` : "Usuario"}</Text>
