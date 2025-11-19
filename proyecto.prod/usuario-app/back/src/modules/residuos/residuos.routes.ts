@@ -42,4 +42,28 @@ router.get(
   })
 );
 
+router.get(
+  "/notificaciones",
+  asyncHandler(async (_req, res) => {
+    const db = getDB();
+
+    const [rows] = await db.query(
+      `
+      SELECT 
+        n.titulo,
+        n.mensaje
+      FROM notificaciones n
+      INNER JOIN cronograma_recoleccion c 
+        ON n.cronograma_recoleccion_idcronograma_recoleccion = c.idcronograma_recoleccion
+      WHERE 
+        c.activo = 1
+        AND n.fecha_envio >= (CURDATE() - INTERVAL 1 DAY)
+      ORDER BY n.fecha_envio DESC;
+      `
+    );
+
+    res.json({ items: rows });
+  })
+);
+
 export default router;
