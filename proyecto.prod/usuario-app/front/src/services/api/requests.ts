@@ -11,7 +11,10 @@ export type CronogramaItem = {
   hora_fin: string;
   tipo_reciclable: string;
 };
-
+export type NotificacionItem = {
+  titulo: string;
+  mensaje: string;
+};
 // Soporta respuestas tipo {items: []} o array directo por si el backend cambia.
 export async function listResiduos(): Promise<Residuo[]> {
   const res = await api.get<{ items?: any[] } | any[]>("/residuos");
@@ -36,6 +39,18 @@ export async function listCronograma(): Promise<CronogramaItem[]> {
   }));
 }
 
+export async function listNotificaciones(): Promise<NotificacionItem[]> {
+  const res = await api.get<{ items?: any[] } | any[]>(
+    "/residuos/notificaciones"
+  );
+
+  const items = Array.isArray(res) ? res : (res.items ?? []);
+
+  return items.map((n) => ({
+    titulo: String(n.titulo ?? ""),
+    mensaje: String(n.mensaje ?? ""),
+  }));
+}
 // 🔴 Cambio mínimo: incluir tipo_reciclable_idtipo_reciclable
 export type CreatePedidoPayload = {
   usuario_idusuario: number;
