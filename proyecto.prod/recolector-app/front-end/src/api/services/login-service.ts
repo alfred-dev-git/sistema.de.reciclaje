@@ -24,6 +24,27 @@ export type LoginResultError = {
   ok: false;
   mensaje: string;
 };
+//
+// Tipos comunes
+//
+export type BasicResponse = {
+  message: string;
+};
+
+export type ServiceResultOk<T> = {
+  ok: true;
+  mensaje: string;
+  data?: T;
+};
+
+export type ServiceResultError = {
+  ok: false;
+  mensaje: string;
+};
+
+export type ServiceResult<T = undefined> =
+  | ServiceResultOk<T>
+  | ServiceResultError;
 
 export type LoginResult = LoginResultOk | LoginResultError;
 
@@ -53,6 +74,66 @@ export const loginUsuario = async (
     return {
       ok: false,
       mensaje: error.response?.data?.message || "Error desconocido",
+    };
+  }
+};
+
+//
+//──── FORGOT PASSWORD
+//
+export const forgotPasswordService = async (
+  email: string
+): Promise<ServiceResult> => {
+  try {
+    const response = await apiPublic.post<BasicResponse>(
+      "/user/forgot",
+      { email },
+      { withCredentials: true }
+    );
+
+    return {
+      ok: true,
+      mensaje: response.data.message,
+    };
+  } catch (err: unknown) {
+    console.error("❌ Error en forgotPassword:", err);
+
+    const error = err as AxiosError<{ message?: string }>;
+
+    return {
+      ok: false,
+      mensaje: error.response?.data?.message || "Error desconocido",
+    };
+  }
+};
+
+//
+// ──── RESET PASSWORD
+//
+export const resetPasswordService = async (
+  email: string,
+  code: string,
+  new_password: string
+): Promise<ServiceResult> => {
+  try {
+    const response = await apiPublic.post<BasicResponse>(
+      "/user/reset",
+      { email, code, new_password },
+      { withCredentials: true }
+    );
+
+    return {
+      ok: true,
+      mensaje: response.data.message ?? "Contraseña actualizada",
+    };
+  } catch (err: unknown) {
+    console.error("❌ Error en resetPassword:", err);
+
+    const error = err as AxiosError<{ error?: string }>;
+
+    return {
+      ok: false,
+      mensaje: error.response?.data?.error || "Error desconocido",
     };
   }
 };

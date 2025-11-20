@@ -4,6 +4,7 @@ import bcrypt from "bcrypt";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { RowDataPacket } from "mysql2";
 import ms, { StringValue } from "ms";
+import { sendPasswordResetEmail } from "../utils/mailer.js";
 
 // Tipos
 type Usuario = {
@@ -19,6 +20,13 @@ type Recolector = {
   idrecolector: number;
   idusuario: number;
 };
+
+// genera código numérico
+function genCode(len = 6) {
+  let s = "";
+  for (let i = 0; i < len; i++) s += Math.floor(Math.random() * 10);
+  return s;
+}
 
 export const loginUser = async (req: Request, res: Response) => {
   try {
@@ -91,3 +99,119 @@ export const loginUser = async (req: Request, res: Response) => {
     res.status(500).json({ message: "Error de servidor" });
   }
 };
+
+/**
+ * POST /api/auth/forgot
+ * body: { email }
+ */
+export async function forgotPassword(req: Request, res: Response) {
+  try {
+    const { email } = req.body ?? {};
+    const emailNorm = String(email || "").trim().toLowerCase();
+    if (!emailNorm) return res.json({ ok: true });
+
+    const [rows] = await pool.query(
+      `SELECT idusuario, email 
+       FROM usuario 
+       WHERE email = ? 
+       LIMIT 1`,
+      [emailNorm]
+    );
+
+    const user = (rows as any[])[0];
+
+    if (user) {
+      const code = genCode(6);
+      const codeHash = await bcrypt.hash(code, 10);
+      const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+
+      // borro códigos viejos
+      await pool.execute(
+        `DELETE FROM password_reset_codes 
+         WHERE usuario_id = ? AND used_at IS NULL`,
+        [user.idusuario]
+      );
+
+      // guardo nuevo
+      await pool.execute(
+        `INSERT INTO password_reset_codes (usuario_id, code_hash, expires_at)
+         VALUES (?, ?, ?)`,
+        [user.idusuario, codeHash, expiresAt]
+      );
+
+      // envío email
+      await sendPasswordResetEmail(emailNorm, code);
+    }
+
+    // no filtra si existe o no
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ forgotPassword error:", err);
+    res.status(500).json({ error: "Error interno" });
+  }
+}
+
+/**
+ * POST /api/auth/reset
+ * body: { email, code, new_password }
+ */
+export async function resetPassword(req: Request, res: Response) {
+  try {
+    const { email, code, new_password } = req.body ?? {};
+    const emailNorm = String(email || "").trim().toLowerCase();
+    const plainCode = String(code || "").trim();
+    const newPass = String(new_password || "");
+
+    if (!emailNorm || !plainCode || newPass.length < 6) {
+      return res.status(400).json({ error: "Datos inválidos" });
+    }
+
+    const [rows] = await pool.query(
+      `SELECT idusuario FROM usuario WHERE email = ? LIMIT 1`,
+      [emailNorm]
+    );
+
+    const user = (rows as any[])[0];
+    if (!user) return res.status(400).json({ error: "Código inválido" });
+
+    // obtener último código
+    const [codes] = await pool.query(
+      `SELECT id, code_hash, expires_at, used_at
+       FROM password_reset_codes
+       WHERE usuario_id = ?
+       ORDER BY created_at DESC
+       LIMIT 1`,
+      [user.idusuario]
+    );
+
+    const rec = (codes as any[])[0];
+
+    if (!rec || rec.used_at)
+      return res.status(400).json({ error: "Código inválido" });
+
+    if (new Date(rec.expires_at) < new Date())
+      return res.status(400).json({ error: "Código vencido" });
+
+    const match = await bcrypt.compare(plainCode, rec.code_hash);
+    if (!match) return res.status(400).json({ error: "Código inválido" });
+
+    // actualizar contraseña
+    const hash = await bcrypt.hash(newPass, 10);
+
+    await pool.execute(
+      `UPDATE usuario SET password = ? WHERE idusuario = ?`,
+      [hash, user.idusuario]
+    );
+
+    // marcar como usado
+    await pool.execute(
+      `UPDATE password_reset_codes SET used_at = NOW() WHERE id = ?`,
+      [rec.id]
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("❌ resetPassword error:", err);
+    res.status(500).json({ error: "Error interno" });
+  }
+}

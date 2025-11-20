@@ -4,6 +4,7 @@ import { getPerfil, updateFotoPerfil, Perfil } from "../api/services/perfil-serv
 import { useImagePicker } from "../utils/imag-picker"
 import HeaderRecolector from "./headerComponent";
 import { Ionicons } from "@expo/vector-icons";
+import { navigate } from "../navigation/refglobal-navigation";
 
 export default function PerfilScreen() {
   const [perfil, setPerfil] = useState<Perfil | null>(null);
@@ -95,9 +96,12 @@ export default function PerfilScreen() {
                 {updatingPhoto ? "Actualizando..." : "Cambiar foto"}
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity>
-              <Text style={styles.changePhotoText}>Editar informacion</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() => navigate("Editar", { perfil })}
+          >
+            <Text style={styles.changePhotoText}>Editar información</Text>
+          </TouchableOpacity>
+
           </View>
         </View>
         <View style={styles.itemProfile}>

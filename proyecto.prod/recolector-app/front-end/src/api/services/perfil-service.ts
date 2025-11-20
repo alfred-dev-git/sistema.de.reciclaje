@@ -22,6 +22,7 @@ export interface Perfil {
   telefono: string;
   fecha_nacimiento: string;
   municipio: string;
+  municipio_idmunicipio: number;
   foto_perfil: string | null;
   puntos: number;
 }
@@ -34,9 +35,50 @@ export interface NewPerfil {
   dni: string;
   telefono: string;
   password: string;
-  fecha_nacimiento: string; // formato YYYY-MM-DD
+  fecha_nacimiento: string; 
   idmunicipio: number;
 }
+
+export interface UpdatePerfilDTO {
+  nombre?: string;
+  apellido?: string;
+  email?: string;
+  telefono?: string;
+  fecha_nacimiento?: string; 
+  dni?: string;
+  idmunicipio?: number;
+  password?: string; 
+}
+
+export const updatePerfil = async (
+  data: UpdatePerfilDTO
+): Promise<ApiResponse> => {
+  try {
+    const response = await apiPrivate.put("/perfil/update", data);
+
+    return {
+      success: true,
+      message: response.data?.message || "Perfil actualizado correctamente",
+      data: response.data?.data,
+    };
+  } catch (error: any) {
+    const status = error.response?.status;
+    const serverMsg = error.response?.data?.message;
+
+    let message = "Error al actualizar perfil";
+
+    if (status === 400) message = serverMsg || "Datos inválidos";
+    else if (status === 409) message = serverMsg || "El correo, DNI o teléfono ya están registrados";
+    else if (status === 500) message = "Error interno del servidor";
+
+    console.error("❌ Error al actualizar perfil:", status, serverMsg);
+
+    return {
+      success: false,
+      message,
+    };
+  }
+};
 
 export const crearPerfil = async (data: NewPerfil): Promise<ApiResponse> => {
   try {

@@ -15,7 +15,7 @@ import { loginUsuario } from "../../api/services/login-service";
 import { saveToken, saveUser } from "../../auth/auth";
 import { navigate } from "../../navigation/refglobal-navigation";
 import { verificarRol } from "../../utils/verificarRol";
-import ModalMunicipio from "./municipio-select"; // 👈 nuevo import
+import ModalMunicipio from "./municipio-select"; 
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -131,6 +131,13 @@ const LoginForm: React.FC = () => {
                 <TouchableOpacity onPress={handleAbrirModalMunicipio}>
                   <Text style={styles.registerLink}>Registrate</Text>
                 </TouchableOpacity>
+
+              <View style={[styles.registerContainer, { marginTop: 10 }]}>
+                <Text style={styles.registerText}>¿Olvidaste tu contraseña? </Text>
+                <TouchableOpacity onPress={() => navigate("Forgot" as any)}>
+                  <Text style={styles.registerLink}>Recuperar</Text>
+                </TouchableOpacity>
+              </View>
               </View>
             </View>
           </View>

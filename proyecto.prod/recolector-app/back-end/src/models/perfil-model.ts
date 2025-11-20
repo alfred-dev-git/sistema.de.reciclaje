@@ -39,6 +39,71 @@ const normalizarTelefono = (tel: string) => {
   return tel.replace(/[^0-9]/g, ""); // deja solo números
 };
 
+export interface UpdateUsuario { 
+  idusuario: number;
+  nombre?: string;
+  apellido?: string;
+  email?: string;
+  telefono?: string;
+  fecha_nacimiento?: string;
+  dni?: string;
+  idmunicipio?: number | null; // <-- permitir null
+}
+
+
+export const actualizarUsuarioDB = async (data: UpdateUsuario): Promise<boolean> => {
+  const {
+    idusuario,
+    nombre,
+    apellido,
+    email,
+    telefono,
+    fecha_nacimiento,
+    idmunicipio,
+  } = data;
+  
+  const telefonoNormalizado = telefono ? telefono.replace(/\D/g, "") : undefined;
+
+  // Verificar duplicados SOLO para email y teléfono
+  const [dup] = await pool.query<RowDataPacket[]>(
+    `SELECT idusuario FROM usuario 
+     WHERE idusuario <> ?
+     AND (email = ? OR telefono = ?) 
+     LIMIT 1`,
+    [idusuario, email, telefonoNormalizado]
+  );
+
+  if (dup.length > 0) {
+    throw new Error("DUPLICATE");
+  }
+
+  const fields: string[] = [];
+  const values: any[] = [];
+
+  if (nombre) { fields.push("nombre = ?"); values.push(nombre); }
+  if (apellido) { fields.push("apellido = ?"); values.push(apellido); }
+  if (email) { fields.push("email = ?"); values.push(email.trim().toLowerCase()); }
+  if (telefono) { fields.push("telefono = ?"); values.push(telefonoNormalizado); }
+  if (fecha_nacimiento) { fields.push("fecha_nacimiento = ?"); values.push(fecha_nacimiento); }
+  if (idmunicipio !== undefined && idmunicipio !== null) {
+    fields.push("municipio_idmunicipio = ?");
+    values.push(idmunicipio);
+  }
+
+
+  if (fields.length === 0) return true;
+
+  values.push(idusuario);
+
+  const [result] = await pool.query<ResultSetHeader>(
+    `UPDATE usuario SET ${fields.join(", ")} WHERE idusuario = ?`,
+    values
+  );
+
+  return result.affectedRows > 0;
+};
+
+
 export const crearUsuarioDB = async (usuario: NuevoUsuario): Promise<UsuarioCreado | null> => {
   const {
     dni,
@@ -114,7 +179,7 @@ export const obtenerMunicipiosDB = async (): Promise<Municipio[]> => {
 
 export const obtenerPerfilDB = async (idRecolector: number): Promise<PerfilUsuario | null> => {
   const [rows] = await pool.query<PerfilUsuario[]>(
-    `
+      `
     SELECT 
       u.DNI,
       u.nombre,
@@ -124,7 +189,8 @@ export const obtenerPerfilDB = async (idRecolector: number): Promise<PerfilUsuar
       u.fecha_nacimiento,
       u.foto_perfil,
       u.puntos,
-      m.descripcion AS municipio
+      m.descripcion AS municipio,
+      m.idmunicipio AS municipio_idmunicipio
     FROM recolector r
     INNER JOIN usuario u ON r.idusuario = u.idusuario
     INNER JOIN municipio m ON u.municipio_idmunicipio = m.idmunicipio

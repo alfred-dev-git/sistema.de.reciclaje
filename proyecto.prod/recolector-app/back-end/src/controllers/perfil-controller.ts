@@ -1,5 +1,85 @@
 import { Request, Response } from "express";
-import { obtenerPerfilDB, actualizarFotoPerfilRutaDB, obtenerMunicipiosDB, crearUsuarioDB } from "../models/perfil-model.js";
+import { obtenerPerfilDB, actualizarFotoPerfilRutaDB, obtenerMunicipiosDB, crearUsuarioDB, actualizarUsuarioDB } from "../models/perfil-model.js";
+import { RowDataPacket, ResultSetHeader  } from "mysql2";
+import { pool } from "../db.js";
+
+export const actualizarPerfil = async (req: Request, res: Response) => {
+  try {
+    const idrecolector = req.user!.id; 
+
+    if (!idrecolector) {
+      return res.status(401).json({ message: "No autorizado" });
+    }
+
+    // Obtener el idusuario real
+    const [rows] = await pool.query<RowDataPacket[]>(
+      "SELECT idusuario FROM recolector WHERE idrecolector = ?",
+      [idrecolector]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "Usuario no encontrado" });
+    }
+
+    const idusuario = rows[0].idusuario;
+
+    const {
+      nombre,
+      apellido,
+      email,
+      telefono,
+      fecha_nacimiento,
+      municipio_idmunicipio
+    } = req.body;
+    const idMuni =
+      municipio_idmunicipio === undefined ||
+      municipio_idmunicipio === null ||
+      municipio_idmunicipio === ""
+        ? null
+        : Number(municipio_idmunicipio);
+
+    const ok = await actualizarUsuarioDB({
+      idusuario, // <- el correcto ahora
+      nombre,
+      apellido,
+      email,
+      telefono,
+      fecha_nacimiento,
+      idmunicipio: idMuni,
+    });
+
+    if (!ok) {
+      return res.status(500).json({
+        success: false,
+        message: "No se pudo actualizar el perfil"
+      });
+    }
+
+    // Obtener perfil actualizado
+    const perfilActualizado = await obtenerPerfilDB(idusuario);
+
+    return res.json({
+      success: true,
+      message: "Perfil actualizado correctamente",
+      data: perfilActualizado
+    });
+
+  } catch (error: any) {
+    console.error("❌ Error al actualizar perfil:", error.message);
+
+    if (error.message === "DUPLICATE") {
+      return res.status(409).json({
+        success: false,
+        message: "El correo o teléfono ya están registrados"
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Error interno del servidor"
+    });
+  }
+};
 
 export const crearUsuario = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -63,9 +143,7 @@ export const crearUsuario = async (req: Request, res: Response): Promise<void> =
 export const getPerfil = async (req: Request, res: Response): Promise<void> => {
   try {
     const idRecolector = req.user!.id; 
-    console.log("🔍 Obteniendo perfil para recolector ID:", idRecolector);
     const perfil = await obtenerPerfilDB(idRecolector);
-
     if (!perfil) {
       res.status(404).json({ message: "Perfil no encontrado" });
       return;

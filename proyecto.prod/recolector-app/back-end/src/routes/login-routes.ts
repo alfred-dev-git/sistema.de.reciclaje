@@ -1,6 +1,6 @@
 // src/routes/login-routes.ts
 import { Router, Request, Response } from 'express';
-import { loginUser } from '../controllers/login-controller.js';
+import { loginUser, forgotPassword, resetPassword } from '../controllers/login-controller.js';
 import { validateLogin } from '../middlewares/validate-login.js';
 const router = Router();
 
@@ -13,6 +13,9 @@ const router = Router();
 // }
 
 router.post('/login', validateLogin, loginUser);
+router.post("/forgot", forgotPassword);
+router.post("/reset", resetPassword);
+
 // router.post('/logout', logoutUser);
 
 // // Ruta protegida

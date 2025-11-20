@@ -1,12 +1,14 @@
 import express from "express";
 import { verifyToken } from "../middlewares/verify-token.js";
 import { validarRegistro } from "../middlewares/validate-register.js";
-import { getPerfil, updateFotoPerfil, getFotoPerfil, getMunicipios, crearUsuario } from "../controllers/perfil-controller.js";
+import { getPerfil, updateFotoPerfil, getFotoPerfil, getMunicipios, crearUsuario, actualizarPerfil } from "../controllers/perfil-controller.js";
 
 const router = express.Router();
 
 // Obtener perfil (datos)
 router.get("/", verifyToken, getPerfil);
+
+router.put("/update", verifyToken, actualizarPerfil);
 
 // Obtener la foto (si querés mantenerlo)
 router.get("/foto", verifyToken, getFotoPerfil);

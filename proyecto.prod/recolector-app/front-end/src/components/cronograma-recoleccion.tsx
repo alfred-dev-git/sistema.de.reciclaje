@@ -1,5 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity, Alert } from "react-native";
+import {
+  View,
+  Text,
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import { getCronograma } from "../api/services/cronograma-service";
 import HeaderRecolector from "./headerComponent";
 import { Ionicons } from "@expo/vector-icons";
@@ -18,25 +26,17 @@ const CronogramaRecoleccion: React.FC = () => {
   const [cronograma, setCronograma] = useState<CronogramaItem[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // 🔹 Funciones para traducir los valores numéricos
+  //estado de la semana seleccionada
+  const [semanaSeleccionada, setSemanaSeleccionada] = useState<number | null>(null);
+
   const obtenerNombreDia = (dia: number) => {
     const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
     return dias[dia - 1] || "Día inválido";
   };
 
   const obtenerNombreSemana = (semana: number) => {
-    switch (semana) {
-      case 1:
-        return "Primera semana";
-      case 2:
-        return "Segunda semana";
-      case 3:
-        return "Tercera semana";
-      case 4:
-        return "Cuarta semana";
-      default:
-        return "Semana inválida";
-    }
+    const nombres = ["Primera", "Segunda", "Tercera", "Cuarta"];
+    return nombres[semana - 1] || "Semana inválida";
   };
 
   useEffect(() => {
@@ -77,27 +77,79 @@ const CronogramaRecoleccion: React.FC = () => {
     );
   }
 
-  return (
+  const datosFiltrados =
+    semanaSeleccionada === null
+      ? cronograma
+      : cronograma.filter((c) => c.semana_mes === semanaSeleccionada);
 
+  return (
     <BackgorundContainer>
-      <ScrollView >
+      <ScrollView>
         <HeaderRecolector />
         <View style={styles.container}>
+
           <Text style={styles.title}>🗓 Frecuencias en el mes</Text>
-          {cronograma.map((item, index) => (
-            <TouchableOpacity key={`${item.dia_semana}-${item.semana_mes}-${index}`} style={styles.card}>
-              <View>
-                <Ionicons name="bicycle" size={34} color="#55b947" />
-              </View>
+
+          {/* NUEVO → FILTRO */}
+          <View style={styles.filterContainer}>
+            <TouchableOpacity
+              style={[styles.filterButton, semanaSeleccionada === null && styles.filterActive]}
+              onPress={() => setSemanaSeleccionada(null)}
+            >
+              <Text
+                style={[
+                  styles.filterText,
+                  semanaSeleccionada === null && styles.filterTextActive,
+                ]}
+              >
+                Todas
+              </Text>
+            </TouchableOpacity>
+
+            {[1, 2, 3, 4].map((semana) => (
+              <TouchableOpacity
+                key={semana}
+                style={[
+                  styles.filterButton,
+                  semanaSeleccionada === semana && styles.filterActive,
+                ]}
+                onPress={() => setSemanaSeleccionada(semana)}
+              >
+                <Text
+                  style={[
+                    styles.filterText,
+                    semanaSeleccionada === semana && styles.filterTextActive,
+                  ]}
+                >
+                  {obtenerNombreSemana(semana)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* LISTA FILTRADA */}
+          {datosFiltrados.map((item, index) => (
+            <TouchableOpacity
+              key={`${item.dia_semana}-${item.semana_mes}-${index}`}
+              style={styles.card}
+            >
+              <Ionicons name="bicycle" size={34} color="#55b947" />
+
               <View style={{ gap: 6 }}>
                 <Text style={styles.day}>
-                  📅 {obtenerNombreSemana(item.semana_mes)} - {obtenerNombreDia(item.dia_semana)}
+                  📅 {obtenerNombreSemana(item.semana_mes)} semana – {obtenerNombreDia(item.dia_semana)}
                 </Text>
                 <Text>🕒 {item.hora_inicio} - {item.hora_fin}</Text>
                 <Text>♻️ Tipo reciclable: {item.tipo_reciclable}</Text>
               </View>
             </TouchableOpacity>
           ))}
+
+          {datosFiltrados.length === 0 && (
+            <Text style={{ marginTop: 20, color: "#666" }}>
+              No hay recolecciones para esta semana.
+            </Text>
+          )}
         </View>
       </ScrollView>
     </BackgorundContainer>
@@ -105,20 +157,37 @@ const CronogramaRecoleccion: React.FC = () => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    padding: 16,
-    alignItems: "center",
-  },
-  center: {
-    flex: 1,
+  container: { padding: 16, alignItems: "center" },
+  center: { flex: 1, justifyContent: "center", alignItems: "center" },
+  title: { fontSize: 20, fontWeight: "600", marginBottom: 12 },
+  noData: { fontSize: 16, color: "#666" },
+
+  /*NUEVO ESTILO PARA FILTRO */
+  filterContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "center",
-    alignItems: "center",
+    marginBottom: 16,
+    gap: 8,
   },
-  title: {
-    fontSize: 20,
+  filterButton: {
+    backgroundColor: "#eee",
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 12,
+  },
+  filterActive: {
+    backgroundColor: "#1f7a44",
+  },
+  filterText: {
+    color: "#000",
     fontWeight: "600",
-    marginBottom: 12,
   },
+  filterTextActive: {
+    color: "#fff",
+  },
+
+  /* Tarjetas */
   card: {
     backgroundColor: "white",
     padding: 16,
@@ -126,20 +195,11 @@ const styles = StyleSheet.create({
     width: "90%",
     marginBottom: 10,
     elevation: 2,
-    display: "flex",
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
   },
-  day: {
-    fontSize: 16,
-    fontWeight: "bold",
-    marginBottom: 4,
-  },
-  noData: {
-    fontSize: 16,
-    color: "#666",
-  },
+  day: { fontSize: 16, fontWeight: "bold", marginBottom: 4 },
 });
 
 export default CronogramaRecoleccion;
