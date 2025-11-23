@@ -9,6 +9,7 @@ import Historial from './pages/Historial'
 import Rutas from "./pages/Rutas";
 import Cronograma from "./pages/Notificacion";
 import SeguimientoRutas from "./pages/SeguimientoRutas";
+import Reciclables from "./pages/Reciclables";
 import AppNavigator from './AppNavigator' 
 import './styles.css'
 
@@ -25,6 +26,7 @@ const router = createBrowserRouter([
           { path: "rutas", element: <Rutas /> }, 
           { path: "cronograma", element: <Cronograma /> }, 
           { path: "seguimiento", element: <SeguimientoRutas /> }, 
+          { path: "reciclables", element: <Reciclables /> },         
         ],
       },
       { path: "login", element: <Login /> }, // fuera del layout protegido

@@ -75,7 +75,9 @@ export default function Home() {
                 <Card title="Administrar tipo de reciclables" isHome={true}>
           <p>Próximamente…</p>
           <button
+            onClick={() => navigate("/reciclables")}
           >
+            
             🢂
           </button>
         </Card>
