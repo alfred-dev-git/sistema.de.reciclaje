@@ -24,6 +24,7 @@ export default function Historial() {
   const [q, setQ] = useState('');
   const [pm, setPm] = useState<PM[]>([]);
   const [pt, setPt] = useState<PT[]>([]);
+  const [mes, setMes] = useState('');
 
   useEffect(() => {
     http.get('/historial').then(r => setRows(r.data));
@@ -31,11 +32,27 @@ export default function Historial() {
     http.get('/stats/por-tipo').then(r => setPt(r.data));
   }, []);
 
-  const filtered = useMemo(() => {
-    if (!q) return rows;
-    const QQ = q.toLowerCase();
-    return rows.filter(r => r.usuario_nombre?.toLowerCase().startsWith(QQ));
-  }, [q, rows]);
+    const filtered = useMemo(() => {
+      let data = rows;
+
+      // filtro por nombre
+      if (q) {
+        const QQ = q.toLowerCase();
+        data = data.filter(r => r.usuario_nombre?.toLowerCase().startsWith(QQ));
+      }
+
+      // filtro por mes
+      if (mes) {
+        data = data.filter(r => {
+          const m = new Date(r.fecha_emision).getMonth() + 1; // 1..12
+          const mm = m.toString().padStart(2, '0');
+          return mm === mes;
+        });
+      }
+
+      return data;
+    }, [q, mes, rows]);
+
 
   return (
     <div className="historial">
@@ -46,6 +63,21 @@ export default function Historial() {
             value={q}
             onChange={e => setQ(e.target.value)}
           />
+          <select value={mes} onChange={e => setMes(e.target.value)}>
+          <option value="">Todos los meses</option>
+          <option value="01">Enero</option>
+          <option value="02">Febrero</option>
+          <option value="03">Marzo</option>
+          <option value="04">Abril</option>
+          <option value="05">Mayo</option>
+          <option value="06">Junio</option>
+          <option value="07">Julio</option>
+          <option value="08">Agosto</option>
+          <option value="09">Septiembre</option>
+          <option value="10">Octubre</option>
+          <option value="11">Noviembre</option>
+          <option value="12">Diciembre</option>
+        </select>
         </div>
 
         <div className="table-wrap">

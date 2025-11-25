@@ -1,0 +1,59 @@
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-box {
+  background: white;
+  padding: 30px;
+  width: 400px;
+  max-width: 90%;
+  border-radius: 12px;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.2);
+  animation: fade-in 0.25s ease-out;
+}
+
+.close-btn {
+  background: #ca3b3b;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  margin-top: 20px;
+  cursor: pointer;
+}
+
+@keyframes fade-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.campo-editable {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.edit-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  opacity: 0.7;
+  transition: 0.2s ease;
+}
+
+.edit-btn:hover {
+  opacity: 1;
+  transform: scale(1.15);
+}

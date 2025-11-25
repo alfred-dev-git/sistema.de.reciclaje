@@ -88,7 +88,7 @@ export default function SeguimientoRutas() {
                 onClick={() => setMostrarModal(true)}
                 className="button button-secundario"
               >
-                Cambiar recolector
+                Seleccionar otro recolector
               </button>
             </>
           )}
@@ -117,7 +117,7 @@ export default function SeguimientoRutas() {
                     }}
                     className="button button-amarillo"
                   >
-                    Cambiar recolector
+                    Modificar recolector
                   </button>
                   <button
                     onClick={() => {
@@ -131,7 +131,7 @@ export default function SeguimientoRutas() {
                     }}
                     className="button button-rojo"
                   >
-                    Anular
+                    Anular Ruta
                   </button>
                 </div>
               </div>

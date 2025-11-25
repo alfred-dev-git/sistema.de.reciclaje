@@ -34,7 +34,7 @@ export default function Home() {
           </button>
         </Card>
         <Card title="Lanzar notificación" isHome={true}>
-          <p>Hay {kpis?.fechasActivas ?? '...'} fechas activas</p>
+          <p>Ver fechas activas</p>
           <button
             onClick={() => navigate("/cronograma")}
 
@@ -43,6 +43,7 @@ export default function Home() {
           </button>
         </Card>
         <Card title="Ver Historial de recolecciones" isHome={true}>
+          <p>Revisar el historial de pedidos</p>
           <button
             onClick={() => navigate("/historial")}
           >
@@ -65,15 +66,15 @@ export default function Home() {
           </button>
         </Card>
                 <Card title="Lista de usuarios" isHome={true}>
-          <p>Próximamente…</p>
+          <p>Total de usuarios en el sistema</p>
           <button
-            onClick={() => navigate("/lista-usuarios")}
+            onClick={() => navigate("/usuarios")}
           >
             🢂
           </button>
         </Card>
                 <Card title="Administrar tipo de reciclables" isHome={true}>
-          <p>Próximamente…</p>
+          <p>Ver residuos disponibles</p>
           <button
             onClick={() => navigate("/reciclables")}
           >

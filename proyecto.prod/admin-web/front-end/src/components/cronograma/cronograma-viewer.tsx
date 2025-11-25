@@ -48,7 +48,7 @@ const CronogramaViewer: React.FC = () => {
         <button onClick={() => setMostrarModal(true)} style={btn("green")}>
           Cargar nueva fecha
         </button>
-        <button onClick={toggleInactivas} style={btn("purple")}>
+        <button onClick={toggleInactivas} style={btn("orange")}>
           {modoInactivo ? " Ver activas" : " Ver inactivas"}
         </button>
 

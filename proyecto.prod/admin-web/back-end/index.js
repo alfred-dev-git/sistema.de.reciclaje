@@ -10,6 +10,8 @@ import paradasRoutes from './routes/paradas.routes.js';
 import cronogramaRoutes from './routes/cronograma.routes.js';
 import reciclablesRoutes from './routes/reciclables.routes.js';
 import rutasRoutes from './routes/rutas.routes.js';
+import usuarioRoutes from './routes/usuarios.routes.js';
+import adminRoutes from './routes/perfil.routes.js';
 
 
 const app = express();
@@ -36,6 +38,9 @@ app.use('/api', paradasRoutes);
 app.use('/api/cronograma', cronogramaRoutes);
 app.use('/api/reciclables', reciclablesRoutes);
 app.use('/api/rutas', rutasRoutes);
+app.use('/api/usuarios', usuarioRoutes);
+app.use('/api/perfil', adminRoutes);
+
 
 
 
