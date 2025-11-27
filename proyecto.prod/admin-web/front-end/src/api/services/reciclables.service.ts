@@ -15,6 +15,7 @@ export interface TipoReciclable {
 export const getTiposReciclable = async (): Promise<ApiResponse> => {
   try {
     const response = await https.get("/reciclables/getAll");
+      console.log("🔍 [LOG] Respuesta completa del backend (tipos reciclables):", response.data);
     return {
       success: true, 
       message: "Tipos de reciclable obtenidos correctamente",

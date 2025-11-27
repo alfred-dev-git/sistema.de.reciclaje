@@ -1,12 +1,14 @@
-//use-rutas.ts
-import { useEffect, useState } from "react";
+// src/components/rutas/use-rutas.ts
+import { useEffect, useMemo, useState } from "react";
 import { obtenerParadas, PedidoAsignado, updateRutaRecolector } from "../../api/services/paradas.service";
 import { obtenerOpcionesAgrupamiento, agruparParadasPorCercania, RutaAgrupada } from "../mapa/agrupador-rutas";
 import { postAsignarRuta, anularRuta } from "../../api/services/recolector.service";
 import { RutasPendientesItem } from "../Recolector";
 import { obtenerRutasPorRecolector } from "./agrupador-rutas";
 
-export function useRutas(modo: "planificacion" | "seguimiento" = "planificacion") {
+export function useRutas(modo: "planificacion" | "seguimiento" = "planificacion", tipoReciclable: number | null = null) {
+  // estado principal
+  const [todasLasParadas, setTodasLasParadas] = useState<PedidoAsignado[]>([]);
   const [paradas, setParadas] = useState<PedidoAsignado[]>([]);
   const [rutas, setRutas] = useState<RutaAgrupada[]>([]);
   const [opciones, setOpciones] = useState<number[]>([]);
@@ -18,22 +20,46 @@ export function useRutas(modo: "planificacion" | "seguimiento" = "planificacion"
   const [recolectorSeleccionado, setRecolectorSeleccionado] = useState<RutasPendientesItem | null>(null);
   const [rutaParaCambio, setRutaParaCambio] = useState<number | null>(null);
 
-  // Cargar datos iniciales según el modo
+  // 1) cargar TODAS las paradas solo una vez (cuando el hook se monta)
   useEffect(() => {
-    if (modo === "planificacion") cargarParadas();
+    let mounted = true;
+    async function load() {
+      try {
+        const data = await obtenerParadas(); // backend devuelve TODO — no se toca
+        if (!mounted) return;
+        setTodasLasParadas(data);
+      } catch (err) {
+        console.error("❌ Error cargando paradas:", err);
+      }
+    }
+    if (modo === "planificacion") load();
+    return () => { mounted = false; };
   }, [modo]);
 
-  async function cargarParadas() {
-    try {
-      const data = await obtenerParadas();
-      setParadas(data);
-      setOpciones(obtenerOpcionesAgrupamiento(data.length));
-    } catch (err) {
-      console.error("❌ Error cargando paradas:", err);
+  // 2) filtrar en memoria cuando cambia tipoReciclable o cuando cambian todasLasParadas
+  useEffect(() => {
+    // si tipoReciclable es null -> consideramos "sin selección" y vaciamos paradas
+    if (tipoReciclable === null) {
+      setParadas([]);
+      setOpciones([]);
+      setRutas([]);
+      setOpcionSeleccionada(null);
+      setRutaActiva(null);
+      return;
     }
-  }
 
-  // === PLANIFICACIÓN ===
+    const filtradas = todasLasParadas.filter(
+      (p) => p.tipo_reciclable_idtipo_reciclable === tipoReciclable
+    );
+
+    setParadas(filtradas);
+    setOpciones(obtenerOpcionesAgrupamiento(filtradas.length));
+    setOpcionSeleccionada(null);
+    setRutas([]);
+    setRutaActiva(null);
+  }, [tipoReciclable, todasLasParadas]);
+
+  // si cambias la opción de agrupamiento, generamos rutas
   const handleSeleccion = (valor: number) => {
     setOpcionSeleccionada(valor);
     const agrupadas = agruparParadasPorCercania(paradas, valor);
@@ -62,7 +88,9 @@ export function useRutas(modo: "planificacion" | "seguimiento" = "planificacion"
       }
       setMostrarModal(false);
       setRutaSeleccionada(null);
-      await cargarParadas();
+      // recargar todas las paradas del backend para mantener consistencia
+      const fresh = await obtenerParadas();
+      setTodasLasParadas(fresh);
     } catch (err) {
       console.error("❌ Error general en asignación:", err);
       alert("Error inesperado al asignar la ruta");

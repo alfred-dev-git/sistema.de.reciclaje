@@ -26,7 +26,7 @@ export default function Home() {
 
       <div className="Container-Cards">
         <Card title="Asignar Rutas" isHome={true}>
-          <p>Hay {kpis?.rutasSinAsignar ?? '...'} rutas sin asignar</p>
+          <p>Hay {kpis?.rutasSinAsignar ?? '...'} pedidos sin asignar</p>
           <button
             onClick={() => navigate("/rutas")}
           >

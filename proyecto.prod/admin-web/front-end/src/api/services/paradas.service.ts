@@ -12,12 +12,22 @@ export interface PedidoAsignado {
   numero: string;
   latitud: number | string | null;
   longitud: number | string | null;
+  tipo_reciclable_idtipo_reciclable: number;
 }
 
 /** Obtiene paradas desde el backend */
-export async function obtenerParadas(): Promise<PedidoAsignado[]> {
+export async function obtenerParadas(tipoReciclable?: number): Promise<PedidoAsignado[]> {
   const { data } = await https.get<PedidoAsignado[]>("/paradas");
-  return data.filter(p => p.latitud && p.longitud);
+
+  let filtradas = data.filter(p => p.latitud && p.longitud);
+
+  if (tipoReciclable) {
+    filtradas = filtradas.filter(
+      p => p.tipo_reciclable_idtipo_reciclable === tipoReciclable
+    );
+  }
+
+  return filtradas;
 }
 
 /** Obtiene las paradas asignadas a un recolector específico */
@@ -25,7 +35,6 @@ export async function obtenerParadasRecolector(idRecolector: number): Promise<Pe
   const { data } = await https.get<PedidoAsignado[]>(`/rutas/inforutas`, {
     params: { idRecolector },
   });
-
   // Filtramos solo las que tienen coordenadas válidas
   return data.filter(p => p.latitud && p.longitud);
 }

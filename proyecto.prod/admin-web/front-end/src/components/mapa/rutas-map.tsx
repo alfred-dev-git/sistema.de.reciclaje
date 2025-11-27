@@ -9,12 +9,14 @@ import {
 import { PedidoAsignado } from "../../api/services/paradas.service";
 import { RutaAgrupada } from "../mapa/agrupador-rutas";
 import { useGoogleMapsLoader } from "./use-google-maps-loader";
+import { TipoReciclable } from "../../api/services/reciclables.service";
 
 interface RutasMapProps {
   rutas: RutaAgrupada[];
   rutaActiva: number | null;
   puntoSeleccionado: PedidoAsignado | null;
   setPuntoSeleccionado: (punto: PedidoAsignado | null) => void;
+  tiposReciclable: TipoReciclable[];
   center: { lat: number; lng: number };
 }
 
@@ -40,6 +42,7 @@ export default function RutasMap({
   rutaActiva,
   puntoSeleccionado,
   setPuntoSeleccionado,
+  tiposReciclable,
   center,
 }: RutasMapProps) {
   const { isLoaded } = useGoogleMapsLoader();
@@ -51,7 +54,19 @@ export default function RutasMap({
   if (!isLoaded) {
     return <p>Cargando mapa...</p>;
   }
+  let descripcionReciclable = null;
 
+if (rutaActiva) {
+  const ruta = rutas.find(r => r.id === rutaActiva);
+
+  if (ruta && ruta.paradas.length > 0) {
+    const idTipo = ruta.paradas[0].tipo_reciclable_idtipo_reciclable;
+
+    const tipo = tiposReciclable.find(t => t.idtipo_reciclable === idTipo);
+
+    descripcionReciclable = tipo?.descripcion ?? "No especificado";
+  }
+}
   return (
     <div style={{
       position: "relative",
@@ -60,7 +75,8 @@ export default function RutasMap({
       boxShadow: "0 4px 12px rgba(0,0,0,0.1)"
     }}>
       {rutaActiva && (
-        <div style={{
+      <div
+        style={{
           position: "absolute",
           top: "8px",
           left: "8px",
@@ -69,9 +85,14 @@ export default function RutasMap({
           padding: "8px 12px",
           borderRadius: "8px",
           zIndex: 10
-        }}>
-          Ruta {rutaActiva} seleccionada
-        </div>
+        }}
+      >
+        <div><b>Ruta {rutaActiva}</b></div>
+        {descripcionReciclable && (
+          <div>Reciclable: {descripcionReciclable}</div>
+        )}
+      </div>
+
       )
       }
 

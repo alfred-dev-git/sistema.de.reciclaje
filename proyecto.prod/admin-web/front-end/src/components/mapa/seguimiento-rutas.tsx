@@ -3,8 +3,20 @@ import ModalRecolector from "../Recolector";
 import RutasMap from "./rutas-map";
 import { RutasPendientesItem } from "../Recolector";
 import { useRutas } from "./use-rutas";
+import { getTiposReciclable, TipoReciclable } from "../../api/services/reciclables.service";
 
 export default function SeguimientoRutas() {
+  const [tiposReciclable, setTiposReciclable] = useState<TipoReciclable[]>([]);
+  useEffect(() => {
+  async function cargarTipos() {
+    const res = await getTiposReciclable();
+
+    if (res.success && Array.isArray(res.data)) {
+      setTiposReciclable(res.data);
+    }
+  }
+  cargarTipos();
+}, []);
   const {
     rutas,
     rutaActiva,
@@ -151,6 +163,7 @@ export default function SeguimientoRutas() {
           rutaActiva={rutaActiva}
           puntoSeleccionado={puntoSeleccionado}
           setPuntoSeleccionado={setPuntoSeleccionado}
+          tiposReciclable={tiposReciclable}
           center={center}
         />
       </div>
