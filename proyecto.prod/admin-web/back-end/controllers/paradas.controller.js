@@ -7,7 +7,6 @@ import { obtenerPedidosPorRecolector } from "../models/paradas.model.js";
 export const getParadas = async (req, res) => {
   try {
     const idAdmin = req.user.idusuario;
-    console.log("🔍 Obteniendo pedidos sin asignar para el admin ID:", idAdmin);
     const pedidos = await obtenerPedidosSinAsignar(idAdmin);
     res.json(pedidos);
   } catch (error) {

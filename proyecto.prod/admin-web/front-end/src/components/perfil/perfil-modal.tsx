@@ -29,9 +29,8 @@ export default function PerfilModal({ visible, onClose, perfil, onEditField }: a
           <strong>DNI:</strong> {perfil.dni}
         </p>
 
-        <p className="campo-editable">
+        <p>
           <strong>Municipio:</strong> {perfil.municipio}
-          <button className="edit-btn" onClick={() => onEditField("municipio")}>✏️</button>
         </p>
 
         <button className="close-btn" onClick={onClose}>Cerrar</button>
