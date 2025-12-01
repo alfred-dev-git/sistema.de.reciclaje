@@ -14,6 +14,7 @@ type Row = {
   usuario_idusuario: number;
   usuario_nombre: string;
   tipo_reciclable: string | null;
+  recolector_nombre: string | null;
 };
 
 type PM = { anio_mes: string; total: number };
@@ -89,6 +90,7 @@ export default function Historial() {
                 <th>Tipo</th>
                 <th>Cant. bolsón</th>
                 <th>Estado</th>
+                <th>Recolector asignado</th>
                 <th>Obs.</th>
               </tr>
             </thead>
@@ -100,6 +102,7 @@ export default function Historial() {
                   <td>{r.tipo_reciclable ?? '-'}</td>
                   <td>{r.cant_bolson ?? '-'}</td>
                   <td>{r.estado ?? '-'}</td>
+                  <td>{r.recolector_nombre ?? '-'}</td>
                   <td>{r.observaciones ?? '-'}</td>
                 </tr>
               ))}
