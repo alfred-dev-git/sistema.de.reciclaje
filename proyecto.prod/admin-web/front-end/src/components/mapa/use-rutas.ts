@@ -1,0 +1,170 @@
+// src/components/rutas/use-rutas.ts
+import { useEffect, useMemo, useState } from "react";
+import { obtenerParadas, PedidoAsignado, updateRutaRecolector } from "../../api/services/paradas.service";
+import { obtenerOpcionesAgrupamiento, agruparParadasPorCercania, RutaAgrupada } from "../mapa/agrupador-rutas";
+import { postAsignarRuta, anularRuta } from "../../api/services/recolector.service";
+import { RutasPendientesItem } from "../Recolector";
+import { obtenerRutasPorRecolector } from "./agrupador-rutas";
+
+export function useRutas(modo: "planificacion" | "seguimiento" = "planificacion", tipoReciclable: number | null = null) {
+  // estado principal
+  const [todasLasParadas, setTodasLasParadas] = useState<PedidoAsignado[]>([]);
+  const [paradas, setParadas] = useState<PedidoAsignado[]>([]);
+  const [rutas, setRutas] = useState<RutaAgrupada[]>([]);
+  const [opciones, setOpciones] = useState<number[]>([]);
+  const [opcionSeleccionada, setOpcionSeleccionada] = useState<number | null>(null);
+  const [rutaActiva, setRutaActiva] = useState<number | null>(null);
+  const [mostrarModal, setMostrarModal] = useState(false);
+  const [rutaSeleccionada, setRutaSeleccionada] = useState<RutaAgrupada | null>(null);
+  const [puntoSeleccionado, setPuntoSeleccionado] = useState<PedidoAsignado | null>(null);
+  const [recolectorSeleccionado, setRecolectorSeleccionado] = useState<RutasPendientesItem | null>(null);
+  const [rutaParaCambio, setRutaParaCambio] = useState<number | null>(null);
+
+  // 1) cargar TODAS las paradas solo una vez (cuando el hook se monta)
+  useEffect(() => {
+    let mounted = true;
+    async function load() {
+      try {
+        const data = await obtenerParadas(); // backend devuelve TODO — no se toca
+        if (!mounted) return;
+        setTodasLasParadas(data);
+      } catch (err) {
+        console.error("❌ Error cargando paradas:", err);
+      }
+    }
+    if (modo === "planificacion") load();
+    return () => { mounted = false; };
+  }, [modo]);
+
+  // 2) filtrar en memoria cuando cambia tipoReciclable o cuando cambian todasLasParadas
+  useEffect(() => {
+    // si tipoReciclable es null -> consideramos "sin selección" y vaciamos paradas
+    if (tipoReciclable === null) {
+      setParadas([]);
+      setOpciones([]);
+      setRutas([]);
+      setOpcionSeleccionada(null);
+      setRutaActiva(null);
+      return;
+    }
+
+    const filtradas = todasLasParadas.filter(
+      (p) => p.tipo_reciclable_idtipo_reciclable === tipoReciclable
+    );
+
+    setParadas(filtradas);
+    setOpciones(obtenerOpcionesAgrupamiento(filtradas.length));
+    setOpcionSeleccionada(null);
+    setRutas([]);
+    setRutaActiva(null);
+  }, [tipoReciclable, todasLasParadas]);
+
+  // si cambias la opción de agrupamiento, generamos rutas
+  const handleSeleccion = (valor: number) => {
+    setOpcionSeleccionada(valor);
+    const agrupadas = agruparParadasPorCercania(paradas, valor);
+    setRutas(agrupadas);
+    setRutaActiva(null);
+  };
+
+  const handleAsignarRuta = (ruta: RutaAgrupada) => {
+    setRutaSeleccionada(ruta);
+    setMostrarModal(true);
+  };
+
+  const handleConfirmarAsignacion = async (recolector: RutasPendientesItem) => {
+    if (!rutaSeleccionada) return;
+    const payload = {
+      idrecolector: recolector.idrecolector,
+      pedidos: rutaSeleccionada.paradas.map((p) => p.idpedidos),
+    };
+
+    try {
+      const result = await postAsignarRuta(payload);
+      if (result.success) {
+        alert(`✅ Ruta ${rutaSeleccionada.id} asignada correctamente a ${recolector.recolector}`);
+      } else {
+        alert(`❌ Error al asignar ruta: ${result.message}`);
+      }
+      setMostrarModal(false);
+      setRutaSeleccionada(null);
+      // recargar todas las paradas del backend para mantener consistencia
+      const fresh = await obtenerParadas();
+      setTodasLasParadas(fresh);
+    } catch (err) {
+      console.error("❌ Error general en asignación:", err);
+      alert("Error inesperado al asignar la ruta");
+    }
+  };
+
+  // === SEGUIMIENTO ===
+  const cargarRutasPorRecolector = async (idrecolector: number) => {
+    try {
+      const data = await obtenerRutasPorRecolector(idrecolector);
+      setRutas(data);
+    } catch (error) {
+      console.error("Error al obtener rutas:", error);
+    }
+  };
+
+  const actualizarRecolectorRuta = async (idRuta: number, nuevoRecolector: RutasPendientesItem) => {
+    try {
+      const resultado = await updateRutaRecolector(idRuta, nuevoRecolector.idrecolector);
+      if (!resultado.success) {
+        alert(`⚠️ No se pudo actualizar: ${resultado.message}`);
+        return;
+      }
+      alert(`✅ Recolector de la ruta ${idRuta} actualizado correctamente.`);
+      if (recolectorSeleccionado)
+        await cargarRutasPorRecolector(recolectorSeleccionado.idrecolector);
+    } catch (error) {
+      console.error("Error actualizando recolector:", error);
+      alert("Error al actualizar recolector.");
+    }
+  };
+
+  const anularRutaExistente = async (idRuta: number) => {
+    try {
+      const resultado = await anularRuta(idRuta);
+      if (resultado.success) {
+        alert(`Ruta ${idRuta} anulada correctamente.`);
+        if (recolectorSeleccionado)
+          await cargarRutasPorRecolector(recolectorSeleccionado.idrecolector);
+      } else {
+        alert(`Error: ${resultado.message}`);
+      }
+    } catch (error) {
+      alert("Error al anular la ruta.");
+      console.error(error);
+    }
+  };
+
+  return {
+    // comunes
+    rutas,
+    rutaActiva,
+    setRutaActiva,
+    puntoSeleccionado,
+    setPuntoSeleccionado,
+    mostrarModal,
+    setMostrarModal,
+
+    // planificación
+    modo,
+    paradas,
+    opciones,
+    opcionSeleccionada,
+    handleSeleccion,
+    handleAsignarRuta,
+    handleConfirmarAsignacion,
+
+    // seguimiento
+    recolectorSeleccionado,
+    setRecolectorSeleccionado,
+    rutaParaCambio,
+    setRutaParaCambio,
+    cargarRutasPorRecolector,
+    actualizarRecolectorRuta,
+    anularRutaExistente,
+  };
+}

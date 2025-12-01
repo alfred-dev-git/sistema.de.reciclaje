@@ -1,0 +1,377 @@
+:root {
+    --bg: #f6f8f6;
+    --card: #ffffff;
+    --border: #dfe7df;
+    --text: #1f2a1f;
+    --accent: #2faa3f;
+}
+
+/* === RESETEO GENERAL === */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, Segoe UI, Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+}
+
+/* === LAYOUT GENERAL === */
+.layout {
+    grid-template-rows: auto auto 1fr;
+    min-height: 100vh;
+}
+
+.topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: #e9f3ea;
+    border-bottom: 1px solid var(--border);
+}
+
+.topbar h1 {
+    font-size: 18px;
+    margin: 0;
+}
+
+.topbar .user {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.topbar button {
+    border: 1px solid var(--border);
+    background: #fff;
+    padding: 6px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+.nav {
+    display: flex;
+    gap: 12px;
+    padding: 8px 16px;
+    border-bottom: 1px solid var(--border);
+    background: #f4faf4;
+}
+
+.nav a {
+    padding: 6px 10px;
+    border-radius: 8px;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    color: var(--text);
+}
+
+.nav a:hover {
+    background: #fff;
+}
+
+.titulo {
+    font-family: "Knewave", system-ui;
+    font-variant: inherit;
+    font-weight: 100;
+}
+
+.subtitulo {
+    font-family: "Fugaz One", sans-serif;
+    font-variant: inherit;
+    font-weight: 300;
+}
+
+/* === CONTENIDO PRINCIPAL === */
+.content {
+    padding: 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+}
+
+/* === Rutas Page === */
+.rutas-page {
+    background-color: #ffffff;
+    padding: 15px;
+    border-radius: 18px;
+}
+
+.MapContainer {
+    background-color: #ffffff;
+    margin-top: 8px;
+    padding: 20px;
+    border-radius: 18px;
+    display: flex;
+    height: 80vh;
+}
+
+.panel-lateral {
+    width: 30%;
+    overflow-y: auto;
+    border-right: 1px solid #ddd;
+    padding: 16px;
+    box-sizing: border-box;
+}
+.acciones-ruta {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+.container-info-rutas {
+    margin: 5px;
+}
+
+.container-info-rutas select {
+    margin-top: 5px;
+    border: 1px solid var(--border);
+    padding: 10px;
+    border-radius: 10px;
+}
+
+.container-botones-rutas {
+    margin-top: 10px;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.button {
+    margin-top: 5px;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    margin-bottom: 5px;
+}
+
+.button.button-ruta {
+    background-color: #2e703ed8;
+    color: #ffffff;
+
+}
+
+.button.button-modal {
+    background-color: rgb(255, 255, 255);
+    color: #142e1ad8;
+    margin: 5px;
+}
+
+.container-ruta-detalles {
+    border-bottom: 4px solid #b4b4b4c0;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+}
+
+.area-mapa {
+    flex: 1;
+    position: relative;
+}
+
+.modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #2e703eff;
+    color: white;
+    padding: 8px 12px;
+    border-radius: 16px;
+}
+
+/* === TARJETAS === */
+.Container-Cards {
+    display: flex;
+    flex-wrap: wrap;
+    margin: 30px;
+    gap: 15px;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    /* distribuye bien el contenido */
+    background: #2e703ed8;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 38px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 2px rgba(16, 24, 40, 0.06);
+    backdrop-filter: blur(5px);
+    gap: 3px;
+}
+
+.card.card-home {
+    width: 288px;
+    height: 276px;
+}
+
+.card p {
+    justify-content: flex-end;
+    margin: 5;
+    color: #ffffff;
+    font-size: 20px;
+    font-weight: 100;
+}
+
+.card h3 {
+    color: #ebe5e5;
+}
+
+.card button {
+    margin-top: auto;
+    padding: 10px;
+    background: #ffffff;
+    border: none;
+    color: #2e703ed8;
+    font-weight: 600;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+.card button:hover {
+    background: #f0f0f0;
+    transition: background 0.5s;
+}
+
+.home {
+    width: 100%;
+
+}
+
+/* encabezado centrado */
+.home .hero {
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    margin-bottom: 12px;
+}
+
+.home .welcome h2 {
+    margin: 0;
+    font-family: "Knewave", system-ui;
+    color: #000000;
+    font-weight: 350;
+}
+
+.home .welcome p {
+    margin: 4px 0 0;
+    color: var(--accent);
+    letter-spacing: 1px;
+    font-weight: 500;
+}
+
+.home .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 12px;
+}
+
+/* === LOGIN === */
+.login {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.login form {
+    width: 320px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.login h2 {
+    margin: 0 0 12px;
+}
+
+.login label {
+    display: block;
+    margin-top: 8px;
+}
+
+.login input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 6px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.login button {
+    margin-top: 16px;
+    width: 100%;
+    padding: 10px;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+/* === ERRORES === */
+.error {
+    background: #ffe5e5;
+    border: 1px solid #f5bcbc;
+    color: #931b1b;
+    padding: 8px;
+    border-radius: 8px;
+    margin-bottom: 8px;
+}
+
+/* === FILTRO Y TABLAS === */
+.filter {
+    margin-bottom: 10px;
+}
+
+.filter input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.table-wrap {
+    overflow: auto;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+}
+
+.table-wrap td {
+    color: #e9f3ea;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead {
+    background: #f5fbf6;
+}
+
+th,
+td {
+    padding: 10px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+}
+
+/* === CHARTS === */
+.charts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+}
+
+@media (max-width: 900px) {
+    .charts {
+        grid-template-columns: 1fr;
+    }
+}
