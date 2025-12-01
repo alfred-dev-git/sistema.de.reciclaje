@@ -23,7 +23,7 @@ const allowedOrigins = [
 ].filter(Boolean); // elimina undefined
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: allowedOrigins.length > 0 ? allowedOrigins : '*',
   credentials: true
 }));
 
