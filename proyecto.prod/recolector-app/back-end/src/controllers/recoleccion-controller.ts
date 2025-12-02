@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { pool } from "../db.js";
 
 /**
- * Función auxiliar para calcular los puntos equivalentes
+ * Función auxiliar para calcular los puntos equivalentes(todavia no se usa)
  */
 const calcularTotalPuntos = async (idpedidos: number, cant_bolson: number): Promise<number> => {
   // obtener el tipo de reciclable del pedido
@@ -44,8 +44,8 @@ export const postMarcarCompletado = async (req: Request, res: Response) => {
   }
 
   try {
-    // calcular puntos
-    const total_puntos = await calcularTotalPuntos(idpedidos, cant_bolson);
+    // 🔹 ANULAR cálculo → siempre 0
+    const total_puntos = 0;
 
     // actualizar estado en pedidos
     await pool.execute(
@@ -53,7 +53,7 @@ export const postMarcarCompletado = async (req: Request, res: Response) => {
       [estado, idpedidos]
     );
 
-    // insertar detalle
+    // insertar el detalle con 0 puntos
     await pool.execute(
       `INSERT INTO detalle_pedido 
         (fecha_entrega, cant_bolson, total_puntos, observaciones, pedidos_idpedidos) 
