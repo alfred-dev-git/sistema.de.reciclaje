@@ -86,7 +86,7 @@ const EditarPerfilScreen: React.FC = () => {
       }
 
       Alert.alert("Éxito", "Perfil actualizado correctamente", [
-        { text: "OK", onPress: () => navigate("Perfil") },
+        { text: "OK", onPress: () => navigate("Mi perfil" as any) },
       ]);
     } catch (e) {
       setLoading(false);
@@ -231,7 +231,7 @@ const EditarPerfilScreen: React.FC = () => {
             </TouchableOpacity>
 
             {/* Volver */}
-            <TouchableOpacity style={styles.boton} onPress={() => navigate("Perfil")}>
+            <TouchableOpacity style={styles.boton} onPress={() => navigate("Mi perfil" as any)}>
               <Text style={styles.botonTexto}>Cancelar</Text>
             </TouchableOpacity>
           </View>
@@ -298,10 +298,10 @@ const styles = StyleSheet.create({
   calendarIcon: { marginRight: 10 },
   dateText: { fontSize: 16 },
   pickerContainer: {
-  borderWidth: 1,
-  borderColor: "#ccc",
-  borderRadius: 8,
-  marginBottom: 12,
-  backgroundColor: "#fff",
-},
+    borderWidth: 1,
+    borderColor: "#ccc",
+    borderRadius: 8,
+    marginBottom: 12,
+    backgroundColor: "#fff",
+  },
 });

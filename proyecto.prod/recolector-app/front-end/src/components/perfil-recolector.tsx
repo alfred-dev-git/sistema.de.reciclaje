@@ -96,11 +96,11 @@ export default function PerfilScreen() {
                 {updatingPhoto ? "Actualizando..." : "Cambiar foto"}
               </Text>
             </TouchableOpacity>
-          <TouchableOpacity
-            onPress={() => navigate("Editar", { perfil })}
-          >
-            <Text style={styles.changePhotoText}>Editar información</Text>
-          </TouchableOpacity>
+            <TouchableOpacity
+              onPress={() => navigate("EditarPerfil" as any, { perfil })}
+            >
+              <Text style={styles.changePhotoText}>Editar información</Text>
+            </TouchableOpacity>
 
           </View>
         </View>
