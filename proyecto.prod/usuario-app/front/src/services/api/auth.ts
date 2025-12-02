@@ -1,0 +1,86 @@
+import { api, saveToken } from "./http";
+import * as SecureStore from "expo-secure-store";
+
+type LoginReq = { email: string; password: string };
+
+export type RegisterReq = {
+  dni: string;
+  nombre: string;
+  apellido: string;
+  email: string;
+  password: string;
+  telefono: string;
+  fecha_nacimiento: string; // "YYYY-MM-DD"
+  sexo: "M" | "F" | "O";    // o el código que uses
+  rol_idrol?: number;       // default 3 si no envías
+  municipio_idmunicipio?: number | null; // default 1 si no envías
+  puntos?: number;          // default 0 si no envías
+};
+
+export type Municipio = {
+  id: number;
+  descripcion: string;
+};
+
+// GET /municipios
+export async function listMunicipios(): Promise<Municipio[]> {
+  const res = await api.get("/auth/municipios");
+
+  const items = res.items ?? [];
+
+  return items.map((m: any) => ({
+    id: Number(m.id),
+    descripcion: String(m.descripcion),
+  }));
+}
+
+
+
+
+export async function login(body: LoginReq) {
+  const resp = await api.post<{ user: any; token: string }>("/auth/login", body);
+  await saveToken(resp.token);
+  await SecureStore.setItemAsync("current_user", JSON.stringify(resp.user));
+  return resp;
+}
+
+export async function register(body: RegisterReq) {
+  const resp = await api.post<{ user: any; token: string }>("/auth/register", body);
+  await saveToken(resp.token);
+  await SecureStore.setItemAsync("current_user", JSON.stringify(resp.user));
+  return resp;
+}
+
+export async function logout() {
+  await saveToken(null);
+  await SecureStore.deleteItemAsync("current_user");
+}
+
+export async function getCurrentUser() {
+  try {
+    const raw = await SecureStore.getItemAsync("current_user");
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
+// --- Reset de contraseña por email (OTP) ---
+
+export async function requestPasswordReset(email: string) {
+  const body = { email: String(email).trim().toLowerCase() };
+  return api.post<{ ok: boolean }>("/auth/forgot", body);
+}
+
+export async function resetPassword(payload: {
+  email: string;
+  code: string;
+  new_password: string;
+}) {
+  const body = {
+    email: String(payload.email).trim().toLowerCase(),
+    code: String(payload.code).trim(),
+    new_password: String(payload.new_password),
+  };
+  return api.post<{ ok: boolean }>("/auth/reset", body);
+}
