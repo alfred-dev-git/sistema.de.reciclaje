@@ -1,8 +1,8 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from 'express';
 import cors from "cors";
 import "dotenv/config";
 import apiRouter from "@/routes";
-import { errorMiddleware } from "@/middlewares/error";
+import errorMiddleware from "@/middlewares/error";
 
 const app = express();
 
@@ -22,6 +22,11 @@ app.use(cors({
     credentials: true
 }));
 app.use(express.json());
+
+app.use((req: Request, res: Response, next: NextFunction) => {
+  // ...existing code...
+  next();
+});
 
 app.use("/api", apiRouter);
 

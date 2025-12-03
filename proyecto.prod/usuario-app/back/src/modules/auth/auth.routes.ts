@@ -1,9 +1,11 @@
-import { Router, Request, Response } from "express";
+import { Router, Request, Response, NextFunction } from "express";
 import bcrypt from "bcryptjs";
-import { asyncHandler } from "@/utils/asyncHandler";
-import { getDB } from "@/config/db";
+import asyncHandler from "@/utils/asyncHandler";
+import dbFactory from "@/config/db";
 import { signToken } from "@/utils/jwt";
-import { sendPasswordResetEmail } from "@/utils/mailer";
+import sendMail from "@/utils/mailer";
+import { sendPasswordResetEmail } from "./auth.util";
+import type { Pool } from "mysql2/promise";
 
 const router = Router();
 
@@ -13,6 +15,8 @@ function genCode(len = 6) {
   for (let i = 0; i < len; i++) s += Math.floor(Math.random() * 10);
   return s;
 }
+
+const getDB = (): Pool => (typeof dbFactory === "function" ? (dbFactory as any)() : (dbFactory as any));
 
 router.get(
   "/municipios",
@@ -135,14 +139,13 @@ router.post(
   })
 );
 
-
 /**
  * POST /api/auth/login
  * Solo permite ingresar si usuario.activo = 1 y rol_idrol = 3
  */
 router.post(
   "/login",
-  asyncHandler(async (req: Request, res: Response) => {
+  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
     const { email, password } = req.body ?? {};
     if (!email || !password) {
       return res.status(400).json({ error: "email y password son requeridos" });
@@ -197,7 +200,7 @@ router.post(
     };
 
     const token = signToken({ uid: user.id });
-    res.json({ user, token });
+    res.json({ token: '...' });
   })
 );
 

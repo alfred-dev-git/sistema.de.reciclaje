@@ -1,48 +1,22 @@
 import nodemailer from "nodemailer";
 
-const {
-  SMTP_HOST,
-  SMTP_PORT,
-  SMTP_USER,
-  SMTP_PASS,
-  MAIL_FROM = "no-reply@example.com",
-} = process.env;
+const transporter = nodemailer.createTransport({
+  host: process.env.SMTP_HOST,
+  port: Number(process.env.SMTP_PORT) || 587,
+  secure: false,
+  auth: {
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
+  },
+});
 
-let transporter: nodemailer.Transporter | null = null;
-
-function getTransporter() {
-  if (!transporter) {
-    if (SMTP_HOST && SMTP_PORT && SMTP_USER && SMTP_PASS) {
-      transporter = nodemailer.createTransport({
-        host: SMTP_HOST,
-        port: Number(SMTP_PORT),
-        secure: false,
-        auth: { user: SMTP_USER, pass: SMTP_PASS },
-      });
-    } else {
-      // modo dev: no envía mail, sólo log
-      transporter = null;
-    }
-  }
-  return transporter;
-}
-
-export async function sendPasswordResetEmail(to: string, code: string) {
-  const t = getTransporter();
-  const subject = "Código para restablecer tu contraseña";
-  const text = `Usá este código para restablecer tu contraseña: ${code}
-El código vence en 15 minutos.`;
-
-  if (!t) {
-    // Dev / sin SMTP: logueamos
-    console.log(`[DEV] Enviar a ${to}: ${subject}\n${text}`);
-    return;
-  }
-
-  await t.sendMail({
-    from: MAIL_FROM,
+export async function sendMail(to: string, subject: string, html: string): Promise<void> {
+  await transporter.sendMail({
+    from: process.env.SMTP_FROM || process.env.SMTP_USER,
     to,
     subject,
-    text,
+    html,
   });
 }
+
+export default sendMail;

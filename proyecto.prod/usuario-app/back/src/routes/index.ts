@@ -12,9 +12,9 @@ router.get("/health", (_req, res) => res.json({ ok: true, service: "api-reciclaj
 
 router.use("/auth", authRoutes);
 router.use("/residuos", residuosRoutes);
-router.use("/", addressesRoutes);            
-router.use("/pedidos", pedidosRoutes);       
-router.use("/detalle_pedido", detalleRoutes);
-router.use("/", usersRoutes);                
+router.use("/addresses", addressesRoutes);
+router.use("/pedidos", pedidosRoutes);
+router.use("/detalle", detalleRoutes);
+router.use("/users", usersRoutes);
 
 export default router;

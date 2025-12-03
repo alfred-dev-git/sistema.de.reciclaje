@@ -3,7 +3,7 @@ import "dotenv/config";
 
 let pool: Pool;
 
-export function getDB() {
+export default function getDB() {
   if (!pool) {
     pool = createPool({
       host: process.env.DB_HOST,
