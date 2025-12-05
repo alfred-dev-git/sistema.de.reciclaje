@@ -7,8 +7,8 @@ export default function Reciclables() {
       <p>
         Gestion de los tipos de materiales reciclables que se pueden recolectar.
       </p>
-      <div className="w-full h-[80vh] border rounded-lg overflow-hidden">
-        <ReciclablesViewer/>
+      <div>
+        <ReciclablesViewer />
       </div>
     </div>
   );

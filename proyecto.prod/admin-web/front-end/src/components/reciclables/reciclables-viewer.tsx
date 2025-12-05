@@ -40,24 +40,34 @@ export const ReciclablesViewer = () => {
   };
 
   return (
-    <div>
-      <h2>♻️ Tipos de reciclables</h2>
+    <div style={container}>
+      <div style={headerBar}>
+        <h2 className="titulo">♻️ Tipos de reciclables</h2>
 
-      <button onClick={() => setShowNew(true)} style={{ marginBottom: "1rem" }}>
-        ➕ Nuevo
-      </button>
+        <button
+          style={buttonPrimary}
+          onClick={() => setShowNew(true)}
+        >
+          + Nuevo
+        </button>
+      </div>
 
       {loading ? (
         <p>Cargando...</p>
       ) : (
-        <ul>
+        <div style={listContainer}>
           {tipos.map((t) => (
-            <li key={t.idtipo_reciclable}>
-              {t.descripcion}{" "}
-              <button onClick={() => setEditItem(t)}>✏️</button>
-            </li>
+            <div key={t.idtipo_reciclable} style={card}>
+              <span style={{ fontSize: "1rem", fontWeight: 500 }}>
+                {t.descripcion}
+              </span>
+
+              <button style={editButton} onClick={() => setEditItem(t)}>
+                Editar
+              </button>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
 
       {showNew && (
@@ -75,5 +85,61 @@ export const ReciclablesViewer = () => {
       />
     </div>
   );
+};
+
+
+const container: React.CSSProperties = {
+  padding: "2rem",
+  fontFamily: "Inter, sans-serif",
+};
+
+const headerBar: React.CSSProperties = {
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  marginBottom: "1.5rem",
+};
+
+
+const buttonPrimary: React.CSSProperties = {
+  background: "#2ecc71",
+  color: "white",
+  padding: "10px 16px",
+  borderRadius: "10px",
+  border: "none",
+  cursor: "pointer",
+  fontSize: "14px",
+  fontWeight: 600,
+  boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+  transition: "0.2s",
+};
+
+const listContainer: React.CSSProperties = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "12px",
+};
+
+const card: React.CSSProperties = {
+  background: "white",
+  padding: "16px 20px",
+  borderRadius: "12px",
+  boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  borderLeft: "5px solid #27ae60",
+};
+
+const editButton: React.CSSProperties = {
+  padding: "8px 12px",
+  borderRadius: "8px",
+  border: "none",
+  color: "white",
+  background: "#3498db",
+  cursor: "pointer",
+  fontWeight: 600,
+  fontSize: "13px",
+  boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
 };
 export default ReciclablesViewer;

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { http } from '../api/http';
 import Card from '../components/Card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, Legend, ResponsiveContainer } from 'recharts';
 
 type Row = {
   iddetalle_pedido: number | null;
@@ -32,27 +32,28 @@ export default function Historial() {
     http.get('/stats/por-tipo').then(r => setPt(r.data));
   }, []);
 
-    const filtered = useMemo(() => {
-      let data = rows;
+  const filtered = useMemo(() => {
+    let data = rows;
 
-      // filtro por nombre
-      if (q) {
-        const QQ = q.toLowerCase();
-        data = data.filter(r => r.usuario_nombre?.toLowerCase().startsWith(QQ));
-      }
+    // filtro por nombre
+    if (q) {
+      const QQ = q.toLowerCase();
+      data = data.filter(r => r.usuario_nombre?.toLowerCase().startsWith(QQ));
+    }
 
-      // filtro por mes
-      if (mes) {
-        data = data.filter(r => {
-          const m = new Date(r.fecha_emision).getMonth() + 1; // 1..12
-          const mm = m.toString().padStart(2, '0');
-          return mm === mes;
-        });
-      }
+    // filtro por mes
+    if (mes) {
+      data = data.filter(r => {
+        const m = new Date(r.fecha_emision).getMonth() + 1; // 1..12
+        const mm = m.toString().padStart(2, '0');
+        return mm === mes;
+      });
+    }
 
-      return data;
-    }, [q, mes, rows]);
+    return data;
+  }, [q, mes, rows]);
 
+  const colors = ["#4CAF50", "#FF9800", "#b3c1ccff", "#a374acff", "#f77066ff"];
 
   return (
     <div className="historial">
@@ -64,20 +65,20 @@ export default function Historial() {
             onChange={e => setQ(e.target.value)}
           />
           <select value={mes} onChange={e => setMes(e.target.value)}>
-          <option value="">Todos los meses</option>
-          <option value="01">Enero</option>
-          <option value="02">Febrero</option>
-          <option value="03">Marzo</option>
-          <option value="04">Abril</option>
-          <option value="05">Mayo</option>
-          <option value="06">Junio</option>
-          <option value="07">Julio</option>
-          <option value="08">Agosto</option>
-          <option value="09">Septiembre</option>
-          <option value="10">Octubre</option>
-          <option value="11">Noviembre</option>
-          <option value="12">Diciembre</option>
-        </select>
+            <option value="">Todos los meses</option>
+            <option value="01">Enero</option>
+            <option value="02">Febrero</option>
+            <option value="03">Marzo</option>
+            <option value="04">Abril</option>
+            <option value="05">Mayo</option>
+            <option value="06">Junio</option>
+            <option value="07">Julio</option>
+            <option value="08">Agosto</option>
+            <option value="09">Septiembre</option>
+            <option value="10">Octubre</option>
+            <option value="11">Noviembre</option>
+            <option value="12">Diciembre</option>
+          </select>
         </div>
 
         <div className="table-wrap">
@@ -114,23 +115,48 @@ export default function Historial() {
             <ResponsiveContainer>
               <BarChart data={pm}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="anio_mes" />
-                <YAxis />
+                <XAxis dataKey="anio_mes"
+                  stroke='#ffffffff'
+                />
+                <YAxis
+                  stroke='#ffffffff'
+                />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="total" name="Total pedidos" />
+                <Bar dataKey="total" name="Total pedidos" fill='#abc337' />
               </BarChart>
             </ResponsiveContainer>
           </div>
         </Card>
 
+
         <Card title="Distribución por tipo">
           <div style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
               <PieChart>
-                <Pie data={pt} dataKey="total" nameKey="tipo" outerRadius={100} label />
-                <Tooltip />
-                <Legend />
+                <Pie
+                  data={pt}
+                  dataKey="total"
+                  nameKey="tipo"
+                  outerRadius={100}
+                  label
+                >
+                  {pt.map((entry, index) => (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={colors[index % colors.length]}
+                    />
+                  ))}
+                </Pie>
+
+                <Tooltip
+                  contentStyle={{ backgroundColor: "#2f5240", color: "#fff" }}
+                />
+
+                <Legend
+                  wrapperStyle={{ color: "#fff" }}
+                />
+
               </PieChart>
             </ResponsiveContainer>
           </div>

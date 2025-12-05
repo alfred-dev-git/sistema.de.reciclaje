@@ -1,12 +1,11 @@
-import React from "react";
 import "./perfil.css";
 
 export default function PerfilModal({ visible, onClose, perfil, onEditField }: any) {
-    
+
   if (!visible) return null;
 
   return (
-    
+
     <div className="modal-overlay">
       <div className="modal-box">
         <h2>Datos del administrador</h2>
@@ -36,6 +35,6 @@ export default function PerfilModal({ visible, onClose, perfil, onEditField }: a
         <button className="close-btn" onClick={onClose}>Cerrar</button>
       </div>
     </div>
-    
+
   );
 }

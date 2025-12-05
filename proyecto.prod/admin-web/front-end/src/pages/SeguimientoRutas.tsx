@@ -7,7 +7,7 @@ export default function SeguimientoRutas() {
       <p>
         Estados de recolectores y rutas en tiempo real.
       </p>
-      <div className="w-full h-[80vh] border rounded-lg overflow-hidden">
+      <div >
         <ParadasPorRecolector />
       </div>
     </div>
