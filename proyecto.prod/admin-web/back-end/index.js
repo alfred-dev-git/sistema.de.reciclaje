@@ -22,15 +22,21 @@ const allowedOrigins = [
   'https://view-admin-91faq2v9g-alfreddevs-projects-2abf9218.vercel.app',
 ].filter(Boolean);
 
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    res.header("Access-Control-Allow-Credentials", "true");
-    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
-    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH");
-    return res.sendStatus(200);
-  }
-  next();
-});
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      if (!origin) return callback(null, true); // permite postman, curl
+
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      } else {
+        console.log('❌ CORS bloqueado para:', origin);
+        return callback(new Error('CORS bloqueado por el servidor'));
+      }
+    },
+    credentials: true,
+  })
+);
 
 app.use(express.json());
 app.use(cookieParser());

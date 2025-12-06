@@ -7,8 +7,7 @@ import { validateLogin } from '../utils/validate.login.js';
 const cookieOpts = {
   httpOnly: true,
   secure: true,           // Railway = HTTPS → requerido
-  sameSite: "none",
-  domain: "admin-back-production-df1a.up.railway.app", 
+  sameSite: "none",       // Para permitir cookies cross-site (local ↔ Railway)
   path: '/',
 };
 
