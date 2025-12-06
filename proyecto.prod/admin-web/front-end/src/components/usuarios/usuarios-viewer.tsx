@@ -78,11 +78,11 @@ export const UsuariosViewer: React.FC = () => {
           <option value={4}>Recolectores</option>
         </select>
 
-        <button onClick={() => setVerDesactivados(!verDesactivados)}>
+        <button className="button" onClick={() => setVerDesactivados(!verDesactivados)}>
           {verDesactivados ? "Ver Activos" : "Ver Desactivados"}
         </button>
 
-        <button onClick={cargarUsuarios}>🔄 Refrescar</button>
+        <button className="button" onClick={cargarUsuarios}>🔄 Refrescar</button>
       </div>
 
       {loading ? (
@@ -146,7 +146,12 @@ const container: React.CSSProperties = {
 
 const filterBar: React.CSSProperties = {
   display: "flex",
-  gap: "0.5rem",
+  alignItems: "center",
+  gap: "10px",
+  marginTop: "5px",
+  border: "1px solid var(--border)",
+  padding: "10px",
+  borderRadius: "10px",
   marginBottom: "1rem",
 };
 

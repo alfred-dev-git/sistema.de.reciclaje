@@ -114,17 +114,19 @@ body {
     padding: 16px;
     box-sizing: border-box;
 }
+
 .acciones-ruta {
-  display: flex;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
 }
+
 .container-info-rutas {
     margin: 5px;
 }
 
-.container-info-rutas select {
-    margin-top: 5px;
+select {
+    margin-top: 7px;
     border: 1px solid var(--border);
     padding: 10px;
     border-radius: 10px;
@@ -144,6 +146,12 @@ body {
     border-radius: 10px;
     font-family: Verdana, Geneva, Tahoma, sans-serif;
     margin-bottom: 5px;
+    cursor: pointer;
+}
+
+.button.button-crear {
+    background-color: #0658f1d8;
+    color: #ffffff;
 }
 
 .button.button-ruta {
@@ -156,6 +164,18 @@ body {
     background-color: rgb(255, 255, 255);
     color: #142e1ad8;
     margin: 5px;
+}
+
+.button.button-eliminar {
+    background-color: rgb(189, 5, 5);
+    color: #ffffffd8;
+
+}
+
+.button.button-modificar {
+    background-color: rgb(193, 235, 97);
+    color: #000000d8;
+
 }
 
 .container-ruta-detalles {
@@ -189,6 +209,7 @@ body {
     justify-content: center;
     align-items: center;
 }
+
 
 .card {
     display: flex;

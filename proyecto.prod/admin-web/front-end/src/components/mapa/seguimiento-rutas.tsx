@@ -8,15 +8,15 @@ import { getTiposReciclable, TipoReciclable } from "../../api/services/reciclabl
 export default function SeguimientoRutas() {
   const [tiposReciclable, setTiposReciclable] = useState<TipoReciclable[]>([]);
   useEffect(() => {
-  async function cargarTipos() {
-    const res = await getTiposReciclable();
+    async function cargarTipos() {
+      const res = await getTiposReciclable();
 
-    if (res.success && Array.isArray(res.data)) {
-      setTiposReciclable(res.data);
+      if (res.success && Array.isArray(res.data)) {
+        setTiposReciclable(res.data);
+      }
     }
-  }
-  cargarTipos();
-}, []);
+    cargarTipos();
+  }, []);
   const {
     rutas,
     rutaActiva,
@@ -98,7 +98,7 @@ export default function SeguimientoRutas() {
 
               <button
                 onClick={() => setMostrarModal(true)}
-                className="button button-secundario"
+                className="button button-crear"
               >
                 Seleccionar otro recolector
               </button>
@@ -114,9 +114,8 @@ export default function SeguimientoRutas() {
               <div key={r.id} className="container-ruta-detalles">
                 <button
                   onClick={() => setRutaActiva(r.id)}
-                  className={`button button-ruta ${
-                    rutaActiva === r.id ? "button-activa" : ""
-                  }`}
+                  className={`button button-ruta ${rutaActiva === r.id ? "button-activa" : ""
+                    }`}
                 >
                   Ruta {r.id}
                 </button>
@@ -127,7 +126,7 @@ export default function SeguimientoRutas() {
                       setRutaParaCambio(r.id);
                       setMostrarModal(true);
                     }}
-                    className="button button-amarillo"
+                    className="button button-modificar"
                   >
                     Modificar recolector
                   </button>
@@ -141,7 +140,7 @@ export default function SeguimientoRutas() {
                         anularRutaExistente(r.id);
                       }
                     }}
-                    className="button button-rojo"
+                    className="button button-eliminar"
                   >
                     Anular Ruta
                   </button>
