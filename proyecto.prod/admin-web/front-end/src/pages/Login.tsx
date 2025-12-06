@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import background from '../assets/Backgrounds/backgroundLogin.jpg'; 
+import type { CSSProperties } from "react";
 import logo from '../assets/logos/logo1.png'; 
 
 
@@ -46,8 +47,15 @@ export default function Login() {
     </div>
   );
 }
-
-const styles = {
+const styles: {
+  container: CSSProperties;
+  left: CSSProperties;
+  right: CSSProperties;
+  logo: CSSProperties;
+  form: CSSProperties;
+  input: CSSProperties;
+  button: CSSProperties;
+} = {
   container: {
     minHeight: '100vh',
     display: 'flex',
@@ -78,25 +86,25 @@ const styles = {
     display: 'flex',
     flexDirection: 'column',
     width: '350px',
-    color: '#ffffffff',
+    color: '#ffffff',
     padding: '2rem',
     borderRadius: '1rem',
     gap: '8px',
   },
-  input:{
+  input: {
     padding: '10px',
     border: 'none',
     borderRadius: '25px',
     fontSize: '16px',
     backgroundColor: '#f9f9f9',
-   },
-  button:{
+  },
+  button: {
     padding: '10px',
     border: 'none',
     borderRadius: '35px',
     fontSize: '16px',
     backgroundColor: '#bcc31c',
     color: '#fff',
-    cursor: 'pointer',    
-   }
+    cursor: 'pointer',
+  }
 };
