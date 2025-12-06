@@ -22,21 +22,17 @@ const allowedOrigins = [
   'https://view-admin-91faq2v9g-alfreddevs-projects-2abf9218.vercel.app',
 ].filter(Boolean);
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      if (!origin) return callback(null, true); // permite postman, curl
+app.use(cors({
+  origin: allowedOrigins,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+}));
 
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      } else {
-        console.log('❌ CORS bloqueado para:', origin);
-        return callback(new Error('CORS bloqueado por el servidor'));
-      }
-    },
-    credentials: true,
-  })
-);
+app.options("*", cors({
+  origin: allowedOrigins,
+  credentials: true
+}));
 
 app.use(express.json());
 app.use(cookieParser());
