@@ -22,17 +22,15 @@ const allowedOrigins = [
   'https://view-admin-91faq2v9g-alfreddevs-projects-2abf9218.vercel.app',
 ].filter(Boolean);
 
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-  methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-}));
-
-app.options("*", cors({
-  origin: allowedOrigins,
-  credentials: true
-}));
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header("Access-Control-Allow-Headers", "Content-Type, Authorization");
+    res.header("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,PATCH");
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 app.use(express.json());
 app.use(cookieParser());
