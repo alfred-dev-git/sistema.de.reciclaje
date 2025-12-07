@@ -1,97 +1,70 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
+  Image,
+  Alert,
   ImageBackground,
   KeyboardAvoidingView,
   Platform,
-  Alert,
 } from "react-native";
-import { useRoute } from "@react-navigation/native";
+import { loginUsuario } from "../../api/services/login-service";
+import { saveToken, saveUser } from "../../auth/auth";
 import { navigate } from "../../navigation/refglobal-navigation";
-import DateTimePicker from "@react-native-community/datetimepicker";
-import { Ionicons } from "@expo/vector-icons";
-import { updatePerfil } from "../../api/services/perfil-service";
-import { Picker } from "@react-native-picker/picker";
-import { Municipio, getMunicipios } from "../../api/services/perfil-service";
+import { verificarRol } from "../../utils/verificarRol";
+import ModalMunicipio from "./municipio-select";
 
-const EditarPerfilScreen: React.FC = () => {
-  const route = useRoute<any>();
-  const { perfil } = route.params || {};
-
-  const [nombre, setNombre] = useState(perfil?.nombre || "");
-  const [apellido, setApellido] = useState(perfil?.apellido || "");
-  const [email, setEmail] = useState(perfil?.email || "");
-  const [telefono, setTelefono] = useState(perfil?.telefono || "");
-  const [fecha, setFecha] = useState(
-    perfil?.fecha_nacimiento ? new Date(perfil.fecha_nacimiento) : new Date()
-  );
-
-  const [municipioId, setMunicipioId] = useState(
-    perfil?.municipio_idmunicipio ?? null
-  );
-
-  const [municipios, setMunicipios] = useState<Municipio[]>([]);
-  const [loadingMunicipios, setLoadingMunicipios] = useState(true);
-
-  const [showPicker, setShowPicker] = useState(false);
+const LoginForm: React.FC = () => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showMunicipioModal, setShowMunicipioModal] = useState(false);
+  const [municipioSeleccionado, setMunicipioSeleccionado] = useState<{ id: number; descripcion: string } | null>(null);
 
-  //  TRAER MUNICIPIOS AL ENTRAR
-  useEffect(() => {
-    const fetchMunicipios = async () => {
-      const resp = await getMunicipios();
-      if (resp.success && resp.data) {
-        setMunicipios(resp.data);
-      } else {
-        Alert.alert("Error", "No se pudieron cargar los municipios");
-      }
-      setLoadingMunicipios(false);
-    };
-
-    fetchMunicipios();
-  }, []);
-
-  const onChangeDate = (event: any, selectedDate?: Date) => {
-    setShowPicker(false);
-    if (selectedDate) setFecha(selectedDate);
-  };
-
-  const handleUpdate = async () => {
-    if (!nombre || !apellido || !email || !telefono) {
-      Alert.alert("Validación", "Todos los campos son obligatorios");
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Campos requeridos", "Por favor ingrese email y contraseña.");
       return;
     }
 
-    const payload = {
-      nombre,
-      apellido,
-      email,
-      telefono,
-      fecha_nacimiento: fecha.toISOString().split("T")[0],
-      municipio_idmunicipio: municipioId,
-    };
-
+    setLoading(true);
     try {
-      setLoading(true);
-      const resp = await updatePerfil(payload);
-      setLoading(false);
+      const response = await loginUsuario(email, password);
 
-      if (!resp.success) {
-        Alert.alert("Error", resp.message);
-        return;
+      if (response.ok) {
+        await saveToken(response.token);
+        await saveUser(response.user);
+
+        if (verificarRol(response.user)) {
+          navigate("Drawer" as any);
+        } else {
+          Alert.alert("Acceso denegado", "No tienes permisos para acceder.");
+        }
+      } else {
+        Alert.alert("Error", response.mensaje || "Credenciales incorrectas.");
       }
-
-      Alert.alert("Éxito", "Perfil actualizado correctamente", [
-        { text: "OK", onPress: () => navigate("Perfil") },
-      ]);
-    } catch (e) {
+    } catch (error) {
+      console.error("ERROR GENERAL:", error);
+      Alert.alert(
+        "Error inesperado",
+        "Ocurrió un problema al intentar iniciar sesión."
+      );
+    } finally {
       setLoading(false);
-      Alert.alert("Error", "Hubo un problema al actualizar");
     }
+  };
+
+  const handleAbrirModalMunicipio = () => {
+    setShowMunicipioModal(true);
+  };
+
+  const handleMunicipioConfirmado = (municipio: { id: number; descripcion: string }) => {
+    setMunicipioSeleccionado(municipio);
+    setShowMunicipioModal(false);
+    navigate("Register" as any, { municipioId: municipio.id, municipioDesc: municipio.descripcion });
   };
 
   return (
@@ -105,203 +78,158 @@ const EditarPerfilScreen: React.FC = () => {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <View style={styles.container}>
-          <View style={styles.formContainer}>
-            <Text style={styles.title}>Editar Perfil</Text>
-
-            {/* Nombre */}
-            <Text>Nombre</Text>
-            <View style={styles.input}>
-              <Ionicons name="person-outline" size={20} color="#000" />
-              <TextInput
-                value={nombre}
-                onChangeText={setNombre}
-                style={{ flex: 1 }}
-                maxLength={80}
+          <View>
+            <View style={{ alignItems: "center" }}>
+              <Image
+                source={require("../../../assets/logos/logo.png")}
+                style={styles.logo}
               />
             </View>
+            <View style={styles.formContainer}>
+              <Text style={styles.title}>Iniciar Sesión</Text>
 
-            {/* Apellido */}
-            <Text>Apellido</Text>
-            <View style={styles.input}>
-              <Ionicons name="person-outline" size={20} color="#000" />
               <TextInput
-                value={apellido}
-                onChangeText={setApellido}
-                style={{ flex: 1 }}
-                maxLength={50}
-              />
-            </View>
-
-            {/* Email */}
-            <Text>Email</Text>
-            <View style={styles.input}>
-              <Ionicons name="mail-outline" size={20} color="#000" />
-              <TextInput
+                placeholder="Correo electrónico"
                 value={email}
                 onChangeText={setEmail}
                 autoCapitalize="none"
                 keyboardType="email-address"
-                style={{ flex: 1 }}
-                maxLength={80}
+                style={styles.input}
+                textContentType="emailAddress"
+                editable={!loading}
               />
-            </View>
-
-            {/* Teléfono */}
-            <Text>Teléfono</Text>
-            <View style={styles.input}>
-              <Ionicons name="call-outline" size={20} color="#000" />
               <TextInput
-                value={telefono}
-                onChangeText={setTelefono}
-                keyboardType="phone-pad"
-                style={{ flex: 1 }}
-                maxLength={15}
+                placeholder="Contraseña"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                style={styles.input}
+                textContentType="password"
+                editable={!loading}
               />
-            </View>
 
-            {/* Fecha nacimiento */}
-            <Text>Fecha de Nacimiento</Text>
-            <TouchableOpacity
-              onPress={() => setShowPicker(true)}
-              style={styles.dateInputContainer}
-            >
-              <Ionicons
-                name="calendar-outline"
-                size={20}
-                color="#000000ff"
-                style={styles.calendarIcon}
-              />
-              <Text style={styles.dateText}>
-                {fecha.toLocaleDateString("es-ES", {
-                  day: "2-digit",
-                  month: "2-digit",
-                  year: "numeric",
-                })}
-              </Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.boton, loading && styles.botonDisabled]}
+                onPress={handleLogin}
+                disabled={loading}
+              >
+                <Text style={styles.botonTexto}>
+                  {loading ? "Entrando..." : "Entrar"}
+                </Text>
+              </TouchableOpacity>
 
-            {showPicker && (
-              <DateTimePicker
-                value={fecha}
-                mode="date"
-                display={Platform.OS === "ios" ? "spinner" : "default"}
-                onChange={onChangeDate}
-                maximumDate={new Date()}
-              />
-            )}
+              <TouchableOpacity
+                style={[styles.boton, styles.botonSecundario]}
+                onPress={() => navigate("Home" as any)}
+                disabled={loading}
+              >
+                <Text style={styles.botonTexto}>Ir al Home</Text>
+              </TouchableOpacity>
 
-            {/* Select de Municipios */}
-            <Text>Municipio</Text>
-
-            {loadingMunicipios ? (
-              <Text>Cargando municipios...</Text>
-            ) : (
-              <View style={styles.pickerContainer}>
-                <Picker
-                  selectedValue={municipioId}
-                  onValueChange={(value) => setMunicipioId(Number(value))}
-                >
-                  {/* Item informativo, no seleccionable */}
-                  <Picker.Item
-                    label="Seleccione un municipio"
-                    value={0}
-                    enabled={false}
-                  />
-
-                  {municipios.map((m) => (
-                    <Picker.Item
-                      key={m.idmunicipio}
-                      label={m.descripcion}
-                      value={m.idmunicipio}
-                    />
-                  ))}
-                </Picker>
+              <View style={styles.registerContainer}>
+                <Text style={styles.registerText}>¿No tenés una cuenta? </Text>
+                <TouchableOpacity onPress={handleAbrirModalMunicipio}>
+                  <Text style={styles.registerLink}>Registrate</Text>
+                </TouchableOpacity>
               </View>
-            )}
 
-            {/* Botón Guardar */}
-            <TouchableOpacity
-              style={styles.boton}
-              onPress={handleUpdate}
-              disabled={loading}
-            >
-              <Text style={styles.botonTexto}>
-                {loading ? "Guardando..." : "Guardar Cambios"}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Volver */}
-            <TouchableOpacity style={styles.boton} onPress={() => navigate("Perfil")}>
-              <Text style={styles.botonTexto}>Cancelar</Text>
-            </TouchableOpacity>
+              <View style={styles.registerContainer}>
+                <View style={[styles.registerContainer, { marginTop: 10 }]}>
+                  <Text style={styles.registerText}>¿Olvidaste tu contraseña? </Text>
+                  <TouchableOpacity onPress={() => navigate("Forgot" as any)}>
+                    <Text style={styles.registerLink}>Recuperar</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
+
+      {/* Modal de municipio */}
+      <ModalMunicipio
+        visible={showMunicipioModal}
+        onCancel={() => setShowMunicipioModal(false)} // ✅ cambia onClose → onCancel
+        onConfirm={handleMunicipioConfirmado}
+      />
+
     </ImageBackground>
   );
 };
 
-export default EditarPerfilScreen;
+export default LoginForm;
 
 const styles = StyleSheet.create({
+
   background: {
     flex: 1,
   },
+  logo: {
+    width: 250,
+    height: 250,
+    marginBottom: 40,
+  },
   container: {
     flex: 1,
-    justifyContent: "center",
+    justifyContent: 'center',
+    margin: 10,
   },
   formContainer: {
-    margin: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
     padding: 20,
-    backgroundColor: "#ffffffdd",
-    borderRadius: 12,
-  },
+    borderRadius: 20,
+  }
+  ,
   title: {
-    fontSize: 30,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 25,
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#005C41',
+    marginBottom: 30,
+    textAlign: 'center',
   },
   input: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 12,
     borderWidth: 1,
+    borderColor: '#999',
     borderRadius: 8,
-    backgroundColor: "#fff",
-    marginBottom: 10,
-    height: 45,
+    padding: 12,
+    marginBottom: 15,
+    backgroundColor: '#fff',
   },
   boton: {
-    backgroundColor: "#307043",
-    padding: 12,
-    marginTop: 12,
-    borderRadius: 8,
-    alignItems: "center",
-  },
-  botonTexto: {
-    color: "#fff",
-    fontSize: 17,
-    fontWeight: "bold",
-  },
-  dateInputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderWidth: 1,
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: '#2e7040',
+    padding: 15,
+    borderRadius: 20,
+    alignItems: 'center',
     marginBottom: 10,
-    backgroundColor: "#fff",
   },
-  calendarIcon: { marginRight: 10 },
-  dateText: { fontSize: 16 },
-  pickerContainer: {
-  borderWidth: 1,
-  borderColor: "#ccc",
-  borderRadius: 8,
-  marginBottom: 12,
-  backgroundColor: "#fff",
-},
+  botonSecundario: {
+    backgroundColor: '#137ce4ff',
+    marginTop: 0,
+  },
+  registerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 10,
+  },
+
+  registerText: {
+    color: '#333',
+    fontSize: 15,
+  },
+
+  registerLink: {
+    color: '#2e7040',
+    fontWeight: 'bold',
+    fontSize: 15,
+  },
+
+  botonTexto: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  botonDisabled: {
+    backgroundColor: '#005C41',
+    opacity: 0.7,
+  },
 });

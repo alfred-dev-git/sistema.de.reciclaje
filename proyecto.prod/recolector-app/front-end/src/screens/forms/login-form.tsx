@@ -15,13 +15,13 @@ import { loginUsuario } from "../../api/services/login-service";
 import { saveToken, saveUser } from "../../auth/auth";
 import { navigate } from "../../navigation/refglobal-navigation";
 import { verificarRol } from "../../utils/verificarRol";
-import ModalMunicipio from "./municipio-select"; 
+import ModalMunicipio from "./municipio-select";
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showMunicipioModal, setShowMunicipioModal] = useState(false); 
+  const [showMunicipioModal, setShowMunicipioModal] = useState(false);
   const [municipioSeleccionado, setMunicipioSeleccionado] = useState<{ id: number; descripcion: string } | null>(null);
 
   const handleLogin = async () => {
@@ -39,7 +39,7 @@ const LoginForm: React.FC = () => {
         await saveUser(response.user);
 
         if (verificarRol(response.user)) {
-          navigate("RecolectorNavigation" as any);
+          navigate("Drawer" as any);
         } else {
           Alert.alert("Acceso denegado", "No tienes permisos para acceder.");
         }
@@ -131,13 +131,15 @@ const LoginForm: React.FC = () => {
                 <TouchableOpacity onPress={handleAbrirModalMunicipio}>
                   <Text style={styles.registerLink}>Registrate</Text>
                 </TouchableOpacity>
-
-              <View style={[styles.registerContainer, { marginTop: 10 }]}>
-                <Text style={styles.registerText}>¿Olvidaste tu contraseña? </Text>
-                <TouchableOpacity onPress={() => navigate("Forgot" as any)}>
-                  <Text style={styles.registerLink}>Recuperar</Text>
-                </TouchableOpacity>
               </View>
+
+              <View style={styles.registerContainer}>
+                <View style={[styles.registerContainer, { marginTop: 10 }]}>
+                  <Text style={styles.registerText}>¿Olvidaste tu contraseña? </Text>
+                  <TouchableOpacity onPress={() => navigate("Forgot" as any)}>
+                    <Text style={styles.registerLink}>Recuperar</Text>
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
           </View>
@@ -145,11 +147,11 @@ const LoginForm: React.FC = () => {
       </KeyboardAvoidingView>
 
       {/* Modal de municipio */}
-    <ModalMunicipio
-      visible={showMunicipioModal}
-      onCancel={() => setShowMunicipioModal(false)} // ✅ cambia onClose → onCancel
-      onConfirm={handleMunicipioConfirmado}
-    />
+      <ModalMunicipio
+        visible={showMunicipioModal}
+        onCancel={() => setShowMunicipioModal(false)} // ✅ cambia onClose → onCancel
+        onConfirm={handleMunicipioConfirmado}
+      />
 
     </ImageBackground>
   );

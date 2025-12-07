@@ -92,7 +92,7 @@ export const loginUser = async (req: Request, res: Response) => {
     const token = jwt.sign(payload, secret, { expiresIn: expireSec });
 
     // Respuesta
-  res.json({ message: "Login exitoso", token, user: { email: user.email, rol: user.rol_idrol, nombre: user.nombre, }, });
+    res.json({ message: "Login exitoso", token, user: { email: user.email, rol: user.rol_idrol, nombre: user.nombre, }, });
 
   } catch (err) {
     console.error("❌ Error en login:", err);
@@ -172,7 +172,8 @@ export async function resetPassword(req: Request, res: Response) {
     );
 
     const user = (rows as any[])[0];
-    if (!user) return res.status(400).json({ error: "Código inválido" });
+    // no revelar si el correo existe: devolver mensaje genérico
+    if (!user) return res.status(400).json({ error: "Datos inválidos" });
 
     // obtener último código
     const [codes] = await pool.query(
@@ -186,14 +187,11 @@ export async function resetPassword(req: Request, res: Response) {
 
     const rec = (codes as any[])[0];
 
-    if (!rec || rec.used_at)
-      return res.status(400).json({ error: "Código inválido" });
-
-    if (new Date(rec.expires_at) < new Date())
-      return res.status(400).json({ error: "Código vencido" });
-
+    // respuestas genéricas para no filtrar estado del código
+    if (!rec || rec.used_at) return res.status(400).json({ error: "Datos inválidos" });
+    if (new Date(rec.expires_at) < new Date()) return res.status(400).json({ error: "Datos inválidos" });
     const match = await bcrypt.compare(plainCode, rec.code_hash);
-    if (!match) return res.status(400).json({ error: "Código inválido" });
+    if (!match) return res.status(400).json({ error: "Datos inválidos" });
 
     // actualizar contraseña
     const hash = await bcrypt.hash(newPass, 10);

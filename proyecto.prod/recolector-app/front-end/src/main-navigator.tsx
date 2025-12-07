@@ -1,16 +1,17 @@
 import React from "react";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+
+// Screens
 import HomeScreen from "./screens/home-screen";
 import LoginForm from "./screens/forms/login-form";
-import DrawerNavigation from "./navigation/drawer-navigation";
-import type { RootStackParamList } from "./types/navigation";
 import RegisterForm from "./screens/forms/register-form";
 import ForgotScreen from "./screens/forms/forgot-form";
 import ResetScreen from "./screens/forms/reset";
-import PerfilScreen from "./components/perfil-recolector";
-import EditarPerfilScreen from "./screens/forms/edit-perfil";
 
-const Stack = createNativeStackNavigator<RootStackParamList>();
+// App Navigation
+import DrawerNavigation from "./navigation/drawer-navigation";
+
+const Stack = createNativeStackNavigator();
 
 const MainNavigator: React.FC = () => {
   return (
@@ -18,15 +19,24 @@ const MainNavigator: React.FC = () => {
       initialRouteName="Home"
       screenOptions={{ headerShown: false }}
     >
+      {/* ================================
+          HOME
+      ================================= */}
       <Stack.Screen name="Home" component={HomeScreen} />
+
+      {/* ================================
+          AUTH
+      ================================= */}
       <Stack.Screen name="Login" component={LoginForm} />
       <Stack.Screen name="Register" component={RegisterForm} />
       <Stack.Screen name="Forgot" component={ForgotScreen} />
       <Stack.Screen name="Reset" component={ResetScreen} />
-      <Stack.Screen name="Perfil" component={PerfilScreen} />
-      <Stack.Screen name="Editar" component={EditarPerfilScreen} />
+
+      {/* ================================
+          APP (Protegida después del login)
+      ================================= */}
       <Stack.Screen
-        name="RecolectorNavigation"
+        name="Drawer"
         component={DrawerNavigation}
       />
     </Stack.Navigator>

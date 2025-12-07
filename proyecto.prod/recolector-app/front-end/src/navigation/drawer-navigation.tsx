@@ -1,43 +1,25 @@
-// src/navigation/drawer-navigation.tsx
-import React from "react";
+// drawer-navigation.tsx
 import { createDrawerNavigator } from "@react-navigation/drawer";
-import RecolectorNavigation from "./recolector-navigation";
-import PerfilScreen from "../components/perfil-recolector";
+import RecolectorStack from "./recolector-navigation";
 import CronogramaScreen from "../components/cronograma-recoleccion";
+import PerfilScreen from "../components/perfil-recolector";
+import EditarPerfilScreen from "../screens/forms/edit-perfil";
+
 const Drawer = createDrawerNavigator();
 
-const DrawerNavigation: React.FC = () => {
-  return (
-    <Drawer.Navigator
-      initialRouteName="Inicio"
-      screenOptions={{
-        headerShown: false, 
-        drawerActiveTintColor: "#307043",
-        drawerInactiveTintColor: "gray",
-        drawerStyle: {
-          backgroundColor: "#f8faed",
-          width: 250,
-        },
+const DrawerNavigation = () => (
+  <Drawer.Navigator initialRouteName="Inicio" screenOptions={{ headerShown: false }}>
+    <Drawer.Screen name="Inicio" component={RecolectorStack} />
+    <Drawer.Screen name="Mi perfil" component={PerfilScreen} />
+
+    <Drawer.Screen name="EditarPerfil" component={EditarPerfilScreen}
+      options={{
+        drawerItemStyle: { display: "none" },
       }}
-    >
-      <Drawer.Screen
-        name="Inicio"
-        component={RecolectorNavigation}
-        options={{ title: "Inicio" }}
-      />
-      <Drawer.Screen
-        name="Perfil"
-        component={PerfilScreen}
-        options={{ title: "Mi Perfil" }}
-      />
-      <Drawer.Screen
-        name="cronograma"
-        component={CronogramaScreen}
-        options={{ title: "Cronograma Reciclaje" }}
-      />
-    </Drawer.Navigator>
-    
-  );
-};
+    />
+
+    <Drawer.Screen name="Cronograma" component={CronogramaScreen} />
+  </Drawer.Navigator>
+);
 
 export default DrawerNavigation;
