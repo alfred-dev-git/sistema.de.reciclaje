@@ -16,6 +16,7 @@ import { saveToken, saveUser } from "../../auth/auth";
 import { navigate } from "../../navigation/refglobal-navigation";
 import { verificarRol } from "../../utils/verificarRol";
 import ModalMunicipio from "./municipio-select";
+import Icon from "react-native-vector-icons/MaterialIcons";
 
 const LoginForm: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -23,6 +24,7 @@ const LoginForm: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [showMunicipioModal, setShowMunicipioModal] = useState(false);
   const [municipioSeleccionado, setMunicipioSeleccionado] = useState<{ id: number; descripcion: string } | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) {
@@ -98,15 +100,27 @@ const LoginForm: React.FC = () => {
                 textContentType="emailAddress"
                 editable={!loading}
               />
-              <TextInput
-                placeholder="Contraseña"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-                style={styles.input}
-                textContentType="password"
-                editable={!loading}
+             <View style={styles.passwordContainer}>
+            <TextInput
+              placeholder="Contraseña"
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry={!showPassword}
+              style={[styles.input, { flex: 1, marginBottom: 0, borderWidth: 0 }]}
+              textContentType="password"
+              editable={!loading}
+            />
+
+            <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+              <Icon
+                name={showPassword ? "visibility-off" : "visibility"}
+                size={24}
+                color="#555"
+                style={{ paddingHorizontal: 5 }}
               />
+            </TouchableOpacity>
+          </View>
+
 
               <TouchableOpacity
                 style={[styles.boton, loading && styles.botonDisabled]}
@@ -232,4 +246,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#005C41',
     opacity: 0.7,
   },
+  passwordContainer: {
+  flexDirection: "row",
+  alignItems: "center",
+  borderWidth: 1,
+  borderColor: "#999",
+  borderRadius: 8,
+  backgroundColor: "#fff",
+  marginBottom: 15,
+  paddingRight: 10,
+},
+
 });
