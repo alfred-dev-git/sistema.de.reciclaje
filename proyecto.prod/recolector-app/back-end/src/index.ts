@@ -9,6 +9,7 @@ import historialRoutes from './routes/historial-routes.js';
 import notificacionRoutes from './routes/notificacion-routes.js';
 import perfilRoutes from './routes/perfil-routes.js';
 import cronogramaRoutes from './routes/cronograma-routes.js';
+import contactosRoutes from './routes/contactos-routes.js';
 
 dotenv.config()
 
@@ -47,6 +48,7 @@ app.use('/api/historial', historialRoutes)
 app.use('/api/notificacion', notificacionRoutes)
 app.use('/api/perfil', perfilRoutes)
 app.use('/api/cronograma', cronogramaRoutes)
+app.use('/api', contactosRoutes)
 
 
 const PORT = Number(process.env.PORT) || 3000;
