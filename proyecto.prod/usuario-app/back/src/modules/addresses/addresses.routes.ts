@@ -36,13 +36,24 @@ router.post(
   "/",
   asyncHandler(async (req: Request, res: Response) => {
     const {
-      usuario_idusuario, latitud, longitud,
-      calle = null, numero = null, barrio = null, referencias = null
+      usuario_idusuario,
+      latitud,
+      longitud,
+      calle,
+      numero,
+      barrio = null,
+      referencias = null
     } = req.body || {};
 
-    if (!usuario_idusuario || latitud === undefined || longitud === undefined) {
-      return res.status(400).json({ error: "Faltan campos: usuario_idusuario, latitud, longitud" });
+    if (!usuario_idusuario || !latitud || !longitud || !calle || !numero) {
+      return res.status(400).json({ error: "Faltan campos obligatorios" });
     }
+
+    const cleanText = (t: string) =>
+      t.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s\.\-]/g, "").trim();
+
+    const calleClean = cleanText(calle);
+    const barrioClean = barrio ? cleanText(barrio) : null;
 
     const db = getDB();
 
@@ -53,14 +64,41 @@ router.post(
     );
     if (!user) return res.status(400).json({ error: "usuario_idusuario inexistente" });
 
+    // 🔥 evitar duplicado
+    const [dup]: any = await db.query(
+      `SELECT iddirecciones FROM direcciones 
+       WHERE usuario_idusuario = ? AND calle = ? AND numero = ?`,
+      [usuario_idusuario, calleClean, numero]
+    );
+
+    if (dup.length > 0) {
+      return res.status(409).json({ error: "La dirección ya existe" });
+    }
+
     const [result] = await db.execute(
       `INSERT INTO direcciones (usuario_idusuario, latitud, longitud, calle, numero, barrio, referencias)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [usuario_idusuario, latitud, longitud, calle, numero, barrio, referencias]
+      [usuario_idusuario, latitud, longitud, calleClean, numero, barrioClean, referencias]
     );
-    const insertId = (result as any).insertId; // este es iddirecciones
 
-    res.status(201).json({ id: insertId });
+    res.status(201).json({ id: (result as any).insertId });
+  })
+);
+
+router.get(
+  "/check-duplicate",
+  asyncHandler(async (req: Request, res: Response) => {
+    const { userId, calle, numero } = req.query;
+
+    const db = getDB();
+
+    const [rows]: any = await db.query(
+      `SELECT iddirecciones FROM direcciones 
+       WHERE usuario_idusuario = ? AND calle = ? AND numero = ?`,
+      [userId, calle, numero]
+    );
+
+    res.json({ duplicate: rows.length > 0 });
   })
 );
 

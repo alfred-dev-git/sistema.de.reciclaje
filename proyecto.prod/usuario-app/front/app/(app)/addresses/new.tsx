@@ -15,9 +15,23 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
 import { getCurrentUser } from "@/services/api/auth";
 import { api } from "@/services/api/http";
-import MapAddressPicker from "@/components/MapAddressPicker";
 import { Button } from "@/components/Button";
 import { router } from "expo-router";
+import { geocodeAddress } from "./geocodeAdress"; // si el archivo se llama así, dejalo igual
+
+// ----------------------
+// VALIDACIONES Y LIMPIEZA
+// ----------------------
+const cleanLetters = (t: string) => t.replace(/[^A-Za-zÁÉÍÓÚáéíóúÑñ .-]/g, "");
+const cleanNumbers = (t: string) => t.replace(/[^0-9]/g, "");
+
+const validateStreet = (t: string) =>
+  /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9 .-]{2,}$/.test(t);
+
+const validateNumber = (t: string) => /^[0-9]{1,10}$/.test(t);
+
+const validateText = (t: string) =>
+  /^[A-Za-zÁÉÍÓÚáéíóúÑñ .-]{2,}$/.test(t);
 
 export default function NewAddressScreen() {
   const insets = useSafeAreaInsets();
@@ -25,23 +39,22 @@ export default function NewAddressScreen() {
 
   const [userId, setUserId] = useState<number | null>(null);
 
-  // Campos del formulario (incluye REFERENCIAS)
+  // Campos del formulario
   const [calle, setCalle] = useState<string>("");
   const [numero, setNumero] = useState<string>("");
   const [barrio, setBarrio] = useState<string>("");
   const [referencias, setReferencias] = useState<string>("");
-
-  // Coordenadas (obligatorias)
-  const [lat, setLat] = useState<number | null>(null);
-  const [lng, setLng] = useState<number | null>(null);
+  const [ciudad, setCiudad] = useState<string>("");
+  const [provincia, setProvincia] = useState<string>("");
 
   const [saving, setSaving] = useState(false);
 
+  // Obtener usuario
   useEffect(() => {
     (async () => {
       const u = await getCurrentUser();
-      console.log("Current user:", u);
       const uid = Number(u?.id ?? u?.idusuario);
+
       if (!Number.isFinite(uid)) {
         Alert.alert("Error", "Sesión inválida");
         return;
@@ -50,40 +63,83 @@ export default function NewAddressScreen() {
     })();
   }, []);
 
-  const onMapChange = (data: {
-    lat: number;
-    lng: number;
-    calle?: string | null;
-    numero?: string | null;
-    barrio?: string | null;
-    formattedAddress?: string | null;
-  }) => {
-    setLat(data.lat);
-    setLng(data.lng);
-
-    // ✅ SIEMPRE sobrescribimos si el map nos provee el dato (aunque ya haya texto)
-    if (data.calle !== undefined) setCalle(data.calle ?? "");
-    if (data.numero !== undefined) setNumero(data.numero ? String(data.numero) : "");
-    if (data.barrio !== undefined) setBarrio(data.barrio ?? "");
-  };
-
+  // ----------------------
+  // SUBMIT
+  // ----------------------
   const onSubmit = async () => {
     if (!userId) return;
-    if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) {
-      Alert.alert("Faltan datos", "Seleccioná una ubicación en el mapa o buscá por texto.");
+
+    // Validaciones
+    if (!validateStreet(calle)) {
+      Alert.alert("Calle inválida", "La calle solo puede tener letras, números, espacios o puntos.");
       return;
     }
+
+    if (!validateNumber(numero)) {
+      Alert.alert("Número inválido", "El número debe contener solo dígitos.");
+      return;
+    }
+
+    if (ciudad && !validateText(ciudad)) {
+      Alert.alert("Ciudad inválida", "Ingrese una ciudad válida.");
+      return;
+    }
+
+    if (provincia && !validateText(provincia)) {
+      Alert.alert("Provincia inválida", "Ingrese una provincia válida.");
+      return;
+    }
+
+    if (barrio && !validateText(barrio)) {
+      Alert.alert("Barrio inválido", "Ingrese un barrio válido.");
+      return;
+    }
+
+    // 🔥 Verificar duplicado ANTES de guardar
+    try {
+    const exists = await api.get(
+      `/addresses/check-duplicate?userId=${userId}&calle=${calle}&numero=${numero}`
+    );
+
+      if (exists?.data?.duplicate) {
+        Alert.alert("Ya existe", "Ya agregaste esta dirección antes.");
+        return;
+      }
+    } catch (err) {
+      console.log("Error verificando duplicado", err);
+    }
+
     try {
       setSaving(true);
+
+      // Obtener coordenadas
+      const coords = await geocodeAddress({
+        calle,
+        numero,
+        barrio: barrio || null,
+        ciudad: ciudad || null,
+        provincia: provincia || null,
+        pais: "Argentina",
+      });
+
+      if (!coords) {
+        Alert.alert("Error", "No se pudieron obtener coordenadas.");
+        return;
+      }
+
+      console.log("Coordenadas obtenidas:", coords);
+
+      // Guardar en backend
       await api.post("/addresses", {
         usuario_idusuario: userId,
-        calle: calle || null,
-        numero: numero || null,
-        barrio: barrio || null,
+        calle,
+        numero,
+        barrio,
         referencias: referencias || null,
-        latitud: Number(lat),
-        longitud: Number(lng),
+        latitud: coords.lat,
+        longitud: coords.lng,
       });
+
       Alert.alert("Listo", "Dirección agregada.");
       router.back();
     } catch (e: any) {
@@ -111,41 +167,53 @@ export default function NewAddressScreen() {
             { paddingBottom: 24 + insets.bottom },
           ]}
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode={Platform.OS === "ios" ? "interactive" : "on-drag"}
         >
           <Text style={styles.title}>Agregar dirección</Text>
 
-          <MapAddressPicker onChange={onMapChange} />
+          <Text style={styles.label}>Ciudad (opcional)</Text>
+          <TextInput
+            style={styles.input}
+            value={ciudad}
+            onChangeText={(t) => setCiudad(cleanLetters(t))}
+            placeholder="Ciudad"
+            maxLength={50}
+          />
+
+          <Text style={styles.label}>Provincia</Text>
+          <TextInput
+            style={styles.input}
+            value={provincia}
+            onChangeText={(t) => setProvincia(cleanLetters(t))}
+            placeholder="Provincia"
+            maxLength={50}
+          />
 
           <Text style={styles.label}>Calle</Text>
           <TextInput
             style={styles.input}
             value={calle}
-            onChangeText={setCalle}
+            onChangeText={(t) => setCalle(cleanLetters(t))}
             placeholder="Calle"
-            returnKeyType="next"
-            blurOnSubmit={false}
+            maxLength={50}
           />
 
           <Text style={styles.label}>Número</Text>
           <TextInput
             style={styles.input}
             value={numero}
-            onChangeText={setNumero}
+            onChangeText={(t) => setNumero(cleanNumbers(t))}
             placeholder="Número"
             keyboardType="numeric"
-            returnKeyType="next"
-            blurOnSubmit={false}
+            maxLength={15}
           />
 
-          <Text style={styles.label}>Barrio</Text>
+          <Text style={styles.label}>Barrio (opcional)</Text>
           <TextInput
             style={styles.input}
             value={barrio}
-            onChangeText={setBarrio}
+            onChangeText={(t) => setBarrio(cleanLetters(t))}
             placeholder="Barrio"
-            returnKeyType="next"
-            blurOnSubmit={false}
+            maxLength={50}
           />
 
           <Text style={styles.label}>Referencias</Text>
@@ -153,9 +221,10 @@ export default function NewAddressScreen() {
             style={[styles.input, styles.multiline]}
             value={referencias}
             onChangeText={setReferencias}
-            placeholder="Punto de referencia, piso/depto, etc."
+            placeholder="Piso, depto, punto de referencia…"
             multiline
             textAlignVertical="top"
+            maxLength={95}
           />
 
           <Button
@@ -172,19 +241,15 @@ export default function NewAddressScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { padding: 16 },
-  title: { fontSize: 18, fontWeight: "700", marginBottom: 12 },
-  label: { fontWeight: "600", marginTop: 12, marginBottom: 6 },
+  container: { padding: 20 },
+  title: { fontSize: 26, fontWeight: "700", marginBottom: 16 },
+  label: { marginTop: 12, fontWeight: "600" },
   input: {
-    height: 44,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     borderColor: "#ccc",
+    padding: 12,
     borderRadius: 8,
-    paddingHorizontal: 12,
-    backgroundColor: "#fff",
+    marginTop: 4,
   },
-  multiline: {
-    height: 100,
-    paddingTop: 10,
-  },
+  multiline: { height: 100 },
 });
