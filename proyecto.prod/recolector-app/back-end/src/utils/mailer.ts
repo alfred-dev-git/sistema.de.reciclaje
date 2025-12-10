@@ -17,10 +17,12 @@ function getTransporter() {
         host: SMTP_HOST,
         port: Number(SMTP_PORT),
         secure: false,
-        auth: { user: SMTP_USER, pass: SMTP_PASS },
+        auth: {
+          user: SMTP_USER,
+          pass: SMTP_PASS,
+        },
       });
     } else {
-      // modo dev: no envía mail, sólo log
       transporter = null;
     }
   }
@@ -29,12 +31,12 @@ function getTransporter() {
 
 export async function sendPasswordResetEmail(to: string, code: string) {
   const t = getTransporter();
+
   const subject = "Código para restablecer tu contraseña";
   const text = `Usá este código para restablecer tu contraseña: ${code}
- El código vence en 15 minutos.`;
+El código vence en 15 minutos.`;
 
   if (!t) {
-    // Dev / sin SMTP: logueamos
     console.log(`[DEV] Enviar a ${to}: ${subject}\n${text}`);
     return;
   }

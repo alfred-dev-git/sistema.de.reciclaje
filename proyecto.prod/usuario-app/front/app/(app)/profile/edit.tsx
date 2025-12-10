@@ -105,7 +105,6 @@ export default function EditProfileScreen() {
         sexo: sexo || undefined,
       };
       Object.keys(body).forEach((k) => body[k] === undefined && delete body[k]);
-      console.log("envio esto:", body);
       const resp = await api.put<{ user: any }>(`/users/${userId}`, body);
       await SecureStore.setItemAsync("current_user", JSON.stringify(resp.user));
 

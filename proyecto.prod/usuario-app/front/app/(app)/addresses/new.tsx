@@ -215,7 +215,7 @@ export default function NewAddressScreen() {
             maxLength={50}
           />
 
-          <Text style={styles.label}>Referencias</Text>
+          <Text style={styles.label}>Referencias(detalle de la vivienda / donde buscar el bolson)</Text>
           <TextInput
             style={[styles.input, styles.multiline]}
             value={referencias}
