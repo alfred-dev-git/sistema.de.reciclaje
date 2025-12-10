@@ -41,8 +41,8 @@ router.post(
       longitud,
       calle,
       numero,
-      barrio = null,
-      referencias = null
+      barrio,
+      referencias
     } = req.body || {};
 
     if (!usuario_idusuario || !latitud || !longitud || !calle || !numero) {
@@ -53,7 +53,13 @@ router.post(
       t.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s\.\-]/g, "").trim();
 
     const calleClean = cleanText(calle);
-    const barrioClean = barrio ? cleanText(barrio) : null;
+
+  const barrioClean =
+    barrio && barrio.trim() !== "" ? cleanText(barrio) : "---";
+
+  const referenciasClean =
+    referencias && referencias.trim() !== "" ? referencias.trim() : "---";
+
 
     const db = getDB();
 
@@ -62,9 +68,11 @@ router.post(
       `SELECT idusuario FROM usuario WHERE idusuario = ?`,
       [usuario_idusuario]
     );
-    if (!user) return res.status(400).json({ error: "usuario_idusuario inexistente" });
+    if (!user) {
+      return res.status(400).json({ error: "usuario_idusuario inexistente" });
+    }
 
-    // 🔥 evitar duplicado
+    // evitar duplicado
     const [dup]: any = await db.query(
       `SELECT iddirecciones FROM direcciones 
        WHERE usuario_idusuario = ? AND calle = ? AND numero = ?`,
@@ -75,15 +83,26 @@ router.post(
       return res.status(409).json({ error: "La dirección ya existe" });
     }
 
+    // insertar
     const [result] = await db.execute(
-      `INSERT INTO direcciones (usuario_idusuario, latitud, longitud, calle, numero, barrio, referencias)
+      `INSERT INTO direcciones 
+      (usuario_idusuario, latitud, longitud, calle, numero, barrio, referencias)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [usuario_idusuario, latitud, longitud, calleClean, numero, barrioClean, referencias]
+      [
+        usuario_idusuario,
+        latitud,
+        longitud,
+        calleClean,
+        numero,
+        barrioClean,
+        referenciasClean
+      ]
     );
 
     res.status(201).json({ id: (result as any).insertId });
   })
 );
+
 
 router.get(
   "/check-duplicate",

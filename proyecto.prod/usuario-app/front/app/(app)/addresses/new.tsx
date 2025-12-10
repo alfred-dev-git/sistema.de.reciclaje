@@ -127,9 +127,8 @@ export default function NewAddressScreen() {
         return;
       }
 
-      console.log("Coordenadas obtenidas:", coords);
 
-      // Guardar en backend
+      // Guardar en backend.
       await api.post("/addresses", {
         usuario_idusuario: userId,
         calle,
