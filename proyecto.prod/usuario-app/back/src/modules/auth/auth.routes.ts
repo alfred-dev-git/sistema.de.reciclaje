@@ -200,7 +200,12 @@ router.post(
     };
 
     const token = signToken({ uid: user.id });
-    res.json({ token: '...' });
+
+    res.json({
+      user,
+      token
+    });
+
   })
 );
 

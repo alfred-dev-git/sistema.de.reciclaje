@@ -66,7 +66,6 @@ export default function RegisterScreen() {
     const cargarMunicipios = async () => {
       try {
         const data = await listMunicipios();
-        console.log("MUNICIPIOS CARGADOS:", data);
         setMunicipios(data);
       } catch (err) {
         console.error("Error al cargar municipios", err);
