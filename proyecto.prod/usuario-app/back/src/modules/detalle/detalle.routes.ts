@@ -77,13 +77,13 @@ router.post(
   })
 );
 
-router.get(
-  "/",
-  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const db = getDB();
-    const [rows] = await db.query("SELECT * FROM detalle");
-    res.json(rows);
-  })
-);
+// router.get(
+//   "/",
+//   asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+//     const db = getDB();
+//     const [rows] = await db.query("SELECT * FROM detalle");
+//     res.json(rows);
+//   })
+// );
 
 export default router;
