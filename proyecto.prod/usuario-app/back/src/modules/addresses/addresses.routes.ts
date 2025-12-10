@@ -33,7 +33,7 @@ router.get(
  * Devuelve: { id }  // id = insertId = iddirecciones
  */
 router.post(
-  "/addresses",
+  "/",
   asyncHandler(async (req: Request, res: Response) => {
     const {
       usuario_idusuario, latitud, longitud,

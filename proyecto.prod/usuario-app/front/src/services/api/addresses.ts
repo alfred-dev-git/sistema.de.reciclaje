@@ -22,7 +22,7 @@ export async function createAddress(payload: Omit<Address, "id">) {
 }
 
 export async function listUserAddresses(userId: number) {
-  const data = await api.get<{ addresses: any[] }>(`/users/${userId}/addresses`);
+  const data = await api.get<{ addresses: any[] }>(`addresses/users/${userId}/addresses`);
   const items: Address[] = (data.addresses || []).map((a) => ({
     id: Number(a.id),
     usuario_idusuario: Number(a.usuario_idusuario),
