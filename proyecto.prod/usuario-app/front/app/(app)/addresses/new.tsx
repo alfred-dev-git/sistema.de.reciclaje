@@ -40,6 +40,7 @@ export default function NewAddressScreen() {
   useEffect(() => {
     (async () => {
       const u = await getCurrentUser();
+      console.log("Current user:", u);
       const uid = Number(u?.id ?? u?.idusuario);
       if (!Number.isFinite(uid)) {
         Alert.alert("Error", "Sesión inválida");
