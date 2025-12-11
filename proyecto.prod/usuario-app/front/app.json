@@ -38,7 +38,11 @@
       "expo-secure-store"
     ],
     "extra": {
-      "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyDn_n2IrdMuLaCPNkEWSFiGJ1bDjFQLgqQ"
+      "EXPO_PUBLIC_GOOGLE_MAPS_API_KEY": "AIzaSyDn_n2IrdMuLaCPNkEWSFiGJ1bDjFQLgqQ",
+      "router": {},
+      "eas": {
+        "projectId": "25db5a68-7732-4118-bfdf-493cb7ea398c"
+      }
     }
   }
 }

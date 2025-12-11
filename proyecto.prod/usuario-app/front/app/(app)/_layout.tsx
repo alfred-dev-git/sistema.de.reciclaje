@@ -117,8 +117,9 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
 
       <DrawerItemList {...props} />
 
+      <DrawerItem label="Cerrar sesión" onPress={onLogout} labelStyle={{ color: "#d00", fontWeight: "600" }} />
       <View style={styles.footer}>
-        <DrawerItem label="Cerrar sesión" onPress={onLogout} labelStyle={{ color: "#d00", fontWeight: "600" }} />
+        <Text style={{ margin: 10, color: "black", fontWeight: "600", fontSize: 13 }}>Contacto: recolectapp.soporte@gmail.com</Text>
       </View>
     </DrawerContentScrollView>
   );
