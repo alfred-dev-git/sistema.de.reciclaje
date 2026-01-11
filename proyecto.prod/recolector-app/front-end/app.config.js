@@ -5,10 +5,10 @@ export default {
     name: "RecolectorApp",
     slug: "recolectapp-recolector",
 
-    icon: "./assets/icon.png",
+    icon: "./assets/logos/logo.png",
 
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/logos/logo.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff",
     },
@@ -20,7 +20,7 @@ export default {
     android: {
       package: "com.recolectapp.recolector",
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./assets/logos/logo.png",
         backgroundColor: "#ffffff",
       },
     },
