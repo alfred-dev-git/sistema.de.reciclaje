@@ -1,6 +1,5 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert } from "react-native";
-import MapaRutas from "../../components/mapa-rutas";
 import ModalCompletado from "../../components/modal-completado";
 import AlertNoEstuvo from "../../components/alert-ausente";
 import { RutaCalculada } from "../../api/services/paradas-service";
@@ -15,7 +14,6 @@ export default function RutaAsignada({ route }: any) {
   const [modalVisible, setModalVisible] = useState(false);
   const [paradaSeleccionada, setParadaSeleccionada] = useState<any>(null);
 
-  const mapRef = useRef<any>(null);
   const ruta = rutas[rutaSeleccionada];
 
   // --- BOTÓN COMPLETADO ---
@@ -51,18 +49,8 @@ export default function RutaAsignada({ route }: any) {
       setRutas(updatedRutas);
       navigation.setParams({ rutasActualizadas: updatedRutas });
 
-      // Opcional: centrar mapa en la parada actual
-      const parada = updatedRutas[rutaSeleccionada].paradas.find(
-        (p) => p.idpedidos === paradaSeleccionada.idpedidos
-      );
-      if (parada) {
-        mapRef.current?.animateToRegion({
-          latitude: parada.latitude,
-          longitude: parada.longitude,
-          latitudeDelta: 0.01,
-          longitudeDelta: 0.01,
-        });
-      }
+      // Opcional: centrar mapa en la parada actual, SE BORRO
+
     } catch (error: any) {
       Alert.alert("Error", error.message || "No se pudo completar la recolección");
     } finally {
@@ -78,15 +66,7 @@ export default function RutaAsignada({ route }: any) {
   return (
     <View style={styles.container}>
       {/* Mapa */}
-      <View style={styles.mapaContainer}>
-        <MapaRutas
-          rutas={rutas}
-          rutaSeleccionada={rutaSeleccionada}
-          onToggleEstado={(paradaIndex) => {
-            // opcional: si quieres hacer algo al tocar el marker
-          }}
-        />
-      </View>
+
 
       {/* Lista de paradas */}
       <View style={styles.listaContainer}>
