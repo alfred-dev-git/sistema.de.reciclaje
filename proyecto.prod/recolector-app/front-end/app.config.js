@@ -5,10 +5,12 @@ export default {
     name: "RecolectorApp",
     slug: "recolectapp-recolector",
 
-    icon: "./assets/icon.png",
+    // 🔹 ICONO GENERAL
+    icon: "./assets/logos/logo.png",
 
+    // 🔹 SPLASH
     splash: {
-      image: "./assets/splash-icon.png",
+      image: "./assets/logos/logo.png",
       resizeMode: "contain",
       backgroundColor: "#ffffff",
     },
@@ -19,9 +21,17 @@ export default {
 
     android: {
       package: "com.recolectapp.recolector",
+
+      // 🔹 ICONO ANDROID
       adaptiveIcon: {
-        foregroundImage: "./assets/adaptive-icon.png",
+        foregroundImage: "./assets/logos/logo.png",
         backgroundColor: "#ffffff",
+      },
+
+      config: {
+        googleMaps: {
+          apiKey: process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY,
+        },
       },
     },
 
@@ -33,11 +43,8 @@ export default {
       favicon: "./assets/favicon.png",
     },
 
-    plugins: ["expo-secure-store"],
-
     extra: {
-      apiUrl: process.env.API_URL,
-      googleMapsApiKey: process.env.GOOGLE_MAPS_API_KEY,
+      apiUrl: process.env.EXPO_PUBLIC_API_URL,
       eas: {
         projectId: "70328863-4493-46f7-9e44-fd1dba42ab1d",
       },
