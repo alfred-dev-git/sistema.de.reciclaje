@@ -1,5 +1,6 @@
+// src/services/rutas/obtener-paradas.ts
+
 import apiPrivate from "../clients/api-private";
-import Constants from "expo-constants";
 import { prepararGruposParaRutas, Punto } from "../../utils/agrupador-rutas";
 import axios from "axios";
 import polyline from "@mapbox/polyline";
@@ -20,7 +21,7 @@ export interface PedidoAsignado {
 
 export interface ParadaNormalizada
   extends Omit<PedidoAsignado, "latitud" | "longitud">,
-    Punto {
+  Punto {
   latitud: number;
   longitud: number;
   estado: number; // 0 = pendiente, 1 = completado
@@ -31,18 +32,25 @@ export interface RutaCalculada {
   paradas: ParadaNormalizada[];
 }
 
-function normalizarParadas(data: PedidoAsignado[]): ParadaNormalizada[] {
+/** ---- Google API Key ---- */
+export const GOOGLE_API_KEY =
+  process.env.EXPO_PUBLIC_GOOGLE_MAPS_API_KEY;
+
+/** ---- Normalización de paradas ---- */
+function normalizarParadas(
+  data: PedidoAsignado[]
+): ParadaNormalizada[] {
   return data
     .filter((p) => p.latitud != null && p.longitud != null)
     .map((p) => {
       const lat =
         typeof p.latitud === "string"
           ? parseFloat(p.latitud)
-          : (p.latitud as number);
+          : p.latitud;
       const lng =
         typeof p.longitud === "string"
           ? parseFloat(p.longitud)
-          : (p.longitud as number);
+          : p.longitud;
 
       return {
         ...p,
@@ -64,20 +72,24 @@ function normalizarParadas(data: PedidoAsignado[]): ParadaNormalizada[] {
     );
 }
 
-const { googleMapsApiKey } =
-  Constants.expoConfig?.extra || Constants.manifest?.extra || {};
-
-export const GOOGLE_API_KEY = googleMapsApiKey;
-
-if (!GOOGLE_API_KEY) {
-  throw new Error("Google Maps API Key no encontrada...");
-}
-
-export async function obtenerParadasAgrupadas(): Promise<RutaCalculada[]> {
+/** ---- Obtener rutas agrupadas ---- */
+export async function obtenerParadasAgrupadas(): Promise<
+  RutaCalculada[]
+> {
   try {
-    const { data } = await apiPrivate.get<PedidoAsignado[]>("/paradas");
+    if (!GOOGLE_API_KEY) {
+      console.warn(
+        "⚠️ Google Maps API Key no configurada (EXPO_PUBLIC_GOOGLE_MAPS_API_KEY)"
+      );
+      return [];
+    }
+
+    const { data } =
+      await apiPrivate.get<PedidoAsignado[]>("/paradas");
+
     const paradasValidas = normalizarParadas(data);
-    const subgrupos = prepararGruposParaRutas(paradasValidas);
+    const subgrupos =
+      prepararGruposParaRutas(paradasValidas);
 
     const rutas: RutaCalculada[] = [];
 
@@ -85,59 +97,76 @@ export async function obtenerParadasAgrupadas(): Promise<RutaCalculada[]> {
       if (grupo.length === 0) continue;
 
       const origin = `${grupo[0].latitude},${grupo[0].longitude}`;
-      const destination = `${grupo[grupo.length - 1].latitude},${
-        grupo[grupo.length - 1].longitude
-      }`;
+      const destination = `${grupo[grupo.length - 1].latitude
+        },${grupo[grupo.length - 1].longitude}`;
 
       const waypoints = grupo
         .slice(1, grupo.length - 1)
         .map((p) => `${p.latitude},${p.longitude}`)
         .join("|");
 
-      const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}${
-        waypoints ? `&waypoints=${waypoints}` : ""
-      }&key=${GOOGLE_API_KEY}`;
+      const url =
+        `https://maps.googleapis.com/maps/api/directions/json` +
+        `?origin=${origin}` +
+        `&destination=${destination}` +
+        (waypoints ? `&waypoints=${waypoints}` : "") +
+        `&key=${GOOGLE_API_KEY}`;
 
-  
       const rutaRes = await axios.get(url);
       const rutaData = rutaRes.data;
 
       if (rutaData.status !== "OK") {
         console.warn(
-          "⚠️ Google Directions devolvió error:",
+          "⚠️ Google Directions error:",
           rutaData.status,
-          rutaData.error_message || ""
+          rutaData.error_message ?? ""
         );
         continue;
       }
 
-      if (rutaData.routes && rutaData.routes.length > 0) {
-        const coords = polyline
-          .decode(rutaData.routes[0].overview_polyline.points)
-          .map(([lat, lng]) => ({
-            latitude: lat,
-            longitude: lng,
-          }));
+      const overview =
+        rutaData.routes?.[0]?.overview_polyline?.points;
 
-        rutas.push({ coordenadas: coords, paradas: grupo });
-      } else {
-        console.warn("⚠️ No se encontraron rutas para este grupo:", grupo);
-        console.log(
-          "Respuesta completa:",
+      if (!overview) {
+        console.warn(
+          "⚠️ Ruta sin polyline:",
           JSON.stringify(rutaData, null, 2)
         );
+        continue;
       }
+
+      const coordenadas = polyline
+        .decode(overview)
+        .map(([lat, lng]) => ({
+          latitude: lat,
+          longitude: lng,
+        }));
+
+      rutas.push({
+        coordenadas,
+        paradas: grupo,
+      });
     }
 
     return rutas;
-  } catch (error: unknown) {
+  } catch (error) {
     if (axios.isAxiosError(error)) {
-      console.error("❌ Axios error:", error.response?.data || error.message);
+      console.error(
+        "❌ Axios error:",
+        error.response?.data || error.message
+      );
     } else if (error instanceof Error) {
-      console.error("❌ Error en obtenerParadasAgrupadas:", error.message);
+      console.error(
+        "❌ Error en obtenerParadasAgrupadas:",
+        error.message
+      );
     } else {
-      console.error("❌ Error desconocido en obtenerParadasAgrupadas:", error);
+      console.error(
+        "❌ Error desconocido en obtenerParadasAgrupadas:",
+        error
+      );
     }
-    throw error;
+
+    return [];
   }
 }

@@ -2,6 +2,7 @@ import 'dotenv/config';
 
 export default {
   expo: {
+    "owner": "recolectapp",
     name: "RecolectorApp",
     slug: "recolectapp-recolector",
 

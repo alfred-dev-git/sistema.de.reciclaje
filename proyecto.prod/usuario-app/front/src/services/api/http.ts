@@ -1,14 +1,17 @@
 // src/services/api/http.ts
 import * as SecureStore from "expo-secure-store";
+import Constants from "expo-constants";
 
-const API_BASE = process.env.EXPO_PUBLIC_API_URL?.replace(/\/+$/, "");
+const API_BASE_RAW =
+  process.env.EXPO_PUBLIC_API_URL ??
+  Constants.expoConfig?.extra?.apiUrl;
+
+const API_BASE = API_BASE_RAW?.replace(/\/+$/, "");
 
 if (!API_BASE) {
-  // Esto hace que si la variable no existe, explote inmediatamente
-  throw new Error(
-    "❌ No se encontró direccion API."
-  );
+  console.warn("⚠️ API_URL no configurada");
 }
+
 
 type Json = Record<string, any>;
 
