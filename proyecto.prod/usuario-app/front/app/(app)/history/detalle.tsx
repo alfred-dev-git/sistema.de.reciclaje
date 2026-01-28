@@ -42,7 +42,7 @@ export default function DetallePedidoModal({ visible, onClose, idPedido }: Props
               <Text>⭐ Puntos totales: {detalle.total_puntos ?? "-"}</Text>
             </>
           ) : (
-            <Text>No se encontró información del pedido.</Text>
+            <Text>No se encontró información del pedido, intente de nuevo.</Text>
           )}
 
           <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
