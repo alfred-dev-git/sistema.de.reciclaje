@@ -155,7 +155,7 @@ export default function EditProfileScreen() {
             keyboardShouldPersistTaps="handled"
           >
             <View style={styles.card}>
-              <Text style={styles.title}>Editar perfil</Text>
+              <Text style={styles.title}>Editar datos del perfil</Text>
 
               {/* Avatar con inicial */}
             <View style={styles.avatarRow}>
