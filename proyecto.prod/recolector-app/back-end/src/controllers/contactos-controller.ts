@@ -3,7 +3,7 @@ import { obtenerContactosAdminDB } from "../models/contactos-model.js";
 
 export const getContactosAdmin = async (req: Request, res: Response): Promise<void> => {
   try {
-    const idRecolector = req.user!.id; // ESTE VIENE DEL TOKEN (idrecolector)
+    const idRecolector = req.user!.id; // ESTE VIENE DEL TOKEN (idrecolector)cc
 
     const contactos = await obtenerContactosAdminDB(idRecolector);
 
