@@ -2,101 +2,126 @@ import { Request, Response } from "express";
 import { pool } from "../db.js";
 
 /**
- * Función auxiliar para calcular los puntos equivalentes(todavia no se usa)
+ * Marcar solicitud como completada
  */
-const calcularTotalPuntos = async (idpedidos: number, cant_bolson: number): Promise<number> => {
-  // obtener el tipo de reciclable del pedido
-  const [pedidoRows]: any = await pool.query(
-    "SELECT tipo_reciclable_idtipo_reciclable FROM pedidos WHERE idpedidos = ?",
-    [idpedidos]
-  );
+export const postMarcarCompletado = async (
+  req: Request,
+  res: Response
+) => {
+  const {
+    idsolicitud_recoleccion,
+    estado,
+    cant_bolson,
+    observaciones,
+  } = req.body;
 
-  if (pedidoRows.length === 0) {
-    throw new Error("Pedido no encontrado");
-  }
-
-  const idTipoReciclable = pedidoRows[0].tipo_reciclable_idtipo_reciclable;
-
-  // obtener punto_equivalente desde puntos_equivalencia
-  const [equivRows]: any = await pool.query(
-    "SELECT punto_equivalente FROM puntos_equivalencia WHERE tipo_reciclable_idtipo_reciclable = ?",
-    [idTipoReciclable]
-  );
-
-  if (equivRows.length === 0) {
-    throw new Error("No existe equivalencia para ese tipo de reciclable");
-  }
-
-  const puntoEquivalente = equivRows[0].punto_equivalente;
-
-  return cant_bolson * puntoEquivalente;
-};
-
-
-/**
- * 🔹 Marcar pedido como completado
- */
-export const postMarcarCompletado = async (req: Request, res: Response) => {
-  const { idpedidos, estado, cant_bolson, observaciones } = req.body;
-
-  if (!idpedidos || estado === undefined || cant_bolson === undefined) {
-    return res.status(400).json({ success: false, message: "Faltan parámetros" });
+  if (
+    !idsolicitud_recoleccion ||
+    estado === undefined ||
+    cant_bolson === undefined
+  ) {
+    return res.status(400).json({
+      success: false,
+      message: "Faltan parámetros",
+    });
   }
 
   try {
-    // 🔹 ANULAR cálculo → siempre 0
-    const total_puntos = 0;
-
-    // actualizar estado en pedidos
+    // Actualizar estado de la solicitud
     await pool.execute(
-      "UPDATE pedidos SET estado = ? WHERE idpedidos = ?",
-      [estado, idpedidos]
+      `
+      UPDATE solicitud_recoleccion
+      SET estado_solicitud_idestado_solicitud = ?
+      WHERE idsolicitud_recoleccion = ?
+      `,
+      [estado, idsolicitud_recoleccion]
     );
 
-    // insertar el detalle con 0 puntos
+    // Registrar detalle de la recolección
     await pool.execute(
-      `INSERT INTO detalle_pedido 
-        (fecha_entrega, cant_bolson, total_puntos, observaciones, pedidos_idpedidos) 
-       VALUES (NOW(), ?, ?, ?, ?)`,
-      [cant_bolson, total_puntos, observaciones || "Completado", idpedidos]
+      `
+      INSERT INTO detalle_recoleccion
+      (
+        fecha_entrega,
+        cant_bolson,
+        observaciones,
+        solicitud_recoleccion_idsolicitud_recoleccion
+      )
+      VALUES (NOW(), ?, ?, ?)
+      `,
+      [
+        cant_bolson,
+        observaciones || "Completado",
+        idsolicitud_recoleccion,
+      ]
     );
 
-    res.json({ success: true, message: "Pedido marcado como completado", total_puntos });
+    res.json({
+      success: true,
+      message: "Solicitud marcada como completada",
+    });
   } catch (error: any) {
     console.error("Error en postMarcarCompletado:", error);
-    res.status(500).json({ success: false, message: error.message || "Error al completar el pedido" });
+
+    res.status(500).json({
+      success: false,
+      message: error.message || "Error al completar la solicitud",
+    });
   }
 };
 
-
 /**
- * 🔹 Marcar pedido como ausente
+ * Marcar solicitud como ausente
  */
-export const postMarcarAusente = async (req: Request, res: Response) => {
-  const { idpedidos, estado } = req.body;
+export const postMarcarAusente = async (
+  req: Request,
+  res: Response
+) => {
+  const { idsolicitud_recoleccion, estado } = req.body;
 
-  if (!idpedidos || estado === undefined) {
-    return res.status(400).json({ success: false, message: "Faltan parámetros" });
+  if (!idsolicitud_recoleccion || estado === undefined) {
+    return res.status(400).json({
+      success: false,
+      message: "Faltan parámetros",
+    });
   }
 
   try {
-    // actualizar estado en pedidos
+    // Actualizar estado de la solicitud
     await pool.execute(
-      "UPDATE pedidos SET estado = ? WHERE idpedidos = ?",
-      [estado, idpedidos]
+      `
+      UPDATE solicitud_recoleccion
+      SET estado_solicitud_idestado_solicitud = ?
+      WHERE idsolicitud_recoleccion = ?
+      `,
+      [estado, idsolicitud_recoleccion]
     );
 
-    // opcional: insertar un detalle con total_puntos = 0
+    // Registrar el detalle
     await pool.execute(
-      `INSERT INTO detalle_pedido 
-        (fecha_entrega, cant_bolson, total_puntos, observaciones, pedidos_idpedidos) 
-       VALUES (NOW(), 0, 0, 'Usuario ausente', ?)`,
-      [idpedidos]
+      `
+      INSERT INTO detalle_recoleccion
+      (
+        fecha_entrega,
+        cant_bolson,
+        observaciones,
+        solicitud_recoleccion_idsolicitud_recoleccion
+      )
+      VALUES (NOW(), 0, 'Usuario ausente', ?)
+      `,
+      [idsolicitud_recoleccion]
     );
 
-    res.json({ success: true, message: "Usuario ausente registrado" });
+    res.json({
+      success: true,
+      message: "Usuario ausente registrado",
+    });
   } catch (error: any) {
     console.error("Error en postMarcarAusente:", error);
-    res.status(500).json({ success: false, message: "Error al registrar ausencia" });
+
+    res.status(500).json({
+      success: false,
+      message: "Error al registrar ausencia",
+    });
   }
 };

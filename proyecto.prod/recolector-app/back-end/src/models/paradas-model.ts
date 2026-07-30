@@ -2,9 +2,8 @@ import { RowDataPacket } from "mysql2";
 import { pool } from "../db.js";
 
 export interface PedidoAsignado extends RowDataPacket {
-  idpedidos: number;
-  estado: number;
-  estado_ruta: number;
+  idsolicitud_recoleccion: number;
+  estado: string;
   nombre: string;
   apellido: string;
   idusuario: number;
@@ -15,41 +14,51 @@ export interface PedidoAsignado extends RowDataPacket {
   id_ruta: number;
 }
 
-export const obtenerPedidosAsignadosDB = async (idRecolector: number): Promise<PedidoAsignado[]> => {
-  const [rows] = await pool.query<PedidoAsignado[]>(`
-    SELECT 
-      p.idpedidos,
-      p.estado,
-      p.estado_ruta,
-      pr.rutas_asignadas_idrutas_asignadas AS id_ruta,
+export const obtenerPedidosAsignadosDB = async (
+  idRecolector: number
+): Promise<PedidoAsignado[]> => {
+  const [rows] = await pool.query<PedidoAsignado[]>(
+    `
+    SELECT
+      sr.idsolicitud_recoleccion,
+      es.descripcion AS estado,
+      r.idrutas AS id_ruta,
+      u.idusuario,
       u.nombre,
       u.apellido,
-      u.idusuario,
       d.calle,
       d.numero,
       d.latitud,
       d.longitud
-    FROM pedidos p
-    INNER JOIN direcciones d 
-      ON p.id_direccion = d.iddirecciones
-    INNER JOIN usuario u 
-      ON p.usuario_idusuario = u.idusuario
-    INNER JOIN pedidos_rutas pr 
-      ON p.idpedidos = pr.pedidos_idpedidos
-    INNER JOIN rutas_asignadas ra 
-      ON pr.rutas_asignadas_idrutas_asignadas = ra.idrutas_asignadas
-    WHERE 
-      p.estado = 0
-      AND p.estado_ruta = 1
-      AND ra.recolector_idrecolector = ?
-  `, [idRecolector]);
+    FROM solicitud_recoleccion sr
+
+    INNER JOIN estado_solicitud es
+      ON sr.estado_solicitud_idestado_solicitud = es.idestado_solicitud
+
+    INNER JOIN direcciones d
+      ON sr.direcciones_iddirecciones = d.iddirecciones
+
+    INNER JOIN contribuyente c
+      ON sr.contribuyente_idcontribuyente = c.idcontribuyente
+
+    INNER JOIN usuarios u
+      ON c.usuarios_idusuario = u.idusuario
+
+    INNER JOIN solicitud_rutas sru
+      ON sr.idsolicitud_recoleccion = sru.solicitud_recoleccion_idsolicitud_recoleccion
+
+    INNER JOIN rutas r
+      ON sru.rutas_idrutas = r.idrutas
+
+    WHERE
+      es.descripcion = 'Pendiente'
+      AND r.recolector_idrecolector = ?
+    `,
+    [idRecolector]
+  );
 
   return rows;
 };
-
-
-
-
 //hacer otra consulta donde guardes las paradas en la tabla rutas
 
 

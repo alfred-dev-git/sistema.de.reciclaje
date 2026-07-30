@@ -12,13 +12,14 @@ type Usuario = {
   email: string;
   password: string;
   nombre: string;
+  apellido: string;
   rol_idrol: number;
   activo: number;
 };
 
 type Recolector = {
   idrecolector: number;
-  idusuario: number;
+  usuario_idusuario: number;
 };
 
 // genera código numérico
@@ -38,9 +39,18 @@ export const loginUser = async (req: Request, res: Response) => {
         .json({ message: "Email y contraseña son obligatorios" });
     }
 
-    //Buscar usuario
+    // Buscar usuario
     const [results] = await pool.query<(RowDataPacket & Usuario)[]>(
-      "SELECT idusuario, email, password, nombre, rol_idrol, activo FROM usuario WHERE email = ?",
+      `SELECT
+          idusuario,
+          email,
+          password,
+          nombre,
+          apellido,
+          rol_idrol,
+          activo
+       FROM usuarios
+       WHERE email = ?`,
       [email]
     );
 
@@ -57,18 +67,23 @@ export const loginUser = async (req: Request, res: Response) => {
       });
     }
 
-    //Comparar contraseña
+    // Comparar contraseña
     const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
       return res.status(401).json({ message: "Contraseña incorrecta" });
     }
 
-    // Si es recolector, obtener su idrecolector (no estado)
+    // Si es recolector, obtener su id
     let idRecolector: number | null = null;
 
     if (user.rol_idrol === 4) {
-      const [recolectorRows] = await pool.query<(RowDataPacket & Recolector)[]>(
-        "SELECT idrecolector FROM recolector WHERE idusuario = ?",
+      const [recolectorRows] = await pool.query<
+        (RowDataPacket & Recolector)[]
+      >(
+        `SELECT idrecolector
+         FROM recolector
+         WHERE usuario_idusuario = ?`,
         [user.idusuario]
       );
 
@@ -77,7 +92,7 @@ export const loginUser = async (req: Request, res: Response) => {
       }
     }
 
-    //Configuración JWT
+    // Configuración JWT
     if (!process.env.JWT_SECRET || !process.env.JWT_EXPIRE) {
       throw new Error("Faltan variables JWT_SECRET o JWT_EXPIRE");
     }
@@ -86,14 +101,27 @@ export const loginUser = async (req: Request, res: Response) => {
     const expireMs = ms(process.env.JWT_EXPIRE as StringValue);
     const expireSec = Math.floor(expireMs / 1000);
 
-    //Payload del token
-    const payload: JwtPayload = { id: idRecolector, email: user.email, };
+    // Payload del token
+    const payload: JwtPayload = {
+      id: idRecolector,
+      email: user.email,
+    };
 
-    const token = jwt.sign(payload, secret, { expiresIn: expireSec });
+    const token = jwt.sign(payload, secret, {
+      expiresIn: expireSec,
+    });
 
     // Respuesta
-    res.json({ message: "Login exitoso", token, user: { email: user.email, rol: user.rol_idrol, nombre: user.nombre, }, });
-
+    res.json({
+      message: "Login exitoso",
+      token,
+      user: {
+        email: user.email,
+        rol: user.rol_idrol,
+        nombre: user.nombre,
+        apellido: user.apellido,
+      },
+    });
   } catch (err) {
     console.error("❌ Error en login:", err);
     res.status(500).json({ message: "Error de servidor" });
@@ -108,12 +136,15 @@ export async function forgotPassword(req: Request, res: Response) {
   try {
     const { email } = req.body ?? {};
     const emailNorm = String(email || "").trim().toLowerCase();
+
     if (!emailNorm) return res.json({ ok: true });
 
     const [rows] = await pool.query(
-      `SELECT idusuario, email 
-       FROM usuario 
-       WHERE email = ? 
+      `SELECT
+          idusuario,
+          email
+       FROM usuarios
+       WHERE email = ?
        LIMIT 1`,
       [emailNorm]
     );
@@ -125,25 +156,27 @@ export async function forgotPassword(req: Request, res: Response) {
       const codeHash = await bcrypt.hash(code, 10);
       const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
 
-      // borro códigos viejos
+      // borrar códigos anteriores
       await pool.execute(
-        `DELETE FROM password_reset_codes 
-         WHERE usuario_id = ? AND used_at IS NULL`,
+        `DELETE FROM codigo_recuperacion_contraseña
+         WHERE usuario_id = ?
+         AND usado IS NULL`,
         [user.idusuario]
       );
 
-      // guardo nuevo
+      // guardar nuevo código
       await pool.execute(
-        `INSERT INTO password_reset_codes (usuario_id, code_hash, expires_at)
+        `INSERT INTO codigo_recuperacion_contraseña
+            (usuario_id, code_hasheo, expiracion)
          VALUES (?, ?, ?)`,
         [user.idusuario, codeHash, expiresAt]
       );
 
-      // envío email
+      // enviar email
       await sendPasswordResetEmail(emailNorm, code);
     }
 
-    // no filtra si existe o no
+    // no revelar si existe el correo
     res.json({ ok: true });
   } catch (err) {
     console.error("❌ forgotPassword error:", err);
@@ -158,6 +191,7 @@ export async function forgotPassword(req: Request, res: Response) {
 export async function resetPassword(req: Request, res: Response) {
   try {
     const { email, code, new_password } = req.body ?? {};
+
     const emailNorm = String(email || "").trim().toLowerCase();
     const plainCode = String(code || "").trim();
     const newPass = String(new_password || "");
@@ -167,43 +201,67 @@ export async function resetPassword(req: Request, res: Response) {
     }
 
     const [rows] = await pool.query(
-      `SELECT idusuario FROM usuario WHERE email = ? LIMIT 1`,
+      `SELECT idusuario
+       FROM usuarios
+       WHERE email = ?
+       LIMIT 1`,
       [emailNorm]
     );
 
     const user = (rows as any[])[0];
-    // no revelar si el correo existe: devolver mensaje genérico
-    if (!user) return res.status(400).json({ error: "Datos inválidos" });
 
-    // obtener último código
+    if (!user) {
+      return res.status(400).json({ error: "Datos inválidos" });
+    }
+
+    // obtener último código generado
     const [codes] = await pool.query(
-      `SELECT id, code_hash, expires_at, used_at
-       FROM password_reset_codes
+      `SELECT
+          id,
+          code_hasheo,
+          expiracion,
+          usado
+       FROM codigo_recuperacion_contraseña
        WHERE usuario_id = ?
-       ORDER BY created_at DESC
+       ORDER BY creado DESC
        LIMIT 1`,
       [user.idusuario]
     );
 
     const rec = (codes as any[])[0];
 
-    // respuestas genéricas para no filtrar estado del código
-    if (!rec || rec.used_at) return res.status(400).json({ error: "Datos inválidos" });
-    if (new Date(rec.expires_at) < new Date()) return res.status(400).json({ error: "Datos inválidos" });
-    const match = await bcrypt.compare(plainCode, rec.code_hash);
-    if (!match) return res.status(400).json({ error: "Datos inválidos" });
+    if (!rec || rec.usado) {
+      return res.status(400).json({ error: "Datos inválidos" });
+    }
+
+    if (new Date(rec.expiracion) < new Date()) {
+      return res.status(400).json({ error: "Datos inválidos" });
+    }
+
+    const match = await bcrypt.compare(
+      plainCode,
+      rec.code_hasheo
+    );
+
+    if (!match) {
+      return res.status(400).json({ error: "Datos inválidos" });
+    }
 
     // actualizar contraseña
     const hash = await bcrypt.hash(newPass, 10);
 
     await pool.execute(
-      `UPDATE usuario SET password = ? WHERE idusuario = ?`,
+      `UPDATE usuarios
+       SET password = ?
+       WHERE idusuario = ?`,
       [hash, user.idusuario]
     );
 
-    // marcar como usado
+    // marcar código como usado
     await pool.execute(
-      `UPDATE password_reset_codes SET used_at = NOW() WHERE id = ?`,
+      `UPDATE codigo_recuperacion_contraseña
+       SET usado = NOW()
+       WHERE id = ?`,
       [rec.id]
     );
 

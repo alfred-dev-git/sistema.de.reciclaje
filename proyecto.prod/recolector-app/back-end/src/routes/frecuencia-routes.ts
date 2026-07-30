@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import { getCronograma } from "../controllers/cronograma-controller.js";
+import { getCronograma } from "../controllers/frecuencia-controller.js";
 import { verifyToken } from "../middlewares/verify-token.js";
 
 const router: Router = express.Router();
