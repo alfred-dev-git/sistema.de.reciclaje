@@ -204,7 +204,7 @@ export const crearUsuarioDB = async (
   // Crear recolector
   await pool.query<ResultSetHeader>(
     `
-    INSERT INTO recolector (usuario_idusuario)
+    INSERT INTO recolector (usuarios_idusuario)
     VALUES (?)
     `,
     [userId]
@@ -256,7 +256,7 @@ export const obtenerPerfilDB = async (
       m.descripcion AS municipio
     FROM recolector r
     INNER JOIN usuarios u
-      ON r.usuario_idusuario = u.idusuario
+      ON r.usuarios_idusuario = u.idusuario
     INNER JOIN municipio m
       ON u.municipio_idmunicipio = m.idmunicipio
     WHERE r.idrecolector = ?
@@ -277,7 +277,7 @@ export const obtenerFotoPerfilDB = async (
       u.foto_perfil
     FROM recolector r
     INNER JOIN usuarios u
-      ON r.usuario_idusuario = u.idusuario
+      ON r.usuarios_idusuario = u.idusuario
     WHERE r.idrecolector = ?
     `,
     [idRecolector]
@@ -297,7 +297,7 @@ export const actualizarFotoPerfilRutaDB = async (
     `
     UPDATE usuarios u
     INNER JOIN recolector r
-      ON r.usuario_idusuario = u.idusuario
+      ON r.usuarios_idusuario = u.idusuario
     SET u.foto_perfil = ?
     WHERE r.idrecolector = ?
     `,
