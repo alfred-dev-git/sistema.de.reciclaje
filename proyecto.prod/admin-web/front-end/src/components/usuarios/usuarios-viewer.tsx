@@ -11,7 +11,7 @@ export const UsuariosViewer: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadingAccion, setLoadingAccion] = useState<number | null>(null);
 
-  const [filtroRol, setFiltroRol] = useState<number | null>(null);
+  const [filtroRol, setFiltroRol] = useState<string>("");
   const [verDesactivados, setVerDesactivados] = useState(false);
 
   // --------------------- CARGAR USUARIOS ---------------------
@@ -49,7 +49,7 @@ export const UsuariosViewer: React.FC = () => {
   // --------------------- FILTROS ---------------------
   const usuariosFiltrados = usuarios.filter((u) => {
     // 1. Filtrar por rol si está seleccionado
-    if (filtroRol !== null && u.rol_idrol !== filtroRol) {
+    if (filtroRol && u.rol.toLowerCase() !== filtroRol) {
       return false;
     }
 
@@ -68,14 +68,12 @@ export const UsuariosViewer: React.FC = () => {
       {/* FILTROS */}
       <div style={filterBar}>
         <select
-          value={filtroRol ?? ""}
-          onChange={(e) =>
-            setFiltroRol(e.target.value ? Number(e.target.value) : null)
-          }
+          value={filtroRol}
+          onChange={(e) => setFiltroRol(e.target.value)}
         >
           <option value="">Todos los roles</option>
-          <option value={3}>Contribuyentes</option>
-          <option value={4}>Recolectores</option>
+          <option value="contribuyente">Contribuyentes</option>
+          <option value="recolector">Recolectores</option>
         </select>
 
         <button className="button" onClick={() => setVerDesactivados(!verDesactivados)}>

@@ -14,7 +14,7 @@
 /* Estilos para el contenedor principal */
 .cronograma-viewer {
     padding: 1.5rem;
-    font-family: Arial, sans-serif;
+    font-family: var(--font-family);
     max-width: 600px;
     margin: 0 auto;
 }

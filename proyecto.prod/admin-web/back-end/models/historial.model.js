@@ -1,52 +1,43 @@
 import { pool } from "../config/db.js";
 
-export const obtenerHistorialDB = async (q = '') => {
+export const obtenerHistorialDB = async (q = "") => {
   const args = [];
-  let where = '';
-
+  let where = "";
   if (q.trim()) {
     where = `WHERE CONCAT(u.nombre, ' ', u.apellido) LIKE ?`;
     args.push(`${q}%`);
   }
 
-  const sql = `
-    SELECT 
-      dp.iddetalle_pedido,
-      p.idpedidos,
-      p.fecha_emision,
-      dp.fecha_entrega,
-      dp.cant_bolson,
-      dp.total_puntos,
-      dp.observaciones,
-      p.estado,
-      p.estado_ruta,
-
-      -- usuario que hizo el pedido
-      CONCAT(u.nombre, ' ', u.apellido) AS usuario_nombre,
-
-      -- tipo de reciclable
-      tr.descripcion AS tipo_reciclable,
-
-      -- recolector asignado (si existe)
-      CONCAT(ur.nombre, ' ', ur.apellido) AS recolector_nombre
-
-    FROM pedidos p
-    JOIN usuario u ON u.idusuario = p.usuario_idusuario
-    LEFT JOIN detalle_pedido dp ON dp.pedidos_idpedidos = p.idpedidos
-    LEFT JOIN tipo_reciclable tr ON tr.idtipo_reciclable = p.tipo_reciclable_idtipo_reciclable
-
-    -- nuevos JOINs
-    LEFT JOIN pedidos_rutas pr ON pr.pedidos_idpedidos = p.idpedidos
-    LEFT JOIN rutas_asignadas ra ON ra.idrutas_asignadas = pr.rutas_asignadas_idrutas_asignadas
-    LEFT JOIN recolector r ON r.idrecolector = ra.recolector_idrecolector
-    LEFT JOIN usuario ur ON ur.idusuario = r.idusuario
-
-    ${where}
-    ORDER BY p.fecha_emision DESC, dp.iddetalle_pedido DESC
-    LIMIT 1000;
-  `;
-
-  const [rows] = await pool.query(sql, args);
+  const [rows] = await pool.query(
+    `SELECT
+       dr.iddetalle_recoleccion AS iddetalle_pedido,
+       s.idsolicitud_recoleccion AS idpedidos,
+       s.fecha_emision,
+       dr.fecha_entrega,
+       dr.cant_bolson,
+       dr.observaciones,
+       es.descripcion AS estado,
+       CONCAT(u.nombre, ' ', u.apellido) AS usuario_nombre,
+       tr.descripcion AS tipo_reciclable,
+       CONCAT(ur.nombre, ' ', ur.apellido) AS recolector_nombre
+     FROM solicitud_recoleccion s
+     INNER JOIN contribuyente c ON c.idcontribuyente = s.contribuyente_idcontribuyente
+     INNER JOIN usuarios u ON u.idusuario = c.usuarios_idusuario
+     INNER JOIN estado_solicitud es
+       ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
+     LEFT JOIN detalle_recoleccion dr
+       ON dr.solicitud_recoleccion_idsolicitud_recoleccion = s.idsolicitud_recoleccion
+     LEFT JOIN tipo_reciclable tr
+       ON tr.idtipo_reciclable = s.tipo_reciclable_idtipo_reciclable
+     LEFT JOIN solicitud_rutas sr
+       ON sr.solicitud_recoleccion_idsolicitud_recoleccion = s.idsolicitud_recoleccion
+     LEFT JOIN rutas ru ON ru.idrutas = sr.rutas_idrutas
+     LEFT JOIN recolector r ON r.idrecolector = ru.recolector_idrecolector
+     LEFT JOIN usuarios ur ON ur.idusuario = r.usuario_idusuario
+     ${where}
+     ORDER BY s.fecha_emision DESC, dr.iddetalle_recoleccion DESC
+     LIMIT 1000`,
+    args
+  );
   return rows;
 };
-

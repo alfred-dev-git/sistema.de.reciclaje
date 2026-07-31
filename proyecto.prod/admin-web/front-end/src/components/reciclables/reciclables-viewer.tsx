@@ -90,7 +90,7 @@ export const ReciclablesViewer = () => {
 
 const container: React.CSSProperties = {
   padding: "2rem",
-  fontFamily: "Inter, sans-serif",
+  fontFamily: "var(--font-family)",
 };
 
 const headerBar: React.CSSProperties = {

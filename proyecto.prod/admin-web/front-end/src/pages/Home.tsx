@@ -33,8 +33,8 @@ export default function Home() {
             🢂
           </button>
         </Card>
-        <Card title="Lanzar notificación" isHome={true}>
-          <p>Ver fechas activas</p>
+        <Card title="Frecuencia de recolecciones" isHome={true}>
+          <p>Hay {kpis?.fechasActivas ?? '...'} frecuencias activas</p>
           <button
             onClick={() => navigate("/cronograma")}
 
@@ -42,7 +42,7 @@ export default function Home() {
             🢂
           </button>
         </Card>
-        <Card title="Ver Historial de recolecciones" isHome={true}>
+        <Card title="Ver estadísticas" isHome={true}>
           <p>Revisar el historial de pedidos</p>
           <button
             onClick={() => navigate("/historial")}
@@ -54,13 +54,6 @@ export default function Home() {
           <p>Hay {kpis?.recolectoresActivos ?? '...'} recolectores activos</p>
           <button
             onClick={() => navigate("/seguimiento")}
-          >
-            🢂
-          </button>
-        </Card>
-        <Card title="Administrar solicitud puntos" isHome={true}>
-          <p>Próximamente…</p>
-          <button        
           >
             🢂
           </button>

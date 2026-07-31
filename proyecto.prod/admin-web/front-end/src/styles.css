@@ -4,6 +4,7 @@
     --border: #dfe7df;
     --text: #1f2a1f;
     --accent: #2faa3f;
+    --font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* === RESETEO GENERAL === */
@@ -13,9 +14,16 @@
 
 body {
     margin: 0;
-    font-family: system-ui, Segoe UI, Roboto, sans-serif;
+    font-family: var(--font-family);
     background: var(--bg);
     color: var(--text);
+}
+
+button,
+input,
+select,
+textarea {
+    font-family: inherit;
 }
 
 /* === LAYOUT GENERAL === */
@@ -73,15 +81,15 @@ body {
 }
 
 .titulo {
-    font-family: "Knewave", system-ui;
+    font-family: var(--font-family);
     font-variant: inherit;
-    font-weight: 100;
+    font-weight: 600;
 }
 
 .subtitulo {
-    font-family: "Fugaz One", sans-serif;
+    font-family: var(--font-family);
     font-variant: inherit;
-    font-weight: 300;
+    font-weight: 600;
 }
 
 /* === CONTENIDO PRINCIPAL === */
@@ -144,7 +152,7 @@ select {
     padding: 10px;
     border: 1px solid var(--border);
     border-radius: 10px;
-    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-family: var(--font-family);
     margin-bottom: 5px;
     cursor: pointer;
 }
@@ -274,9 +282,9 @@ select {
 
 .home .welcome h2 {
     margin: 0;
-    font-family: "Knewave", system-ui;
+    font-family: var(--font-family);
     color: #000000;
-    font-weight: 350;
+    font-weight: 600;
 }
 
 .home .welcome p {

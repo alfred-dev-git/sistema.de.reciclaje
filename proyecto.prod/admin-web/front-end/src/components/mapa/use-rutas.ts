@@ -1,8 +1,8 @@
 // src/components/rutas/use-rutas.ts
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { obtenerParadas, PedidoAsignado, updateRutaRecolector } from "../../api/services/paradas.service";
 import { obtenerOpcionesAgrupamiento, agruparParadasPorCercania, RutaAgrupada } from "../mapa/agrupador-rutas";
-import { postAsignarRuta, anularRuta } from "../../api/services/recolector.service";
+import { postAsignarRuta, anularRuta, notificarRuta } from "../../api/services/recolector.service";
 import { RutasPendientesItem } from "../Recolector";
 import { obtenerRutasPorRecolector } from "./agrupador-rutas";
 
@@ -139,6 +139,13 @@ export function useRutas(modo: "planificacion" | "seguimiento" = "planificacion"
     }
   };
 
+  const notificarRutaExistente = async (idRuta: number) => {
+    const mensaje = prompt("Mensaje para los usuarios de esta ruta:");
+    if (!mensaje?.trim()) return;
+    const resultado = await notificarRuta(idRuta, mensaje.trim());
+    alert(resultado.message);
+  };
+
   return {
     // comunes
     rutas,
@@ -166,5 +173,6 @@ export function useRutas(modo: "planificacion" | "seguimiento" = "planificacion"
     cargarRutasPorRecolector,
     actualizarRecolectorRuta,
     anularRutaExistente,
+    notificarRutaExistente,
   };
 }

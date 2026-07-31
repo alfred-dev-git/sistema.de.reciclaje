@@ -103,27 +103,6 @@ const CronogramaViewer: React.FC = () => {
                 <strong>Horario:</strong> {item.hora_inicio} - {item.hora_fin}
               </p>
 
-              {item.ultima_notificacion ? (
-                <div style={styles.notificationBox}>
-                  <p style={styles.notificationText}>
-                    <strong>📩 Última notificación:</strong> {item.ultima_notificacion}
-                  </p>
-                  {item.fecha_ultima_notificacion && (
-                    <p style={styles.notificationText}>
-                      <strong>📅 Enviada:</strong>{" "}
-                      {new Date(item.fecha_ultima_notificacion).toLocaleDateString("es-AR", {
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "numeric",
-                      })}
-                    </p>
-                  )}
-                </div>
-              ) : (
-                <p style={{ color: "#777", fontStyle: "italic", fontSize: "0.9rem" }}>
-                  Sin notificaciones enviadas
-                </p>
-              )}
             </div>
 
             {/* Botones */}
@@ -150,7 +129,7 @@ const CronogramaViewer: React.FC = () => {
                     onClick={() => handleNotificar(item.idcronograma_recoleccion)}
                     style={btn("violet")}
                   >
-                    Notificar
+                    Lanzar notificación
                   </button>
                 </>
               )}
@@ -181,7 +160,7 @@ const styles: Record<string, CSSProperties> = {
     maxWidth: "900px",
     margin: "0 auto",
     padding: "2rem 1rem",
-    fontFamily: "Segoe UI, Roboto, sans-serif",
+    fontFamily: "var(--font-family)",
     color: "#222",
   },
   title: {

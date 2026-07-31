@@ -4,10 +4,12 @@ import { signToken } from '../utils/jwt.js';
 import { validateLogin } from '../utils/validate.login.js';
 
 // ⚠️ COOKIE CONFIG PARA FRONT-END EN LOCAL Y BACKEND EN RAILWAY
+const isProduction = process.env.NODE_ENV === 'production';
+
 const cookieOpts = {
   httpOnly: true,
-  secure: true,           // Railway = HTTPS → requerido
-  sameSite: "none",       // Para permitir cookies cross-site (local ↔ Railway)
+  secure: isProduction,
+  sameSite: isProduction ? "none" : "lax",
   path: '/',
 };
 
@@ -19,9 +21,11 @@ export const login = async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      `SELECT idusuario, nombre, apellido, email, password, rol_idrol, activo
-       FROM usuario
-       WHERE email = ?
+      `SELECT u.idusuario, u.nombre, u.apellido, u.email, u.password,
+              u.rol_idrol, u.activo, r.descripcion AS rol
+       FROM usuarios u
+       INNER JOIN rol r ON r.idrol = u.rol_idrol
+       WHERE u.email = ?
        LIMIT 1`,
       [email]
     );
@@ -41,7 +45,7 @@ export const login = async (req, res) => {
     if (!match)
       return res.status(401).json({ error: 'Credenciales inválidas' });
 
-    if (user.rol_idrol !== 1 && user.rol_idrol !== 2) {
+    if (user.rol.toLowerCase() !== 'administrador') {
       return res.status(403).json({
         error: 'Acceso denegado. Solo administradores pueden ingresar.',
       });

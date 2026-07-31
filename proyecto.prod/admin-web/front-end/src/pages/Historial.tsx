@@ -33,13 +33,7 @@ export default function Historial() {
   const getEstadoTexto = (estado: string | number | null) => {
     if (estado === null || estado === undefined) return "-";
 
-    const v = Number(estado);
-
-    if (v === 0) return "Pendiente";
-    if (v === 1) return "Éxito";
-    if (v === 2) return "Cancelado";
-
-    return estado; // fallback
+    return String(estado);
   };
 
   useEffect(() => {
@@ -74,7 +68,7 @@ export default function Historial() {
 
   return (
     <div className="historial">
-      <Card title="Historial de pedidos">
+      <Card title="Estadísticas de recolecciones">
         <div className="filter">
           <input
             placeholder='Filtrar por nombre de usuario... (ej: "A")'

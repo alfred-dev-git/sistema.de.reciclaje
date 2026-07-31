@@ -14,6 +14,7 @@ export interface Usuario {
   telefono: string;
   activo: number; // 1 activo, 0 desactivado
   rol_idrol: number;
+  rol: string;
 }
 
 export const getUsuarios = async (): Promise<ApiResponse<Usuario[]>> => {

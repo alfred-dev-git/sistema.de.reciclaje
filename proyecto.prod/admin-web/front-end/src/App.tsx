@@ -1,4 +1,4 @@
-import { Link, Outlet } from 'react-router-dom';
+import { Outlet, useNavigate } from 'react-router-dom';
 import Protected from './components/Protected';
 import { useAuth } from './context/AuthContext';
 import background from './assets/Backgrounds/background.jpg';
@@ -8,6 +8,7 @@ import { useState, useEffect } from "react";
 import { perfilService, Perfil } from "./api/services/perfil.service";
 
 export default function App() {
+  const navigate = useNavigate();
   const { user, logout } = useAuth();
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [showPerfil, setShowPerfil] = useState(false);
@@ -39,7 +40,7 @@ export default function App() {
     <Protected>
       <div className="layout">
         <header className="topbar">
-          <button className="menu">≡</button>
+          <button className="menu" onClick={() => navigate('/')}>Home</button>
 
           <div className="user">
             <button

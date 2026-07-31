@@ -1,159 +1,145 @@
 import { pool } from "../config/db.js";
 
-/**
- * Obtiene los recolectores, su teléfono y la cantidad de rutas pendientes.
- * Compatible con Railway (sin GROUP BY).
- */
 export const obtenerCantRutasPorRecolector = async () => {
   const [rows] = await pool.query(`
-    SELECT 
+    SELECT
       r.idrecolector,
       CONCAT(u.nombre, ' ', u.apellido) AS recolector,
       u.telefono,
       (
-        SELECT COUNT(DISTINCT ra2.idrutas_asignadas)
-        FROM rutas_asignadas ra2
-        LEFT JOIN pedidos_rutas pr2 ON pr2.rutas_asignadas_idrutas_asignadas = ra2.idrutas_asignadas
-        LEFT JOIN pedidos p2 ON p2.idpedidos = pr2.pedidos_idpedidos
-        WHERE ra2.recolector_idrecolector = r.idrecolector
-          AND p2.estado = 0
-          AND p2.estado_ruta = 1
+        SELECT COUNT(DISTINCT ru.idrutas)
+        FROM rutas ru
+        INNER JOIN solicitud_rutas sr ON sr.rutas_idrutas = ru.idrutas
+        INNER JOIN solicitud_recoleccion s
+          ON s.idsolicitud_recoleccion = sr.solicitud_recoleccion_idsolicitud_recoleccion
+        INNER JOIN estado_solicitud es
+          ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
+        WHERE ru.recolector_idrecolector = r.idrecolector
+          AND LOWER(es.descripcion) = 'pendiente'
       ) AS rutas_pendientes
     FROM recolector r
-    INNER JOIN usuario u ON r.idusuario = u.idusuario
+    INNER JOIN usuarios u ON r.usuario_idusuario = u.idusuario
+    WHERE u.activo = 1
     ORDER BY rutas_pendientes DESC;
   `);
 
   return rows;
 };
 
-
-export const asignarRutaARecolector = async (idrecolector, pedidos) => {
+export const asignarRutaARecolector = async (idrecolector, solicitudes, idAdmin) => {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
 
-    // 🔹 1. Verificar que los pedidos existan y no estén asignados (estado_ruta = 0)
     const [verificacion] = await connection.query(
-      `SELECT idpedidos, estado_ruta 
-       FROM pedidos 
-       WHERE idpedidos IN (?)`,
-      [pedidos]
+      `SELECT
+         s.idsolicitud_recoleccion,
+         s.tipo_reciclable_idtipo_reciclable,
+         es.descripcion AS estado,
+         sr.rutas_idrutas
+       FROM solicitud_recoleccion s
+       INNER JOIN estado_solicitud es
+         ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
+       LEFT JOIN solicitud_rutas sr
+         ON sr.solicitud_recoleccion_idsolicitud_recoleccion = s.idsolicitud_recoleccion
+       WHERE s.idsolicitud_recoleccion IN (?)
+       FOR UPDATE`,
+      [solicitudes]
     );
 
-    const pedidosInvalidos = verificacion
-      .filter((p) => p.estado_ruta !== 0)
-      .map((p) => p.idpedidos);
+    const idsEncontrados = new Set(verificacion.map((item) => item.idsolicitud_recoleccion));
+    const solicitudesInvalidas = solicitudes.filter((id) => !idsEncontrados.has(id));
+    solicitudesInvalidas.push(
+      ...verificacion
+        .filter((item) => item.rutas_idrutas || item.estado.toLowerCase() !== 'pendiente')
+        .map((item) => item.idsolicitud_recoleccion)
+    );
 
-    if (pedidosInvalidos.length > 0) {
+    const tipos = new Set(verificacion.map((item) => item.tipo_reciclable_idtipo_reciclable));
+
+    if (solicitudesInvalidas.length > 0 || tipos.size !== 1) {
       await connection.rollback();
       return {
         success: false,
-        message: "Algunos pedidos ya fueron asignados a otra ruta",
-        pedidos_invalidos: pedidosInvalidos,
+        message: tipos.size !== 1
+          ? "Todas las solicitudes de una ruta deben tener el mismo tipo de reciclable"
+          : "Algunas solicitudes no existen, ya tienen ruta o no están pendientes",
+        pedidos_invalidos: [...new Set(solicitudesInvalidas)],
       };
     }
 
-    // 🔹 2. Insertar nueva ruta asignada
+    const tipoReciclable = verificacion[0].tipo_reciclable_idtipo_reciclable;
     const [resultRuta] = await connection.query(
-      `INSERT INTO rutas_asignadas (recolector_idrecolector) VALUES (?)`,
-      [idrecolector]
+      `INSERT INTO rutas
+        (fecha_creacion, recolector_idrecolector, tipo_reciclable_idtipo_reciclable, usuarios_idusuario)
+       VALUES (CURDATE(), ?, ?, ?)`,
+      [idrecolector, tipoReciclable, idAdmin]
     );
 
-    const idrutas_asignadas = resultRuta.insertId;
-
-    // 🔹 3. Actualizar estado_ruta = 1 en los pedidos
+    const idrutas = resultRuta.insertId;
+    const values = solicitudes.map((idSolicitud) => [idSolicitud, idrutas]);
     await connection.query(
-      `UPDATE pedidos 
-       SET estado_ruta = 1 
-       WHERE idpedidos IN (?)`,
-      [pedidos]
-    );
-
-    // 🔹 4. Insertar relaciones en pedidos_rutas
-    const values = pedidos.map((idPedido) => [idPedido, idrutas_asignadas]);
-    await connection.query(
-      `INSERT INTO pedidos_rutas (pedidos_idpedidos, rutas_asignadas_idrutas_asignadas)
+      `INSERT INTO solicitud_rutas
+        (solicitud_recoleccion_idsolicitud_recoleccion, rutas_idrutas)
        VALUES ?`,
       [values]
     );
 
     await connection.commit();
-
     return {
       success: true,
       message: "Ruta asignada correctamente",
-      data: { idrutas_asignadas, idrecolector, pedidos },
+      data: { idrutas, idrecolector, solicitudes },
     };
   } catch (error) {
     await connection.rollback();
-    console.error("❌ Error en asignarRutaARecolector:", error);
-    return {
-      success: false,
-      message: "Error al asignar la ruta",
-      error: error.message,
-    };
+    console.error("Error en asignarRutaARecolector:", error);
+    return { success: false, message: "Error al asignar la ruta", error: error.message };
   } finally {
     connection.release();
   }
 };
 
-
-/**
- * Cambia el recolector asignado a una ruta específica.
- * @param {number} idRuta - ID de la ruta asignada
- * @param {number} idRecolector - Nuevo ID del recolector
- */
 export const cambiarRecolectorRuta = async (idRuta, idRecolector) => {
   try {
-    // 1️⃣ Verificamos si ya tiene asignado el mismo recolector
     const [check] = await pool.query(
-      `SELECT recolector_idrecolector 
-       FROM rutas_asignadas 
-       WHERE idrutas_asignadas = ?`,
+      `SELECT recolector_idrecolector FROM rutas WHERE idrutas = ?`,
       [idRuta]
     );
 
     if (check.length === 0) {
-      return {
-        success: false,
-        message: "No se encontró la ruta especificada",
-      };
+      return { success: false, message: "No se encontró la ruta especificada" };
     }
 
-    const recolectorActual = check[0].recolector_idrecolector;
-    if (recolectorActual === idRecolector) {
-      return {
-        success: false,
-        message: "El recolector ya tiene esta ruta asignada",
-      };
+    if (check[0].recolector_idrecolector === idRecolector) {
+      return { success: false, message: "El recolector ya tiene esta ruta asignada" };
     }
 
-    // 2️⃣ Si no es el mismo, hacemos el UPDATE
     const [result] = await pool.query(
-      `UPDATE rutas_asignadas 
-       SET recolector_idrecolector = ? 
-       WHERE idrutas_asignadas = ?`,
+      `UPDATE rutas SET recolector_idrecolector = ? WHERE idrutas = ?`,
       [idRecolector, idRuta]
     );
 
-    if (result.affectedRows === 0) {
-      return {
-        success: false,
-        message: "No se pudo actualizar la ruta",
-      };
-    }
-
-    return {
-      success: true,
-      message: "Recolector actualizado correctamente",
-    };
+    return result.affectedRows > 0
+      ? { success: true, message: "Recolector actualizado correctamente" }
+      : { success: false, message: "No se pudo actualizar la ruta" };
   } catch (error) {
-    console.error("❌ Error en cambiarRecolectorRuta:", error);
-    return {
-      success: false,
-      message: "Error interno al cambiar el recolector",
-      error,
-    };
+    console.error("Error en cambiarRecolectorRuta:", error);
+    return { success: false, message: "Error interno al cambiar el recolector", error };
   }
+};
+
+export const crearNotificacionRutaDB = async (idRuta, mensaje, titulo) => {
+  const [ruta] = await pool.query(`SELECT idrutas FROM rutas WHERE idrutas = ?`, [idRuta]);
+  if (ruta.length === 0) {
+    return { success: false, message: "No se encontró la ruta especificada" };
+  }
+
+  const [result] = await pool.query(
+    `INSERT INTO notificaciones (titulo, mensaje, fecha_envio, rutas_idrutas)
+     VALUES (?, ?, NOW(), ?)`,
+    [titulo || "Aviso de recolección", mensaje, idRuta]
+  );
+
+  return { success: true, insertId: result.insertId };
 };

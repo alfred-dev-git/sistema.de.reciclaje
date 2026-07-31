@@ -1,177 +1,109 @@
-import {crearNotificacionDB, obtenerCronogramaDB, anularFechaRecoleccionDB, crearFechaRecoleccionDB, modificarFechaRecoleccionDB, obtenerFechasInactivasDB, activarFechaRecoleccionDB } from "../models/cronograma.model.js";
+import {
+  obtenerCronogramaDB,
+  anularFechaRecoleccionDB,
+  crearFechaRecoleccionDB,
+  modificarFechaRecoleccionDB,
+  obtenerFechasInactivasDB,
+  activarFechaRecoleccionDB,
+  crearNotificacionesFrecuenciaDB,
+} from "../models/cronograma.model.js";
 
-// Obtener cronograma (ya existente)
-export const getCronograma = async (req, res) => {
+export const getCronograma = async (_req, res) => {
   try {
-    const cronograma = await obtenerCronogramaDB();
-    res.json(cronograma);
+    res.json(await obtenerCronogramaDB());
   } catch (error) {
-    console.error("❌ Error al obtener Cronograma:", error.message);
+    console.error("Error al obtener frecuencias:", error);
     res.status(500).json({ message: "Error interno del servidor" });
   }
 };
 
-// Nueva función: notificar un día de recolección
 export const notificarRecoleccion = async (req, res) => {
   try {
-    const { idcronograma_recoleccion, mensaje, fechaObjetivo } = req.body;
-
-    if (!idcronograma_recoleccion || !mensaje) {
-      return res
-        .status(400)
-        .json({ message: "Debe enviar idcronograma_recoleccion y mensaje" });
+    const { idcronograma_recoleccion, mensaje } = req.body;
+    const idFrecuencia = Number(idcronograma_recoleccion);
+    if (!Number.isInteger(idFrecuencia) || idFrecuencia <= 0 || !mensaje?.trim()) {
+      return res.status(400).json({
+        success: false,
+        message: "Se requiere una frecuencia y un mensaje",
+      });
     }
 
-    const result = await crearNotificacionDB({
-      idcronograma_recoleccion,
-      mensaje,
-      fechaObjetivo,
-    });
-
-    res.json({
-      success: true,
-      message: "Notificación creada y enviada correctamente",
-      id: result.insertId,
-    });
+    const resultado = await crearNotificacionesFrecuenciaDB(
+      idFrecuencia,
+      mensaje.trim()
+    );
+    res.status(resultado.success ? 200 : 409).json(resultado);
   } catch (error) {
-    console.error("❌ Error al notificar recolección:", error.message);
-    res.status(500).json({ message: "Error al crear la notificación" });
+    console.error("Error al notificar frecuencia:", error);
+    res.status(500).json({ success: false, message: "Error al crear las notificaciones" });
   }
 };
 
-
-// 🔴 Anular fecha de recolección
 export const anularFechaRecoleccion = async (req, res) => {
   try {
-    const { id } = req.params;
-    if (!id) {
-      return res.status(400).json({ message: "Falta el ID del cronograma a anular" });
-    }
-
-    const exito = await anularFechaRecoleccionDB(id);
-
-    if (exito) {
-      res.json({ message: "✅ Fecha de recolección anulada correctamente" });
-    } else {
-      res.status(404).json({ message: "No se encontró la fecha a anular" });
-    }
+    const exito = await anularFechaRecoleccionDB(req.params.id);
+    if (!exito) return res.status(404).json({ message: "No se encontró la frecuencia" });
+    res.json({ message: "Frecuencia anulada correctamente" });
   } catch (error) {
-    console.error("❌ Error al anular fecha:", error.message);
+    console.error("Error al anular frecuencia:", error);
     res.status(500).json({ message: "Error interno del servidor" });
   }
 };
-
 
 export const crearFechaRecoleccion = async (req, res) => {
   try {
     const { dia_semana, semana_mes, hora_inicio, hora_fin, tipo_reciclable } = req.body;
-
-    // Validar campos requeridos
     if (!dia_semana || !semana_mes || !hora_inicio || !hora_fin || !tipo_reciclable) {
       return res.status(400).json({ message: "Todos los campos son obligatorios" });
     }
-
-    // 🔧 Ahora pasamos los valores correctamente (no un objeto)
-    const resultado = await crearFechaRecoleccionDB(
-      dia_semana,
-      semana_mes,
-      hora_inicio,
-      hora_fin,
-      tipo_reciclable
-    );
-
-    if (!resultado.success) {
-      return res.status(400).json(resultado);
+    if (hora_inicio >= hora_fin) {
+      return res.status(400).json({ message: "La hora de inicio debe ser anterior a la hora de fin" });
     }
 
-    res.json(resultado);
-
+    const resultado = await crearFechaRecoleccionDB(
+      dia_semana, semana_mes, hora_inicio, hora_fin, tipo_reciclable
+    );
+    res.status(resultado.success ? 200 : 409).json(resultado);
   } catch (error) {
-    console.error("❌ Error al crear fecha:", error.message);
-    res.status(500).json({
-      success: false,
-      message: error.message || "Error interno del servidor",
-    });
+    console.error("Error al crear frecuencia:", error);
+    res.status(500).json({ success: false, message: "Error interno del servidor" });
   }
 };
-
-
 
 export const modificarFechaRecoleccion = async (req, res) => {
   try {
-    const { id } = req.params;
-    const {
-      dia_semana,
-      semana_mes,
-      hora_inicio,
-      hora_fin,
-      tipo_reciclable,
-    } = req.body;
-
-    // Validaciones básicas
-    if (!id) {
-      return res.status(400).json({ message: "Falta el ID del cronograma a modificar" });
-    }
-
+    const { dia_semana, semana_mes, hora_inicio, hora_fin, tipo_reciclable } = req.body;
     if (!dia_semana || !semana_mes || !hora_inicio || !hora_fin || !tipo_reciclable) {
       return res.status(400).json({ message: "Faltan datos obligatorios" });
     }
-
-    const exito = await modificarFechaRecoleccionDB(id, {
-      dia_semana,
-      semana_mes,
-      hora_inicio,
-      hora_fin,
-      tipo_reciclable,
-    });
-
-    if (exito) {
-      res.json({ message: "✅ Fecha de recolección modificada correctamente" });
-    } else {
-      res.status(404).json({ message: "No se encontró la fecha a modificar" });
+    if (hora_inicio >= hora_fin) {
+      return res.status(400).json({ message: "La hora de inicio debe ser anterior a la hora de fin" });
     }
+
+    const exito = await modificarFechaRecoleccionDB(req.params.id, req.body);
+    if (!exito) return res.status(409).json({ message: "La frecuencia se superpone o no existe" });
+    res.json({ message: "Frecuencia modificada correctamente" });
   } catch (error) {
-    console.error("❌ Error al modificar fecha:", error.message);
+    console.error("Error al modificar frecuencia:", error);
     res.status(500).json({ message: "Error interno del servidor" });
   }
 };
 
-
-
-export const obtenerFechasInactivas = async (req, res) => {
+export const obtenerFechasInactivas = async (_req, res) => {
   try {
-    const data = await obtenerFechasInactivasDB();
-    res.json(data);
+    res.json(await obtenerFechasInactivasDB());
   } catch (error) {
-    console.error("❌ Error al traer fechas inactivas:", error.message);
+    console.error("Error al obtener frecuencias inactivas:", error);
     res.status(500).json({ message: "Error interno del servidor" });
   }
 };
-
 
 export const activarFechaRecoleccion = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    if (!id) {
-      return res.status(400).json({
-        success: false,
-        message: "Debe enviar el ID en la URL",
-      });
-    }
-
-    const result = await activarFechaRecoleccionDB(id);
-
-    if (!result.success) {
-      return res.status(400).json(result);
-    }
-
-    res.json(result);
+    const resultado = await activarFechaRecoleccionDB(req.params.id);
+    res.status(resultado.success ? 200 : 409).json(resultado);
   } catch (error) {
-    console.error("❌ Error al activar la fecha:", error.message);
-    res.status(500).json({
-      success: false,
-      message: "Error interno al activar la fecha de recolección",
-    });
+    console.error("Error al activar frecuencia:", error);
+    res.status(500).json({ success: false, message: "Error interno del servidor" });
   }
 };

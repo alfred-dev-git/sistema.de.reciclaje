@@ -1,6 +1,6 @@
 import { pool } from "../config/db.js";
 
-/** Obtener todos los usuarios con rol 3 o 4 */
+/** Obtener contribuyentes y recolectores */
 export const obtenerUsuariosDB = async () => {
   const [rows] = await pool.query(`
     SELECT 
@@ -14,13 +14,14 @@ export const obtenerUsuariosDB = async () => {
       fecha_nacimiento,
       rol_idrol,
       municipio_idmunicipio,
-      foto_perfil,
-      puntos,
-      sexo,
-      activo
-    FROM usuario
-    WHERE rol_idrol IN (3, 4)
-    ORDER BY idusuario ASC;
+      u.foto_perfil,
+      u.sexo,
+      u.activo,
+      r.descripcion AS rol
+    FROM usuarios u
+    INNER JOIN rol r ON r.idrol = u.rol_idrol
+    WHERE LOWER(r.descripcion) IN ('contribuyente', 'recolector')
+    ORDER BY u.idusuario ASC;
   `);
 
   return rows;
@@ -30,7 +31,7 @@ export const obtenerUsuariosDB = async () => {
 export const desactivarUsuarioDB = async (id) => {
   const [result] = await pool.query(
     `
-    UPDATE usuario
+    UPDATE usuarios
     SET activo = 0
     WHERE idusuario = ?
     `,
@@ -47,7 +48,7 @@ export const desactivarUsuarioDB = async (id) => {
 export const activarUsuarioDB = async (id) => {
   const [result] = await pool.query(
     `
-    UPDATE usuario
+    UPDATE usuarios
     SET activo = 1
     WHERE idusuario = ?
     `,

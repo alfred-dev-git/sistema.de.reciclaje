@@ -59,9 +59,12 @@ export const useCronograma = () => {
 
   const handleNotificar = async (id: number) => {
     const mensaje = prompt("Mensaje de la notificación:");
-    if (!mensaje) return;
-    const res = await lanzarNotificacion({ idcronograma_recoleccion: id, mensaje });
-    handleAfterSuccess(res);
+    if (!mensaje?.trim()) return;
+    const res = await lanzarNotificacion({
+      idcronograma_recoleccion: id,
+      mensaje: mensaje.trim(),
+    });
+    alert(res.message);
   };
 
   const handleModificar = async (id: number, data: Partial<CronogramaItem>) => {

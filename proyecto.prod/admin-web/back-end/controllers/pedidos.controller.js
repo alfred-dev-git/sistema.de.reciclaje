@@ -27,12 +27,12 @@ export const getPedidosPorMes = async (_req, res) => {
   try {
     const [rows] = await pool.query(`
       SELECT 
-        YEAR(p.fecha_emision) AS anio,
-        MONTH(p.fecha_emision) AS mes,
+        YEAR(s.fecha_emision) AS anio,
+        MONTH(s.fecha_emision) AS mes,
         COUNT(*) AS total
-      FROM pedidos p
-      WHERE p.fecha_emision >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
-      GROUP BY YEAR(p.fecha_emision), MONTH(p.fecha_emision)
+      FROM solicitud_recoleccion s
+      WHERE s.fecha_emision >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+      GROUP BY YEAR(s.fecha_emision), MONTH(s.fecha_emision)
       ORDER BY anio ASC, mes ASC;
     `);
 
@@ -60,11 +60,11 @@ export const getDistribucionTipos = async (_req, res) => {
       SELECT 
         tr.idtipo_reciclable AS id_tipo,
         tr.descripcion AS tipo,
-        COUNT(p.idpedidos) AS total
-      FROM pedidos p
+        COUNT(s.idsolicitud_recoleccion) AS total
+      FROM solicitud_recoleccion s
       INNER JOIN tipo_reciclable tr 
-        ON tr.idtipo_reciclable = p.tipo_reciclable_idtipo_reciclable
-      WHERE p.fecha_emision >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
+        ON tr.idtipo_reciclable = s.tipo_reciclable_idtipo_reciclable
+      WHERE s.fecha_emision >= DATE_SUB(CURDATE(), INTERVAL 12 MONTH)
       GROUP BY tr.idtipo_reciclable, tr.descripcion
       ORDER BY total DESC;
     `);
@@ -86,20 +86,32 @@ export const getHomeKpis = async (_req, res) => {
     // 1️⃣ Pedidos sin ruta asignada (estado_ruta = 0)
     const [sinAsignar] = await pool.query(`
       SELECT COUNT(*) AS n 
-      FROM pedidos 
-      WHERE estado_ruta = 0;
+      FROM solicitud_recoleccion s
+      INNER JOIN estado_solicitud es
+        ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
+      WHERE LOWER(es.descripcion) = 'pendiente'
+        AND NOT EXISTS (
+          SELECT 1 FROM solicitud_rutas sr
+          WHERE sr.solicitud_recoleccion_idsolicitud_recoleccion = s.idsolicitud_recoleccion
+        );
     `);
 
     // 2️⃣ Recolectores activos (que tienen pedidos activos y con ruta asignada)
     const [recolectoresActivos] = await pool.query(`
-      SELECT COUNT(DISTINCT ra.recolector_idrecolector) AS n
-      FROM rutas_asignadas ra
-      INNER JOIN pedidos_rutas pr 
-        ON pr.rutas_asignadas_idrutas_asignadas = ra.idrutas_asignadas
-      INNER JOIN pedidos p 
-        ON p.idpedidos = pr.pedidos_idpedidos
-      WHERE p.estado_ruta = 1 
-        AND p.estado = 0;
+      SELECT COUNT(DISTINCT ru.recolector_idrecolector) AS n
+      FROM rutas ru
+      INNER JOIN solicitud_rutas sr ON sr.rutas_idrutas = ru.idrutas
+      INNER JOIN solicitud_recoleccion s
+        ON s.idsolicitud_recoleccion = sr.solicitud_recoleccion_idsolicitud_recoleccion
+      INNER JOIN estado_solicitud es
+        ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
+      WHERE LOWER(es.descripcion) = 'pendiente';
+    `);
+
+    const [fechasActivas] = await pool.query(`
+      SELECT COUNT(*) AS n
+      FROM frecuencia_recoleccion
+      WHERE activo = 1;
     `);
 
 
@@ -108,7 +120,7 @@ export const getHomeKpis = async (_req, res) => {
     res.json({
       rutasSinAsignar: sinAsignar[0].n,
       recolectoresActivos: recolectoresActivos[0].n,
-      fechasActivas: 0 // placeholder
+      fechasActivas: fechasActivas[0].n
     });
 
   } catch (err) {

@@ -11,7 +11,7 @@ export const obtenerPerfilDB = async (idusuario) => {
       u.DNI AS dni,
       m.descripcion AS municipio,
       m.idmunicipio AS municipio_idmunicipio
-    FROM usuario u
+    FROM usuarios u
     LEFT JOIN municipio m ON u.municipio_idmunicipio = m.idmunicipio
     WHERE u.idusuario = ?
     LIMIT 1;
@@ -39,7 +39,7 @@ export const actualizarPerfilDB = async (idusuario, fields) => {
 
   await pool.query(
     `
-      UPDATE usuario 
+      UPDATE usuarios
       SET ${setClause}
       WHERE idusuario = ?
     `,

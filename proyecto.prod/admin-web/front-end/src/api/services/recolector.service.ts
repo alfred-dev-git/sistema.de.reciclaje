@@ -1,4 +1,5 @@
 import { https } from "../https";
+import type { AxiosError } from "axios";
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -55,6 +56,19 @@ export const anularRuta = async (idRuta: number) => {
     return {
       success: false,
       message: error.response?.data?.message || "Error al anular la ruta",
+    };
+  }
+};
+
+export const notificarRuta = async (idRuta: number, mensaje: string) => {
+  try {
+    const response = await https.post("/rutas/notificar", { idRuta, mensaje });
+    return { success: true, message: response.data.message, data: response.data };
+  } catch (error: unknown) {
+    const apiError = error as AxiosError<{ message?: string }>;
+    return {
+      success: false,
+      message: apiError.response?.data?.message || "Error al enviar la notificación",
     };
   }
 };

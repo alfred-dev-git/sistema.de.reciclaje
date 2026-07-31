@@ -32,6 +32,7 @@ export default function SeguimientoRutas() {
     cargarRutasPorRecolector,
     actualizarRecolectorRuta,
     anularRutaExistente,
+    notificarRutaExistente,
   } = useRutas("seguimiento");
 
   const [loading, setLoading] = useState(false);
@@ -121,6 +122,12 @@ export default function SeguimientoRutas() {
                 </button>
 
                 <div className="acciones-ruta">
+                  <button
+                    onClick={() => notificarRutaExistente(r.id)}
+                    className="button button-ruta"
+                  >
+                    Notificar usuarios
+                  </button>
                   <button
                     onClick={() => {
                       setRutaParaCambio(r.id);
