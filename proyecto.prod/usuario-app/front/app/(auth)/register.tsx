@@ -146,10 +146,9 @@ export default function RegisterScreen() {
         telefono: form.telefono,
         fecha_nacimiento: form.fecha_nacimiento,
         sexo: form.sexo,
-        municipio_idmunicipio: municipioSeleccionado,        // Si querés enviar explícitos:
+        municipio_idmunicipio: municipioSeleccionado!,
         // rol_idrol: 2,
         // municipio_idmunicipio: 1,
-        // puntos: 0,
       });
 
       router.replace("/(app)/home");
@@ -184,7 +183,7 @@ export default function RegisterScreen() {
                   keyboardType="number-pad"
                   value={form.dni}
                   onChangeText={(t) => setField("dni", t.replace(/\D+/g, ""))}
-                  maxLength={9}
+                  maxLength={8}
                   error={errors.dni}
                 />
                 <Text style={{ fontWeight: "700", marginTop: 8 }}>Municipio</Text>

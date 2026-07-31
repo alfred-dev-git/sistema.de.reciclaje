@@ -2,7 +2,7 @@
 import { Drawer } from "expo-router/drawer";
 import { useEffect, useState } from "react";
 import {
-  View, Text, Image, TouchableOpacity, StyleSheet, Platform,
+  View, Text, Image, StyleSheet, Platform,
 } from "react-native";
 import {
   DrawerContentScrollView,
@@ -12,7 +12,6 @@ import {
 } from "@react-navigation/drawer";
 import { router } from "expo-router";
 import { getCurrentUser, logout as logoutApi } from "@/services/api/auth";
-import { getUserPhotoUrl, pickImageFromLibrary, uploadUserPhoto } from "@/services/api/user";
 
 function initialsFrom(name?: string, last?: string) {
   const a = (name?.trim()?.[0] ?? "").toUpperCase();
@@ -73,23 +72,13 @@ export default function AppLayout() {
 
 function CustomDrawerContent(props: DrawerContentComponentProps) {
   const [user, setUser] = useState<any>(null);
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
       const u = await getCurrentUser();
       setUser(u);
-      if (u) setPhotoUri(getUserPhotoUrl(u.id));
     })();
   }, []);
-
-  const onEditPhoto = async () => {
-    if (!user) return;
-    const asset = await pickImageFromLibrary();
-    if (!asset) return;
-    await uploadUserPhoto(user.id, asset);
-    setPhotoUri(`${getUserPhotoUrl(user.id)}`); // cache-busting
-  };
 
   const onLogout = async () => {
     try {
@@ -106,12 +95,11 @@ function CustomDrawerContent(props: DrawerContentComponentProps) {
     <DrawerContentScrollView {...props} contentContainerStyle={styles.scroll}>
       <View style={styles.header}>
         <View style={{ width: 80, height: 80 }}>
-          <Avatar uri={photoUri} initials={initials} />
+          <Avatar uri={user?.foto_perfil ?? null} initials={initials} />
         </View>
         <View style={styles.userInfo}>
           <Text style={styles.name}>{user ? `${user.nombre} ${user.apellido}` : "Usuario"}</Text>
           <Text style={styles.email}>{user?.email ?? ""}</Text>
-          {typeof user?.puntos === "number" ? <Text style={styles.points}>Puntos: {user.puntos}</Text> : null}
         </View>
       </View>
 
@@ -172,7 +160,6 @@ const styles = StyleSheet.create({
   userInfo: { marginLeft: 12, flex: 1 },
   name: { fontSize: 18, fontWeight: "700", color: "#1f7a44" },
   email: { color: "#666", marginTop: 2 },
-  points: { color: "#333", marginTop: 4, fontWeight: "600" },
   footer: {
     marginTop: 8,
     borderTopWidth: StyleSheet.hairlineWidth,

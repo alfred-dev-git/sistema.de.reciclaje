@@ -1,41 +1,64 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, Request, Response } from "express";
 import bcrypt from "bcryptjs";
 import asyncHandler from "@/utils/asyncHandler";
-import dbFactory from "@/config/db";
+import getDB from "@/config/db";
 import { signToken } from "@/utils/jwt";
-import sendMail from "@/utils/mailer";
 import { sendPasswordResetEmail } from "./auth.util";
-import type { Pool } from "mysql2/promise";
+import { requireAuth } from "@/middlewares/auth";
 
 const router = Router();
 
-/* Utilidad: OTP numérico */
 function genCode(len = 6) {
-  let s = "";
-  for (let i = 0; i < len; i++) s += Math.floor(Math.random() * 10);
-  return s;
+  let code = "";
+  for (let i = 0; i < len; i++) code += Math.floor(Math.random() * 10);
+  return code;
 }
 
-const getDB = (): Pool => (typeof dbFactory === "function" ? (dbFactory as any)() : (dbFactory as any));
+function sexoToDb(value: unknown) {
+  const values: Record<string, number> = { M: 1, F: 2, O: 3 };
+  return values[String(value).toUpperCase()] ?? 3;
+}
+
+function sexoFromDb(value: unknown) {
+  const values: Record<number, "M" | "F" | "O"> = { 1: "M", 2: "F", 3: "O" };
+  return values[Number(value)] ?? "O";
+}
 
 router.get(
   "/municipios",
-  asyncHandler(async (req: Request, res: Response) => {
-    const db = getDB();
-    const [rows] = await db.query(
-      `SELECT idmunicipio AS id, descripcion
-       FROM municipio
-       ORDER BY descripcion ASC`
+  asyncHandler(async (_req: Request, res: Response) => {
+    const [rows] = await getDB().query(
+      `SELECT idmunicipio AS id, descripcion FROM municipio ORDER BY descripcion ASC`
     );
-
     res.json({ items: rows });
   })
 );
-/**
- * POST /api/auth/register
- * Requeridos: dni, nombre, apellido, email, password, telefono, fecha_nacimiento, sexo
- * Defaults: rol_idrol=3 (user), municipio_idmunicipio=1, puntos=0
- */
+
+router.get(
+  "/me",
+  requireAuth,
+  asyncHandler(async (req: Request, res: Response) => {
+    const [rows] = await getDB().query(
+      `SELECT u.idusuario AS id, u.DNI AS dni, u.CUIT AS cuit, u.nombre,
+              u.apellido, u.email, u.telefono, u.fecha_nacimiento,
+              u.municipio_idmunicipio, u.sexo, u.foto_perfil, u.activo,
+              r.descripcion AS rol
+       FROM usuarios u
+       INNER JOIN rol r ON r.idrol = u.rol_idrol
+       INNER JOIN contribuyente c ON c.usuarios_idusuario = u.idusuario
+       WHERE u.idusuario = ? LIMIT 1`,
+      [req.user!.uid]
+    );
+    const user = (rows as Record<string, unknown>[])[0];
+    if (!user || Number(user.activo) !== 1 || String(user.rol).toLowerCase() !== "contribuyente") {
+      return res.status(401).json({ error: "Sesión inválida" });
+    }
+    user.sexo = sexoFromDb(user.sexo);
+    delete user.rol;
+    res.json({ user });
+  })
+);
+
 router.post(
   "/register",
   asyncHandler(async (req: Request, res: Response) => {
@@ -49,271 +72,222 @@ router.post(
       telefono,
       fecha_nacimiento,
       sexo,
-      rol_idrol,
-      municipio_idmunicipio, // ← viene del body
-      foto_perfil,
+      municipio_idmunicipio,
     } = req.body ?? {};
 
-    if (
-      !dni ||
-      !nombre ||
-      !apellido ||
-      !email ||
-      !password ||
-      !telefono ||
-      !fecha_nacimiento ||
-      !sexo
-    ) {
-      return res.status(400).json({
-        error:
-          "Faltan campos requeridos: dni, nombre, apellido, email, password, telefono, fecha_nacimiento, sexo",
-      });
+    if (!dni || !nombre || !apellido || !email || !password || !telefono || !fecha_nacimiento || !sexo || !municipio_idmunicipio) {
+      return res.status(400).json({ error: "Faltan campos requeridos" });
     }
 
+    const dniNorm = String(dni).replace(/\D+/g, "");
     const emailNorm = String(email).trim().toLowerCase();
-    const db = getDB();
-
-    // Validar duplicado
-    const [dup] = await db.query(
-      `SELECT 1 FROM usuario WHERE email = ? LIMIT 1`,
-      [emailNorm]
-    );
-    if ((dup as any[]).length > 0) {
-      return res.status(409).json({ error: "Email ya registrado" });
+    if (!/^\d{7,8}$/.test(dniNorm)) {
+      return res.status(400).json({ error: "El DNI debe tener 7 u 8 números" });
+    }
+    if (String(password).length < 6) {
+      return res.status(400).json({ error: "La contraseña debe tener al menos 6 caracteres" });
     }
 
-    // Hash
-    const hash = await bcrypt.hash(String(password), 10);
+    const db = getDB();
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
 
-    // Defaults
-    const rol = Number(rol_idrol) || 3;
-    const muni = Number(municipio_idmunicipio);
-    const puntos = 0;
-    const activo = 1;
+      const [duplicates] = await connection.query(
+        `SELECT idusuario FROM usuarios WHERE email = ? OR DNI = ? LIMIT 1`,
+        [emailNorm, dniNorm]
+      );
+      if ((duplicates as unknown[]).length > 0) {
+        await connection.rollback();
+        return res.status(409).json({ error: "Email o DNI ya registrado" });
+      }
 
-    // Insert usuario
-    const [result] = await db.execute(
-      `
-      INSERT INTO usuario
-        (DNI, CUIT, nombre, apellido, email, password, telefono, fecha_nacimiento,
-         rol_idrol, municipio_idmunicipio, foto_perfil, puntos, sexo, activo)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `,
-      [
-        String(dni),
-        cuit ? String(cuit) : null,
-        nombre,
-        apellido,
-        emailNorm,
-        hash,
-        String(telefono),
-        String(fecha_nacimiento),
-        rol,
-        muni,
-        foto_perfil ?? null,
-        puntos,
-        String(sexo),
-        activo,
-      ]
-    );
+      const [roles] = await connection.query(
+        `SELECT idrol FROM rol WHERE LOWER(descripcion) = 'contribuyente' LIMIT 1`
+      );
+      const rol = (roles as { idrol: number }[])[0];
+      if (!rol) throw new Error("No existe el rol Contribuyente");
 
-    const id = (result as any).insertId;
+      const [municipios] = await connection.query(
+        `SELECT idmunicipio FROM municipio WHERE idmunicipio = ? LIMIT 1`,
+        [Number(municipio_idmunicipio)]
+      );
+      if ((municipios as unknown[]).length === 0) {
+        await connection.rollback();
+        return res.status(400).json({ error: "Municipio inválido" });
+      }
 
-    const user = {
-      id,
-      dni: String(dni),
-      nombre,
-      apellido,
-      email: emailNorm,
-      telefono: String(telefono),
-      fecha_nacimiento: String(fecha_nacimiento),
-      rol_idrol: rol,
-      municipio_idmunicipio: muni,
-      puntos,
-      sexo: String(sexo),
-      activo,
-    };
+      const hash = await bcrypt.hash(String(password), 10);
+      const [result] = await connection.execute(
+        `INSERT INTO usuarios
+          (DNI, CUIT, nombre, apellido, email, password, telefono, fecha_nacimiento,
+           rol_idrol, municipio_idmunicipio, foto_perfil, sexo, activo)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, 1)`,
+        [
+          dniNorm,
+          cuit ? String(cuit) : null,
+          String(nombre).trim(),
+          String(apellido).trim(),
+          emailNorm,
+          hash,
+          String(telefono),
+          String(fecha_nacimiento),
+          rol.idrol,
+          Number(municipio_idmunicipio),
+          sexoToDb(sexo),
+        ]
+      );
+      const id = (result as { insertId: number }).insertId;
+      await connection.execute(
+        `INSERT INTO contribuyente (usuarios_idusuario) VALUES (?)`,
+        [id]
+      );
+      await connection.commit();
 
-    const token = signToken({ uid: id });
-    res.status(201).json({ user, token });
+      const user = {
+        id,
+        dni: dniNorm,
+        nombre: String(nombre).trim(),
+        apellido: String(apellido).trim(),
+        email: emailNorm,
+        telefono: String(telefono),
+        fecha_nacimiento: String(fecha_nacimiento),
+        municipio_idmunicipio: Number(municipio_idmunicipio),
+        sexo: String(sexo).toUpperCase(),
+        activo: 1,
+      };
+      res.status(201).json({ user, token: signToken({ uid: id }) });
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
   })
 );
 
-/**
- * POST /api/auth/login
- * Solo permite ingresar si usuario.activo = 1 y rol_idrol = 3
- */
 router.post(
   "/login",
-  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+  asyncHandler(async (req: Request, res: Response) => {
     const { email, password } = req.body ?? {};
     if (!email || !password) {
-      return res.status(400).json({ error: "email y password son requeridos" });
+      return res.status(400).json({ error: "Email y contraseña son requeridos" });
     }
 
-    const emailNorm = String(email).trim().toLowerCase();
-    const db = getDB();
-
-    const [rows] = await db.query(
-      `
-      SELECT
-        idusuario, DNI, CUIT, nombre, apellido, email, telefono,
-        password AS password_hash,
-        puntos, rol_idrol, municipio_idmunicipio,
-        fecha_nacimiento, sexo, foto_perfil, activo
-      FROM usuario
-      WHERE email = ?
-      LIMIT 1
-      `,
-      [emailNorm]
+    const [rows] = await getDB().query(
+      `SELECT u.idusuario, u.DNI, u.CUIT, u.nombre, u.apellido, u.email,
+              u.telefono, u.password AS password_hash, u.municipio_idmunicipio,
+              u.fecha_nacimiento, u.sexo, u.foto_perfil, u.activo,
+              r.descripcion AS rol
+       FROM usuarios u
+       INNER JOIN rol r ON r.idrol = u.rol_idrol
+       INNER JOIN contribuyente c ON c.usuarios_idusuario = u.idusuario
+       WHERE u.email = ?
+       LIMIT 1`,
+      [String(email).trim().toLowerCase()]
     );
-
-    const row = (rows as any[])[0];
-    if (!row) return res.status(401).json({ error: "Credenciales inválidas" });
-
+    const row = (rows as Record<string, unknown>[])[0];
+    if (!row || !(await bcrypt.compare(String(password), String(row.password_hash)))) {
+      return res.status(401).json({ error: "Credenciales inválidas" });
+    }
     if (Number(row.activo) !== 1) {
       return res.status(403).json({ error: "Tu cuenta está inactiva. Contactá con soporte." });
     }
-
-    const ok = await bcrypt.compare(String(password), String(row.password_hash));
-    if (!ok) return res.status(401).json({ error: "Credenciales inválidas" });
-
-    if (Number(row.rol_idrol) !== 3) {
+    if (String(row.rol).toLowerCase() !== "contribuyente") {
       return res.status(403).json({ error: "Tu rol no tiene permiso para esta app." });
     }
 
     const user = {
-      id: row.idusuario,
+      id: Number(row.idusuario),
       dni: row.DNI,
       cuit: row.CUIT,
       nombre: row.nombre,
       apellido: row.apellido,
       email: row.email,
       telefono: row.telefono,
-      puntos: row.puntos,
-      rol_idrol: row.rol_idrol,
       municipio_idmunicipio: row.municipio_idmunicipio,
       fecha_nacimiento: row.fecha_nacimiento,
-      sexo: row.sexo,
+      sexo: sexoFromDb(row.sexo),
       foto_perfil: row.foto_perfil,
       activo: row.activo,
     };
-
-    const token = signToken({ uid: user.id });
-
-    res.json({
-      user,
-      token
-    });
-
+    res.json({ user, token: signToken({ uid: user.id }) });
   })
 );
 
-
-/**
- * POST /api/auth/forgot
- * body: { email }
- * - Genera un código (OTP) de 6 dígitos, vence a los 15 minutos
- * - Guarda hash del código
- * - Envía el código por email (o log por consola en dev)
- * - Siempre responde 200 para no filtrar si el email existe o no
- */
 router.post(
   "/forgot",
   asyncHandler(async (req: Request, res: Response) => {
-    const { email } = req.body ?? {};
-    const emailNorm = String(email || "").trim().toLowerCase();
-    if (!emailNorm) return res.json({ ok: true });
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    if (!email) return res.json({ ok: true });
 
     const db = getDB();
     const [rows] = await db.query(
-      `SELECT idusuario, email FROM usuario WHERE email = ? LIMIT 1`,
-      [emailNorm]
+      `SELECT idusuario FROM usuarios WHERE email = ? LIMIT 1`,
+      [email]
     );
-    const user = (rows as any[])[0];
-
+    const user = (rows as { idusuario: number }[])[0];
     if (user) {
-      const code = genCode(6);
-      const codeHash = await bcrypt.hash(code, 10);
-      const expiresAt = new Date(Date.now() + 15 * 60 * 1000); // 15 min
-
-      // Anulo códigos anteriores sin usar
+      const code = genCode();
+      const hash = await bcrypt.hash(code, 10);
       await db.execute(
-        `DELETE FROM password_reset_codes WHERE usuario_id = ? AND used_at IS NULL`,
+        `DELETE FROM \`codigo_recuperacion_contraseña\`
+         WHERE usuario_id = ? AND COALESCE(usado, 0) = 0`,
         [user.idusuario]
       );
-
       await db.execute(
-        `INSERT INTO password_reset_codes (usuario_id, code_hash, expires_at)
-         VALUES (?, ?, ?)`,
-        [user.idusuario, codeHash, expiresAt]
+        `INSERT INTO \`codigo_recuperacion_contraseña\`
+          (usuario_id, code_hasheo, expiracion, usado)
+         VALUES (?, ?, ?, 0)`,
+        [user.idusuario, hash, new Date(Date.now() + 15 * 60 * 1000)]
       );
-
-      await sendPasswordResetEmail(emailNorm, code);
+      await sendPasswordResetEmail(email, code);
     }
-
-    // Respuesta genérica
     res.json({ ok: true });
   })
 );
 
-/**
- * POST /api/auth/reset
- * body: { email, code, new_password }
- * - Valida código, vencimiento y marca como usado
- * - Actualiza password del usuario
- */
 router.post(
   "/reset",
   asyncHandler(async (req: Request, res: Response) => {
-    const { email, code, new_password } = req.body ?? {};
-    const emailNorm = String(email || "").trim().toLowerCase();
-    const plainCode = String(code || "").trim();
-    const newPass = String(new_password || "");
-
-    if (!emailNorm || !plainCode || newPass.length < 6) {
+    const email = String(req.body?.email || "").trim().toLowerCase();
+    const code = String(req.body?.code || "").trim();
+    const newPassword = String(req.body?.new_password || "");
+    if (!email || !code || newPassword.length < 6) {
       return res.status(400).json({ error: "Datos inválidos" });
     }
 
     const db = getDB();
-    const [rows] = await db.query(
-      `SELECT idusuario FROM usuario WHERE email = ? LIMIT 1`,
-      [emailNorm]
-    );
-    const user = (rows as any[])[0];
+    const [rows] = await db.query(`SELECT idusuario FROM usuarios WHERE email = ? LIMIT 1`, [email]);
+    const user = (rows as { idusuario: number }[])[0];
     if (!user) return res.status(400).json({ error: "Código inválido" });
 
     const [codes] = await db.query(
-      `SELECT id, code_hash, expires_at, used_at
-       FROM password_reset_codes
-       WHERE usuario_id = ?
-       ORDER BY created_at DESC
-       LIMIT 1`,
+      `SELECT id, code_hasheo, expiracion, usado
+       FROM \`codigo_recuperacion_contraseña\`
+       WHERE usuario_id = ? ORDER BY creado DESC LIMIT 1`,
       [user.idusuario]
     );
-    const rec = (codes as any[])[0];
-    if (!rec || rec.used_at) return res.status(400).json({ error: "Código inválido" });
-
-    const now = new Date();
-    if (new Date(rec.expires_at) < now) {
-      return res.status(400).json({ error: "Código vencido" });
+    const record = (codes as Record<string, unknown>[])[0];
+    if (!record || Number(record.usado) === 1 || new Date(String(record.expiracion)) < new Date()) {
+      return res.status(400).json({ error: "Código inválido o vencido" });
+    }
+    if (!(await bcrypt.compare(code, String(record.code_hasheo)))) {
+      return res.status(400).json({ error: "Código inválido" });
     }
 
-    const match = await bcrypt.compare(plainCode, rec.code_hash);
-    if (!match) return res.status(400).json({ error: "Código inválido" });
-
-    const hash = await bcrypt.hash(newPass, 10);
-
-    await db.execute(
-      `UPDATE usuario SET password = ? WHERE idusuario = ?`,
-      [hash, user.idusuario]
-    );
-
-    await db.execute(
-      `UPDATE password_reset_codes SET used_at = NOW() WHERE id = ?`,
-      [rec.id]
-    );
-
+    const connection = await db.getConnection();
+    try {
+      await connection.beginTransaction();
+      await connection.execute(`UPDATE usuarios SET password = ? WHERE idusuario = ?`, [await bcrypt.hash(newPassword, 10), user.idusuario]);
+      await connection.execute(`UPDATE \`codigo_recuperacion_contraseña\` SET usado = 1 WHERE id = ?`, [record.id]);
+      await connection.commit();
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
+    }
     res.json({ ok: true });
   })
 );

@@ -1,123 +1,94 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import asyncHandler from '@/utils/asyncHandler';
-import dbFactory from '@/config/db';
-import type { Pool } from 'mysql2/promise';
-
-const getDB = (): Pool => (typeof dbFactory === 'function' ? (dbFactory as any)() : (dbFactory as any));
+import { Router, Request, Response } from "express";
+import asyncHandler from "@/utils/asyncHandler";
+import getDB from "@/config/db";
+import { requireAuth } from "@/middlewares/auth";
 
 const router = Router();
+router.use(requireAuth);
+
+async function getContributorId(userId: number) {
+  const [rows] = await getDB().query(
+    `SELECT idcontribuyente FROM contribuyente WHERE usuarios_idusuario = ? LIMIT 1`,
+    [userId]
+  );
+  return (rows as { idcontribuyente: number }[])[0]?.idcontribuyente;
+}
 
 router.get(
   "/users/:id/addresses",
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = Number(req.params.id);
-    if (!Number.isFinite(userId)) return res.status(400).json({ error: "userId inválido" });
+    const userId = req.user!.uid;
+    if (Number(req.params.id) !== userId) {
+      return res.status(403).json({ error: "No podés consultar direcciones de otro usuario" });
+    }
+    const contributorId = await getContributorId(userId);
+    if (!contributorId) return res.status(404).json({ error: "Contribuyente no encontrado" });
 
-    const db = getDB();
-    const [rows] = await db.query(
-      `SELECT
-         iddirecciones AS id,
-         usuario_idusuario,
-         latitud, longitud, calle, numero, barrio, referencias
-       FROM direcciones
-       WHERE usuario_idusuario = ?`,
-      [userId]
+    const [rows] = await getDB().query(
+      `SELECT iddirecciones AS id, latitud, longitud, calle, numero, barrio, referencias
+       FROM direcciones WHERE contribuyente_idcontribuyente = ?
+       ORDER BY iddirecciones DESC`,
+      [contributorId]
     );
     res.json({ addresses: rows });
   })
 );
 
-/**
- * POST /api/addresses
- * Body: { usuario_idusuario, latitud, longitud, calle?, numero?, barrio?, referencias? }
- * Devuelve: { id }  // id = insertId = iddirecciones
- */
 router.post(
   "/",
   asyncHandler(async (req: Request, res: Response) => {
-    const {
-      usuario_idusuario,
-      latitud,
-      longitud,
-      calle,
-      numero,
-      barrio,
-      referencias
-    } = req.body || {};
-
-    if (!usuario_idusuario || !latitud || !longitud || !calle || !numero) {
-      return res.status(400).json({ error: "Faltan campos obligatorios" });
+    const { latitud, longitud, calle, numero, barrio, referencias } = req.body ?? {};
+    const lat = Number(latitud);
+    const lng = Number(longitud);
+    if (!calle || !numero || !Number.isFinite(lat) || !Number.isFinite(lng)) {
+      return res.status(400).json({ error: "Faltan campos obligatorios o las coordenadas son inválidas" });
+    }
+    if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+      return res.status(400).json({ error: "Coordenadas fuera de rango" });
     }
 
-    const cleanText = (t: string) =>
-      t.replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s\.\-]/g, "").trim();
+    const contributorId = await getContributorId(req.user!.uid);
+    if (!contributorId) return res.status(404).json({ error: "Contribuyente no encontrado" });
 
+    const cleanText = (text: unknown) =>
+      String(text ?? "").replace(/[^a-zA-Z0-9áéíóúÁÉÍÓÚñÑüÜ\s.\-]/g, "").trim();
     const calleClean = cleanText(calle);
-
-  const barrioClean =
-    barrio && barrio.trim() !== "" ? cleanText(barrio) : "---";
-
-  const referenciasClean =
-    referencias && referencias.trim() !== "" ? referencias.trim() : "---";
-
+    const numeroClean = cleanText(numero);
+    const barrioClean = cleanText(barrio) || "---";
+    const referenciasClean = String(referencias ?? "").trim() || "---";
+    if (!calleClean || !numeroClean) return res.status(400).json({ error: "Dirección inválida" });
 
     const db = getDB();
-
-    // validar usuario existe
-    const [[user]]: any = await db.query(
-      `SELECT idusuario FROM usuario WHERE idusuario = ?`,
-      [usuario_idusuario]
+    const [duplicates] = await db.query(
+      `SELECT iddirecciones FROM direcciones
+       WHERE contribuyente_idcontribuyente = ? AND calle = ? AND numero = ? LIMIT 1`,
+      [contributorId, calleClean, numeroClean]
     );
-    if (!user) {
-      return res.status(400).json({ error: "usuario_idusuario inexistente" });
-    }
-
-    // evitar duplicado
-    const [dup]: any = await db.query(
-      `SELECT iddirecciones FROM direcciones 
-       WHERE usuario_idusuario = ? AND calle = ? AND numero = ?`,
-      [usuario_idusuario, calleClean, numero]
-    );
-
-    if (dup.length > 0) {
+    if ((duplicates as unknown[]).length > 0) {
       return res.status(409).json({ error: "La dirección ya existe" });
     }
 
-    // insertar
     const [result] = await db.execute(
-      `INSERT INTO direcciones 
-      (usuario_idusuario, latitud, longitud, calle, numero, barrio, referencias)
+      `INSERT INTO direcciones
+        (latitud, longitud, calle, numero, barrio, referencias, contribuyente_idcontribuyente)
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [
-        usuario_idusuario,
-        latitud,
-        longitud,
-        calleClean,
-        numero,
-        barrioClean,
-        referenciasClean
-      ]
+      [lat, lng, calleClean, numeroClean, barrioClean, referenciasClean, contributorId]
     );
-
-    res.status(201).json({ id: (result as any).insertId });
+    res.status(201).json({ id: (result as { insertId: number }).insertId });
   })
 );
-
 
 router.get(
   "/check-duplicate",
   asyncHandler(async (req: Request, res: Response) => {
-    const { userId, calle, numero } = req.query;
-
-    const db = getDB();
-
-    const [rows]: any = await db.query(
-      `SELECT iddirecciones FROM direcciones 
-       WHERE usuario_idusuario = ? AND calle = ? AND numero = ?`,
-      [userId, calle, numero]
+    const contributorId = await getContributorId(req.user!.uid);
+    if (!contributorId) return res.status(404).json({ error: "Contribuyente no encontrado" });
+    const [rows] = await getDB().query(
+      `SELECT iddirecciones FROM direcciones
+       WHERE contribuyente_idcontribuyente = ? AND calle = ? AND numero = ? LIMIT 1`,
+      [contributorId, req.query.calle, req.query.numero]
     );
-
-    res.json({ duplicate: rows.length > 0 });
+    res.json({ duplicate: (rows as unknown[]).length > 0 });
   })
 );
 

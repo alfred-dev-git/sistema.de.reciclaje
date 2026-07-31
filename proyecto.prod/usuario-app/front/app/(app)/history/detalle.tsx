@@ -39,7 +39,6 @@ export default function DetallePedidoModal({ visible, onClose, idPedido }: Props
               <Text>🗓️ Entrega: {detalle.fecha_entrega ?? "-"}</Text>
               <Text>🧺 Bolsones: {detalle.cant_bolson ?? "-"}</Text>
               <Text>📝 Observación: {detalle.observaciones ?? "Sin observaciones"}</Text>
-              <Text>⭐ Puntos totales: {detalle.total_puntos ?? "-"}</Text>
             </>
           ) : (
             <Text>No se encontró información del pedido.</Text>

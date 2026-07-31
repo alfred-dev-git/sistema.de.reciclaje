@@ -12,9 +12,7 @@ export type RegisterReq = {
   telefono: string;
   fecha_nacimiento: string; // "YYYY-MM-DD"
   sexo: "M" | "F" | "O";    // o el código que uses
-  rol_idrol?: number;       // default 3 si no envías
-  municipio_idmunicipio?: number | null; // default 1 si no envías
-  puntos?: number;          // default 0 si no envías
+  municipio_idmunicipio: number;
 };
 
 export type Municipio = {
@@ -24,7 +22,7 @@ export type Municipio = {
 
 // GET /municipios
 export async function listMunicipios(): Promise<Municipio[]> {
-  const res = await api.get("/auth/municipios");
+  const res = await api.get<{ items: Municipio[] }>("/auth/municipios");
 
   const items = res.items ?? [];
 
@@ -63,6 +61,12 @@ export async function getCurrentUser() {
   } catch {
     return null;
   }
+}
+
+export async function refreshCurrentUser() {
+  const response = await api.get<{ user: Record<string, unknown> }>("/auth/me");
+  await SecureStore.setItemAsync("current_user", JSON.stringify(response.user));
+  return response.user;
 }
 
 // --- Reset de contraseña por email (OTP) ---

@@ -1,71 +1,57 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router } from "express";
 import asyncHandler from "@/utils/asyncHandler";
-import dbFactory from "@/config/db";
-import type { Pool } from "mysql2/promise";
-
-const getDB = (): Pool => (typeof dbFactory === "function" ? (dbFactory as any)() : (dbFactory as any));
+import getDB from "@/config/db";
+import { requireAuth } from "@/middlewares/auth";
 
 const router = Router();
 
 router.get(
   "/",
-  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const db = getDB();
-    const [rows] = await db.query("SELECT * FROM tipo_reciclable");
+  requireAuth,
+  asyncHandler(async (_req, res) => {
+    const [rows] = await getDB().query(
+      `SELECT idtipo_reciclable, descripcion FROM tipo_reciclable ORDER BY descripcion ASC`
+    );
     res.json(rows);
   })
 );
 
 router.get(
   "/cronograma",
+  requireAuth,
   asyncHandler(async (_req, res) => {
-    const db = getDB();
-    const [rows] = await db.query(
-      `
-      SELECT 
-        c.idcronograma_recoleccion AS id,
-        c.dia_semana,
-        c.semana_mes,
-        c.hora_inicio,
-        c.hora_fin,
-        tr.descripcion AS tipo_reciclable
-      FROM cronograma_recoleccion c
-      INNER JOIN tipo_reciclable tr 
-        ON c.tipo_reciclable_idtipo_reciclable = tr.idtipo_reciclable
-      WHERE c.activo = 1
-      ORDER BY 
-        c.dia_semana ASC,
-        c.semana_mes ASC;
-      `
+    const [rows] = await getDB().query(
+      `SELECT f.idfrecuencia_recoleccion AS id, f.dia_semana, f.semana_mes,
+              f.hora_inicio, f.hora_fin, tr.descripcion AS tipo_reciclable
+       FROM frecuencia_recoleccion f
+       INNER JOIN tipo_reciclable tr
+         ON tr.idtipo_reciclable = f.tipo_reciclable_idtipo_reciclable
+       WHERE f.activo = 1
+       ORDER BY f.dia_semana ASC, f.semana_mes ASC`
     );
-
     res.json({ items: rows });
   })
 );
 
 router.get(
   "/notificaciones",
-  asyncHandler(async (_req, res) => {
-    const db = getDB();
-
-    const [rows] = await db.query(
-      `
-      SELECT 
-        n.titulo,
-        n.mensaje
-      FROM notificaciones n
-      INNER JOIN cronograma_recoleccion c 
-        ON n.cronograma_recoleccion_idcronograma_recoleccion = c.idcronograma_recoleccion
-      WHERE 
-        c.activo = 1
-        AND n.fecha_envio >= (CURDATE() - INTERVAL 1 DAY)
-      ORDER BY n.fecha_envio DESC;
-      `
+  requireAuth,
+  asyncHandler(async (req, res) => {
+    const [rows] = await getDB().query(
+      `SELECT DISTINCT n.idnotificaciones AS id, n.titulo, n.mensaje, n.fecha_envio
+       FROM notificaciones n
+       INNER JOIN rutas ru ON ru.idrutas = n.rutas_idrutas
+       INNER JOIN solicitud_rutas sr ON sr.rutas_idrutas = ru.idrutas
+       INNER JOIN solicitud_recoleccion s
+         ON s.idsolicitud_recoleccion = sr.solicitud_recoleccion_idsolicitud_recoleccion
+       INNER JOIN contribuyente c ON c.idcontribuyente = s.contribuyente_idcontribuyente
+       WHERE c.usuarios_idusuario = ?
+         AND n.fecha_envio >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+       ORDER BY n.fecha_envio DESC`,
+      [req.user!.uid]
     );
-
     res.json({ items: rows });
   })
 );
 
-// Asegúrate de tipar los demás endpoints de forma similar
 export default router;

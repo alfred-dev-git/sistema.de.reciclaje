@@ -97,11 +97,11 @@ export default function NewAddressScreen() {
 
     // 🔥 Verificar duplicado ANTES de guardar
     try {
-    const exists = await api.get(
-      `/addresses/check-duplicate?userId=${userId}&calle=${calle}&numero=${numero}`
+    const exists = await api.get<{ duplicate: boolean }>(
+      `/addresses/check-duplicate?userId=${userId}&calle=${encodeURIComponent(calle)}&numero=${encodeURIComponent(numero)}`
     );
 
-      if (exists?.data?.duplicate) {
+      if (exists.duplicate) {
         Alert.alert("Ya existe", "Ya agregaste esta dirección antes.");
         return;
       }
@@ -130,7 +130,6 @@ export default function NewAddressScreen() {
 
       // Guardar en backend.
       await api.post("/addresses", {
-        usuario_idusuario: userId,
         calle,
         numero,
         barrio,

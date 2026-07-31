@@ -1,256 +1,176 @@
-import { Router, Request, Response, NextFunction } from "express";
+import { Router, Request, Response } from "express";
 import asyncHandler from "@/utils/asyncHandler";
-import dbFactory from '@/config/db';
-import type { Pool } from 'mysql2/promise';
-
-const getDB = (): Pool => (typeof dbFactory === 'function' ? (dbFactory as any)() : (dbFactory as any));
+import getDB from "@/config/db";
+import { requireAuth } from "@/middlewares/auth";
 
 const router = Router();
+router.use(requireAuth);
 
-/**
- * POST /api/pedidos
- * Crea un nuevo pedido
- * Body:
- *  - usuario_idusuario (number, requerido)
- *  - id_direccion (number, requerido)
- *  - tipo_reciclable_idtipo_reciclable (number, requerido)
- *  - estado? (number, opcional; default 3)
- *  - estado_ruta? (number, opcional; default null)
- */
+async function getContributorId(userId: number) {
+  const [rows] = await getDB().query(
+    `SELECT idcontribuyente FROM contribuyente WHERE usuarios_idusuario = ? LIMIT 1`,
+    [userId]
+  );
+  return (rows as { idcontribuyente: number }[])[0]?.idcontribuyente;
+}
+
+async function getStateId(description: string) {
+  const [rows] = await getDB().query(
+    `SELECT idestado_solicitud FROM estado_solicitud WHERE LOWER(descripcion) = LOWER(?) LIMIT 1`,
+    [description]
+  );
+  return (rows as { idestado_solicitud: number }[])[0]?.idestado_solicitud;
+}
+
 router.post(
   "/",
   asyncHandler(async (req: Request, res: Response) => {
-    const {
-      usuario_idusuario,
-      id_direccion,
-      tipo_reciclable_idtipo_reciclable,
-      estado,
-    } = req.body ?? {};
-
-    const uid = Number(usuario_idusuario);
-    const addrId = Number(id_direccion);
-    const tipoId = Number(tipo_reciclable_idtipo_reciclable);
-    const estadoVal = Number.isFinite(Number(estado)) ? Number(estado) : 0;
-
-    if (!Number.isFinite(uid) || !Number.isFinite(addrId) || !Number.isFinite(tipoId)) {
-      return res.status(400).json({
-        error:
-          "Faltan/son inválidos: usuario_idusuario, id_direccion, tipo_reciclable_idtipo_reciclable",
-      });
+    const addressId = Number(req.body?.id_direccion);
+    const typeId = Number(req.body?.tipo_reciclable_idtipo_reciclable);
+    if (!Number.isInteger(addressId) || !Number.isInteger(typeId)) {
+      return res.status(400).json({ error: "Dirección y tipo de reciclable son requeridos" });
     }
+
+    const contributorId = await getContributorId(req.user!.uid);
+    if (!contributorId) return res.status(404).json({ error: "Contribuyente no encontrado" });
 
     const db = getDB();
+    const [[address]] = await db.query(
+      `SELECT iddirecciones FROM direcciones
+       WHERE iddirecciones = ? AND contribuyente_idcontribuyente = ? LIMIT 1`,
+      [addressId, contributorId]
+    ) as [{ iddirecciones: number }[], unknown];
+    if (!address) return res.status(404).json({ error: "La dirección no pertenece al usuario" });
 
-    // 🔹 Validar usuario
-    const [[usr]]: any = await db.query(
-      "SELECT idusuario FROM usuario WHERE idusuario = ? LIMIT 1",
-      [uid]
+    const [[type]] = await db.query(
+      `SELECT idtipo_reciclable FROM tipo_reciclable WHERE idtipo_reciclable = ? LIMIT 1`,
+      [typeId]
+    ) as [{ idtipo_reciclable: number }[], unknown];
+    if (!type) return res.status(404).json({ error: "Tipo de reciclable inexistente" });
+
+    const pendingStateId = await getStateId("Pendiente");
+    if (!pendingStateId) throw new Error("No existe el estado Pendiente");
+
+    const [pending] = await db.query(
+      `SELECT idsolicitud_recoleccion FROM solicitud_recoleccion
+       WHERE contribuyente_idcontribuyente = ?
+         AND tipo_reciclable_idtipo_reciclable = ?
+         AND estado_solicitud_idestado_solicitud = ?
+       LIMIT 1`,
+      [contributorId, typeId, pendingStateId]
     );
-    if (!usr) return res.status(404).json({ error: "Usuario no existe" });
-
-    // 🔹 Validar dirección
-    const [[addr]]: any = await db.query(
-      "SELECT iddirecciones, usuario_idusuario FROM direcciones WHERE iddirecciones = ? LIMIT 1",
-      [addrId]
-    );
-    if (!addr) return res.status(404).json({ error: "Dirección no existe" });
-    if (Number(addr.usuario_idusuario) !== uid) {
-      return res.status(400).json({ error: "La dirección no pertenece al usuario" });
-    }
-
-    // 🔹 Validar tipo reciclable
-    const [[tipo]]: any = await db.query(
-      "SELECT idtipo_reciclable FROM tipo_reciclable WHERE idtipo_reciclable = ? LIMIT 1",
-      [tipoId]
-    );
-    if (!tipo) return res.status(404).json({ error: "Tipo reciclable no existe" });
-
-    // 🔹 Validar si ya existe una solicitud pendiente (estado = 0) para ese tipo de reciclable
-    const [[pendiente]]: any = await db.query(
-      `
-      SELECT idpedidos 
-      FROM pedidos 
-      WHERE usuario_idusuario = ? 
-        AND tipo_reciclable_idtipo_reciclable = ? 
-        AND estado = 0
-      LIMIT 1
-      `,
-      [uid, tipoId]
-    );
-
-    if (pendiente) {
-      return res.status(400).json({
-        error: "Ya existe una solicitud pendiente para este tipo de reciclable. Espere a que se complete o cancele antes de crear otra.",
+    if ((pending as unknown[]).length > 0) {
+      return res.status(409).json({
+        error: "Ya existe una solicitud pendiente para este tipo de reciclable.",
       });
     }
 
-    // 🔹 Insertar nuevo pedido
     const [result] = await db.execute(
-      `
-      INSERT INTO pedidos
-      (fecha_emision, estado, estado_ruta, id_direccion, usuario_idusuario, tipo_reciclable_idtipo_reciclable)
-      VALUES (CURDATE(), ?, ?, ?, ?, ?)
-      `,
-      [estadoVal, 0, addrId, uid, tipoId]
+      `INSERT INTO solicitud_recoleccion
+        (fecha_emision, tipo_reciclable_idtipo_reciclable,
+         contribuyente_idcontribuyente, direcciones_iddirecciones,
+         estado_solicitud_idestado_solicitud)
+       VALUES (NOW(), ?, ?, ?, ?)`,
+      [typeId, contributorId, addressId, pendingStateId]
     );
-
-    res.status(201).json({ idpedidos: (result as any).insertId });
+    const id = (result as { insertId: number }).insertId;
+    res.status(201).json({ id, idpedidos: id });
   })
 );
-/**
- * GET /api/pedidos/users/:id/historial
- * Retorna todos los pedidos del usuario con sus detalles y tipo reciclable
- */
+
 router.get(
   "/users/:id/historial",
   asyncHandler(async (req: Request, res: Response) => {
-    const userId = Number(req.params.id);
-    if (!Number.isFinite(userId)) {
-      return res.status(400).json({ error: "id inválido" });
+    if (Number(req.params.id) !== req.user!.uid) {
+      return res.status(403).json({ error: "No podés consultar solicitudes de otro usuario" });
     }
+    const contributorId = await getContributorId(req.user!.uid);
+    if (!contributorId) return res.status(404).json({ error: "Contribuyente no encontrado" });
 
-    const db = getDB();
-
-    const [rows] = await db.query(
-      `
-      SELECT
-        p.idpedidos,
-        DATE_FORMAT(p.fecha_emision, '%Y-%m-%d') AS fecha_emision,
-        p.estado,
-        p.estado_ruta,
-        p.id_direccion,
-        a.calle,
-        a.numero,
-        a.latitud,
-        a.longitud,
-        p.tipo_reciclable_idtipo_reciclable AS tipo_id,
-        tr.descripcion AS tipo_descripcion
-      FROM pedidos p
-      LEFT JOIN direcciones a
-        ON a.iddirecciones = p.id_direccion
-      LEFT JOIN tipo_reciclable tr
-        ON tr.idtipo_reciclable = p.tipo_reciclable_idtipo_reciclable
-      WHERE 
-        p.usuario_idusuario = ?
-        AND MONTH(p.fecha_emision) = MONTH(CURDATE())
-        AND YEAR(p.fecha_emision) = YEAR(CURDATE())
-      ORDER BY p.fecha_emision DESC, p.idpedidos DESC
-      `,
-      [userId]
+    const [rows] = await getDB().query(
+      `SELECT
+         s.idsolicitud_recoleccion AS idpedidos,
+         DATE_FORMAT(s.fecha_emision, '%Y-%m-%d') AS fecha_emision,
+         es.descripcion AS estado,
+         d.iddirecciones AS id_direccion,
+         d.calle, d.numero, d.latitud, d.longitud,
+         s.tipo_reciclable_idtipo_reciclable AS tipo_id,
+         tr.descripcion AS tipo_descripcion,
+         CASE WHEN sr.rutas_idrutas IS NULL THEN 0 ELSE 1 END AS tiene_ruta
+       FROM solicitud_recoleccion s
+       INNER JOIN estado_solicitud es
+         ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
+       INNER JOIN direcciones d ON d.iddirecciones = s.direcciones_iddirecciones
+       INNER JOIN tipo_reciclable tr
+         ON tr.idtipo_reciclable = s.tipo_reciclable_idtipo_reciclable
+       LEFT JOIN solicitud_rutas sr
+         ON sr.solicitud_recoleccion_idsolicitud_recoleccion = s.idsolicitud_recoleccion
+       WHERE s.contribuyente_idcontribuyente = ?
+       ORDER BY s.fecha_emision DESC, s.idsolicitud_recoleccion DESC`,
+      [contributorId]
     );
-
     res.json(rows);
   })
 );
 
-
-/**
- * GET /api/pedidos/detalle/:idPedido
- * Devuelve el detalle completo de un pedido
- */
 router.get(
   "/detalle/:idPedido",
   asyncHandler(async (req: Request, res: Response) => {
-    const idPedido = Number(req.params.idPedido);
-    if (!Number.isFinite(idPedido)) {
-      return res.status(400).json({ error: "idPedido inválido" });
-    }
+    const id = Number(req.params.idPedido);
+    const contributorId = await getContributorId(req.user!.uid);
+    if (!Number.isInteger(id) || !contributorId) return res.status(400).json({ error: "Solicitud inválida" });
 
-    const db = getDB();
-
-    const [[pedido]]: any = await db.query(
-      `
-      SELECT
-        p.idpedidos,
-        DATE_FORMAT(p.fecha_emision, '%Y-%m-%d') AS fecha_emision,
-        p.estado,
-        p.estado_ruta,
-        p.id_direccion,
-        p.usuario_idusuario,
-        p.tipo_reciclable_idtipo_reciclable AS tipo_id,
-        tr.descripcion AS tipo_descripcion,
-        a.calle,
-        a.numero,
-        a.latitud,
-        a.longitud
-      FROM pedidos p
-      LEFT JOIN direcciones a
-        ON a.iddirecciones = p.id_direccion
-      LEFT JOIN tipo_reciclable tr
-        ON tr.idtipo_reciclable = p.tipo_reciclable_idtipo_reciclable
-      WHERE p.idpedidos = ?
-      LIMIT 1
-      `,
-      [idPedido]
+    const [rows] = await getDB().query(
+      `SELECT
+         s.idsolicitud_recoleccion AS idpedidos,
+         DATE_FORMAT(s.fecha_emision, '%Y-%m-%d') AS fecha_emision,
+         es.descripcion AS estado,
+         tr.descripcion AS tipo_descripcion,
+         d.calle, d.numero, d.latitud, d.longitud,
+         DATE_FORMAT(dr.fecha_entrega, '%Y-%m-%d') AS fecha_entrega,
+         dr.cant_bolson, dr.observaciones
+       FROM solicitud_recoleccion s
+       INNER JOIN estado_solicitud es
+         ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
+       INNER JOIN tipo_reciclable tr
+         ON tr.idtipo_reciclable = s.tipo_reciclable_idtipo_reciclable
+       INNER JOIN direcciones d ON d.iddirecciones = s.direcciones_iddirecciones
+       LEFT JOIN detalle_recoleccion dr
+         ON dr.solicitud_recoleccion_idsolicitud_recoleccion = s.idsolicitud_recoleccion
+       WHERE s.idsolicitud_recoleccion = ? AND s.contribuyente_idcontribuyente = ?
+       ORDER BY dr.fecha_entrega DESC LIMIT 1`,
+      [id, contributorId]
     );
-
-    if (!pedido) {
-      return res.status(404).json({ error: "Pedido no encontrado" });
-    }
-
-    const [[detalle]]: any = await db.query(
-      `
-      SELECT
-        DATE_FORMAT(fecha_entrega, '%Y-%m-%d') AS fecha_entrega,
-        cant_bolson,
-        total_puntos,
-        observaciones
-      FROM detalle_pedido
-      WHERE pedidos_idpedidos = ?
-      ORDER BY fecha_entrega DESC
-      LIMIT 1
-      `,
-      [idPedido]
-    );
-
-    res.json({ ...pedido, ...detalle });
+    const detail = (rows as Record<string, unknown>[])[0];
+    if (!detail) return res.status(404).json({ error: "Solicitud no encontrada" });
+    res.json(detail);
   })
 );
 
-
-// 🔹 Cancelar pedido (estado = 2)
 router.put(
   "/:idPedido/cancelar",
   asyncHandler(async (req: Request, res: Response) => {
-    const idPedido = Number(req.params.idPedido);
-    if (!Number.isFinite(idPedido)) {
-      return res.status(400).json({ error: "idPedido inválido" });
-    }
+    const id = Number(req.params.idPedido);
+    const contributorId = await getContributorId(req.user!.uid);
+    if (!Number.isInteger(id) || !contributorId) return res.status(400).json({ error: "Solicitud inválida" });
 
-    const db = getDB();
+    const cancelledStateId = await getStateId("Anulada");
+    if (!cancelledStateId) throw new Error("No existe el estado Anulada");
 
-    // Verificar estado actual
-    const [[pedido]]: any = await db.query(
-      `SELECT estado FROM pedidos WHERE idpedidos = ? LIMIT 1`,
-      [idPedido]
+    const [result] = await getDB().execute(
+      `UPDATE solicitud_recoleccion s
+       INNER JOIN estado_solicitud es
+         ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
+       SET s.estado_solicitud_idestado_solicitud = ?
+       WHERE s.idsolicitud_recoleccion = ?
+         AND s.contribuyente_idcontribuyente = ?
+         AND LOWER(es.descripcion) = 'pendiente'`,
+      [cancelledStateId, id, contributorId]
     );
-
-    if (!pedido) {
-      return res.status(404).json({ error: "Pedido no encontrado" });
+    if ((result as { affectedRows: number }).affectedRows === 0) {
+      return res.status(409).json({ error: "La solicitud no existe o ya no puede cancelarse" });
     }
-
-    if (![0, 3].includes(pedido.estado)) {
-      return res
-        .status(400)
-        .json({ error: "El pedido no puede ser cancelado en este estado." });
-    }
-
-    // Actualizar estado a cancelado
-    await db.query(
-      `UPDATE pedidos SET estado = 2 WHERE idpedidos = ?`,
-      [idPedido]
-    );
-
-    res.json({ success: true, message: "Pedido cancelado correctamente." });
-  })
-);
-
-router.get(
-  "/",
-  asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-    const db = getDB();
-    const [rows] = await db.query("SELECT * FROM pedidos");
-    res.json(rows);
+    res.json({ success: true, message: "Solicitud cancelada correctamente." });
   })
 );
 

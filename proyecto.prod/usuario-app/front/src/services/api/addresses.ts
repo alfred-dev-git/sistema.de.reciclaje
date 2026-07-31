@@ -3,7 +3,6 @@ import { api } from "./http";
 
 export type Address = {
   id: number; // alias de iddirecciones
-  usuario_idusuario: number;
   latitud: number;
   longitud: number;
   calle?: string | null;
@@ -25,7 +24,6 @@ export async function listUserAddresses(userId: number) {
   const data = await api.get<{ addresses: any[] }>(`addresses/users/${userId}/addresses`);
   const items: Address[] = (data.addresses || []).map((a) => ({
     id: Number(a.id),
-    usuario_idusuario: Number(a.usuario_idusuario),
     latitud: Number(a.latitud),
     longitud: Number(a.longitud),
     calle: a.calle ?? null,

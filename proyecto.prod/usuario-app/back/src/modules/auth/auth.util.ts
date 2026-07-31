@@ -3,7 +3,7 @@ import jwt from "jsonwebtoken";
 import type { JwtPayload, SignOptions } from "jsonwebtoken";
 import { sendMail } from '@/utils/mailer';
 
-const JWT_SECRET = process.env.JWT_SECRET ?? "dev_secret_cambialo";
+const JWT_SECRET = process.env.JWT_SECRET;
 const JWT_EXPIRES = (process.env.JWT_EXPIRES ?? "7d") as SignOptions["expiresIn"];
 
 export async function hashPassword(plain: string) {
@@ -16,11 +16,15 @@ export async function verifyPassword(plain: string, hash: string) {
 }
 
 export function signToken(payload: object) {
-  return jwt.sign(payload as any, JWT_SECRET, { expiresIn: JWT_EXPIRES });
+  const secret = JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET no configurado");
+  return jwt.sign(payload as any, secret, { expiresIn: JWT_EXPIRES });
 }
 
 export function verifyToken<T extends JwtPayload | string = JwtPayload>(token: string) {
-  return jwt.verify(token, JWT_SECRET) as T;
+  const secret = JWT_SECRET;
+  if (!secret) throw new Error("JWT_SECRET no configurado");
+  return jwt.verify(token, secret) as T;
 }
 
 export async function sendPasswordResetEmail(email: string, code: string): Promise<void> {

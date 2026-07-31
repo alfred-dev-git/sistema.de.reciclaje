@@ -96,7 +96,6 @@ export default function RequestNewScreen() {
     try {
       setSaving(true);
       await createPedido({
-        usuario_idusuario: userId,
         id_direccion: addressId,
         tipo_reciclable_idtipo_reciclable: residuoId,
       });

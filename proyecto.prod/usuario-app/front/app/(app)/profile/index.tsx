@@ -36,7 +36,7 @@ export default function ProfileScreen() {
         <Ionicons name="id-card-outline" size={30} color="gray" />
         <View style={styles.ItemInfo}>
           <Text style={styles.itemTitulo}>DNI:</Text>
-          <Text style={styles.itemSubtitulo}>{user?.DNI ?? "-"}</Text>
+          <Text style={styles.itemSubtitulo}>{user?.dni ?? "-"}</Text>
         </View>
       </View>
 
@@ -79,17 +79,6 @@ export default function ProfileScreen() {
           </Text>
         </View>
       </View>
-
-      {/* Puntos */}
-      {typeof user?.puntos === "number" && (
-        <View style={styles.itemProfile}>
-          <Ionicons name="star-outline" size={30} color="black" />
-          <View style={styles.ItemInfo}>
-            <Text style={styles.itemTitulo}>Puntos:</Text>
-            <Text style={styles.itemSubtitulo}>{user.puntos}</Text>
-          </View>
-        </View>
-      )}
 
       {/* Botones */}
       <View style={styles.actions}>

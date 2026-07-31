@@ -16,8 +16,8 @@ import DetallePedidoModal from "./detalle";
 type Item = {
   idpedidos: number;
   fecha_emision: string;
-  estado?: number;
-  estado_ruta?: number;
+  estado: string;
+  tiene_ruta?: number;
   id_direccion: number;
   calle?: string | null;
   numero?: string | null;
@@ -27,11 +27,11 @@ type Item = {
   tipo_descripcion: string;
 };
 
-const statusMap: Record<number, { label: string; bg: string; fg: string }> = {
-  0: { label: "Sin asignar", bg: "#9ca3af", fg: "#000" },
-  1: { label: "Completado", bg: "#16a34a", fg: "#fff" },
-  2: { label: "Cancelado", bg: "#dc2626", fg: "#fff" },
-  3: { label: "En proceso", bg: "#f59e0b", fg: "#000" },
+const statusMap: Record<string, { label: string; bg: string; fg: string }> = {
+  pendiente: { label: "Pendiente", bg: "#f59e0b", fg: "#000" },
+  completada: { label: "Completada", bg: "#16a34a", fg: "#fff" },
+  anulado: { label: "Anulada", bg: "#dc2626", fg: "#fff" },
+  anulada: { label: "Anulada", bg: "#dc2626", fg: "#fff" },
 };
 
 export default function HistoryScreen() {
@@ -110,7 +110,11 @@ export default function HistoryScreen() {
   }
 
   const renderItem = ({ item }: { item: Item }) => {
-    const status = statusMap[item.estado ?? 0] ?? statusMap[0];
+    const status = statusMap[item.estado?.toLowerCase()] ?? {
+      label: item.estado || "Sin estado",
+      bg: "#9ca3af",
+      fg: "#000",
+    };
     const direccion = item.calle
       ? `${item.calle} ${item.numero ?? ""}`.trim()
       : `(${Number(item.latitud ?? 0).toFixed(5)}, ${Number(item.longitud ?? 0).toFixed(5)})`;
@@ -128,7 +132,7 @@ export default function HistoryScreen() {
         <Text style={styles.line}>📍 Dirección: {direccion}</Text>
         <Text style={styles.line}>♻️ Tipo: {item.tipo_descripcion}</Text>
 
-        {item.estado === 1 && (
+        {item.estado?.toLowerCase() === "completada" && (
           <TouchableOpacity
             style={styles.detailButton}
             onPress={() => abrirModal(item.idpedidos)}
@@ -137,7 +141,7 @@ export default function HistoryScreen() {
           </TouchableOpacity>
         )}
 
-        {(item.estado === 0 || item.estado === 3) && (
+        {item.estado?.toLowerCase() === "pendiente" && (
           <TouchableOpacity
             style={[styles.detailButton, { backgroundColor: "#dc2626" }]}
             onPress={() => handleCancelarPedido(item.idpedidos)}

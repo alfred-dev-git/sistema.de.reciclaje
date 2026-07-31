@@ -10,9 +10,9 @@ if (!API_BASE) {
   );
 }
 
-type Json = Record<string, any>;
+type Json = Record<string, unknown>;
 
-async function request(path: string, init: RequestInit = {}) {
+async function request<T = Json>(path: string, init: RequestInit = {}): Promise<T> {
   const url = `${API_BASE}${path.startsWith("/") ? path : `/${path}`}`;
 
   const token = await SecureStore.getItemAsync("auth_token");
@@ -44,18 +44,18 @@ async function request(path: string, init: RequestInit = {}) {
     throw err;
   }
 
-  return data as Json;
+  return data as T;
 }
 
 export const api = {
-  get: (p: string) => request(p, { method: "GET" }),
-  post: (p: string, body?: Json) =>
-    request(p, { method: "POST", body: JSON.stringify(body ?? {}) }),
-  put: (p: string, body?: Json) =>
-    request(p, { method: "PUT", body: JSON.stringify(body ?? {}) }),
-  patch: (p: string, body?: Json) =>
-    request(p, { method: "PATCH", body: JSON.stringify(body ?? {}) }),
-  del: (p: string) => request(p, { method: "DELETE" }),
+  get: <T = Json>(p: string) => request<T>(p, { method: "GET" }),
+  post: <T = Json>(p: string, body?: unknown) =>
+    request<T>(p, { method: "POST", body: JSON.stringify(body ?? {}) }),
+  put: <T = Json>(p: string, body?: unknown) =>
+    request<T>(p, { method: "PUT", body: JSON.stringify(body ?? {}) }),
+  patch: <T = Json>(p: string, body?: unknown) =>
+    request<T>(p, { method: "PATCH", body: JSON.stringify(body ?? {}) }),
+  del: <T = Json>(p: string) => request<T>(p, { method: "DELETE" }),
 };
 
 export async function saveToken(token: string | null) {
