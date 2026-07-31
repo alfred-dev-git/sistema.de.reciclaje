@@ -93,7 +93,6 @@ export default function PerfilScreen() {
       <Text>Teléfono: {perfil.telefono}</Text>
       <Text>Fecha de nacimiento: {perfil.fecha_nacimiento}</Text>
       <Text>Municipio: {perfil.municipio}</Text>
-      <Text>Puntos: {perfil.puntos}</Text>
     </ScrollView>
   );
 }

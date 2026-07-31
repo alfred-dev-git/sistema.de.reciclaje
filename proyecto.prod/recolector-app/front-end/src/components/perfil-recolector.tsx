@@ -152,8 +152,6 @@ export default function PerfilScreen() {
             <Ionicons name="star-outline" size={30} color="black" />
           </View>
           <View style={styles.ItemInfo}>
-            <Text style={styles.itemTitulo}>Puntos:</Text>
-            <Text style={styles.itemSubtitulo}>{perfil.puntos}</Text>
           </View>
         </View>
       </View>

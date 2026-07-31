@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { getCronograma } from "../api/services/frecuencia-service";
+import { getFrecuencia } from "../api/services/frecuencia-service";
 import HeaderRecolector from "./headerComponent";
 import { Ionicons } from "@expo/vector-icons";
 import BackgorundContainer from "./layout";
@@ -42,7 +42,7 @@ const CronogramaRecoleccion: React.FC = () => {
   useEffect(() => {
     const fetchCronograma = async () => {
       try {
-        const response = await getCronograma();
+        const response = await getFrecuencia();
 
         if (response.success && Array.isArray(response.data)) {
           setCronograma(response.data);

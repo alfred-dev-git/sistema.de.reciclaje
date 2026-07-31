@@ -2,7 +2,7 @@ import React from "react";
 import { SafeAreaView, ScrollView, View, Text, StyleSheet, Image } from "react-native";
 
 interface Recoleccion {
-  idpedidos: number;
+  idsolicitud_recoleccion: number;
   estado: number;
   fecha_entrega: string;
   total_puntos: number;
@@ -39,7 +39,7 @@ const HistorialRecolecciones: React.FC<Props> = ({ historial }) => {
         {historial.map((item) => {
           const { label, color } = getEstadoInfo(item.estado);
           return (
-            <View key={item.idpedidos} style={styles.historialItem}>
+            <View key={item.idsolicitud_recoleccion} style={styles.historialItem}>
               <Image
                 source={require("../../assets/images/truck-icon.png")}
                 style={styles.icon}

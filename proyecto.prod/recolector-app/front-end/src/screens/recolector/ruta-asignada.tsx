@@ -28,11 +28,13 @@ export default function RutaAsignada({ route }: any) {
     if (!paradaSeleccionada) return;
     try {
       const response = await marcarCompletado({
-        idpedidos: paradaSeleccionada.idpedidos,
+        idsolicitud_recoleccion: paradaSeleccionada.idsolicitud_recoleccion,
         estado: 1,
         cant_bolson: cantidad,
-        id_tipo_reciclable: paradaSeleccionada.id_tipo_reciclable,
       });
+      if (!response.success) {
+        throw new Error(response.message);
+      }
 
       // Actualizar estado local
       const updatedRutas = rutas.map((rutaItem, idx) =>
@@ -40,7 +42,7 @@ export default function RutaAsignada({ route }: any) {
           ? {
             ...rutaItem,
             paradas: rutaItem.paradas.map((p) =>
-              p.idpedidos === paradaSeleccionada.idpedidos
+              p.idsolicitud_recoleccion === paradaSeleccionada.idsolicitud_recoleccion
                 ? { ...p, estado: 1 }
                 : p
             ),
@@ -53,7 +55,7 @@ export default function RutaAsignada({ route }: any) {
 
       // Opcional: centrar mapa en la parada actual
       const parada = updatedRutas[rutaSeleccionada].paradas.find(
-        (p) => p.idpedidos === paradaSeleccionada.idpedidos
+        (p) => p.idsolicitud_recoleccion === paradaSeleccionada.idsolicitud_recoleccion
       );
       if (parada) {
         mapRef.current?.animateToRegion({

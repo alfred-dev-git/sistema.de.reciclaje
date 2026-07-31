@@ -177,7 +177,7 @@ const HomeRecolector: React.FC = () => {
 
         <FlatList
           data={historial}
-          keyExtractor={(item) => item.idpedidos.toString()}
+          keyExtractor={(item) => item.idsolicitud_recoleccion.toString()}
           renderItem={renderHistorialItem}
           contentContainerStyle={{ paddingBottom: 20 }}
           showsVerticalScrollIndicator
