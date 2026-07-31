@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { obtenerPedidosAsignadosDB } from "../models/paradas-model.js";
+import { obtenerPedidosAsignadosDB } from "../models/rutas-model.js";
 
 export const getPedidosAsignados = async (req: Request, res: Response): Promise<void> => {
   try {

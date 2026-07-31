@@ -6,9 +6,9 @@ export type LoginResponse = {
   message: string;
   token: string;
   user: {
-    id: number;
     nombre: string;
     email: string;
+    rol: number;
   };
 };
 
@@ -91,10 +91,10 @@ export const forgotPasswordService = async (
       { withCredentials: true }
     );
 
-    return {
+  return {
       ok: true,
-      mensaje: response.data.message,
-    };
+      mensaje: "Si el correo existe, se envió un código.",
+  };
   } catch (err: unknown) {
     console.error("❌ Error en forgotPassword:", err);
 
@@ -124,7 +124,7 @@ export const resetPasswordService = async (
 
     return {
       ok: true,
-      mensaje: response.data.message ?? "Contraseña actualizada",
+      mensaje: "Contraseña actualizada"
     };
   } catch (err: unknown) {
     console.error("❌ Error en resetPassword:", err);

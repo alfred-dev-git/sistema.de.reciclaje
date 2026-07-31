@@ -6,7 +6,7 @@ import polyline from "@mapbox/polyline";
 
 /** ---- Tipos del backend ---- */
 export interface PedidoAsignado {
-  idpedidos: number;
+  idsolicitud_recoleccion: number;
   id_ruta: number;
   estado: number;
   nombre: string;

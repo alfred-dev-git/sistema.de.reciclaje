@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { getCronograma } from "../api/services/cronograma-service";
+import { getCronograma } from "../api/services/frecuencia-service";
 import HeaderRecolector from "./headerComponent";
 import { Ionicons } from "@expo/vector-icons";
 import BackgorundContainer from "./layout";

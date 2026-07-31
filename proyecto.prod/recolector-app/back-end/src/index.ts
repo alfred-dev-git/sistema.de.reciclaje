@@ -3,7 +3,7 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import cookieParser from 'cookie-parser'
 import loginRoutes from './routes/login-routes.js';
-import paradasRoutes from './routes/paradas-routes.js';
+import paradasRoutes from './routes/rutas-routes.js';
 import recoleccionRoutes from './routes/recoleccion-routes.js';
 import historialRoutes from './routes/historial-routes.js';
 import notificacionRoutes from './routes/notificacion-routes.js';

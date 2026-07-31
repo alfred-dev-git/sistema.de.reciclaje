@@ -13,7 +13,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
 import BackgorundContainer from "../../components/layout";
 import HeaderRecolector from "../../components/headerComponent";
-import { obtenerParadasAgrupadas, RutaCalculada } from "../../api/services/paradas-service";
+import { obtenerParadasAgrupadas, RutaCalculada } from "../../api/services/rutas-service";
 import { getHistorial } from "../../api/services/historial-service";
 import { getNotificacion } from "../../api/services/notificacion-service";
 

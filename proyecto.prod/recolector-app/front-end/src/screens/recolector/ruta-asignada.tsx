@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert } from "react
 import MapaRutas from "../../components/mapa-rutas";
 import ModalCompletado from "../../components/modal-completado";
 import AlertNoEstuvo from "../../components/alert-ausente";
-import { RutaCalculada } from "../../api/services/paradas-service";
+import { RutaCalculada } from "../../api/services/rutas-service";
 import { marcarCompletado } from "../../api/services/recoleccion-service";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from '@react-navigation/native';

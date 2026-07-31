@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { StyleSheet } from "react-native";
-import { RutaCalculada } from "../api/services/paradas-service";
+import { RutaCalculada } from "../api/services/rutas-service";
 import Constants from "expo-constants";
 
 interface MapaRutasProps {
