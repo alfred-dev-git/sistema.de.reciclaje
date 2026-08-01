@@ -141,7 +141,7 @@ export default function HistoryScreen() {
           </TouchableOpacity>
         )}
 
-        {item.estado?.toLowerCase() === "pendiente" && (
+        {item.estado?.toLowerCase() === "pendiente" && !item.tiene_ruta && (
           <TouchableOpacity
             style={[styles.detailButton, { backgroundColor: "#dc2626" }]}
             onPress={() => handleCancelarPedido(item.idpedidos)}

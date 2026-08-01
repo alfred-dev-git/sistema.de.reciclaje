@@ -154,18 +154,20 @@ router.put(
     const contributorId = await getContributorId(req.user!.uid);
     if (!Number.isInteger(id) || !contributorId) return res.status(400).json({ error: "Solicitud inválida" });
 
-    const cancelledStateId = await getStateId("Anulada");
-    if (!cancelledStateId) throw new Error("No existe el estado Anulada");
+    const pendingStateId = await getStateId("Pendiente");
+    if (!pendingStateId) throw new Error("No existe el estado Pendiente");
 
     const [result] = await getDB().execute(
-      `UPDATE solicitud_recoleccion s
-       INNER JOIN estado_solicitud es
-         ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
-       SET s.estado_solicitud_idestado_solicitud = ?
-       WHERE s.idsolicitud_recoleccion = ?
-         AND s.contribuyente_idcontribuyente = ?
-         AND LOWER(es.descripcion) = 'pendiente'`,
-      [cancelledStateId, id, contributorId]
+      `DELETE FROM solicitud_recoleccion
+       WHERE idsolicitud_recoleccion = ?
+         AND contribuyente_idcontribuyente = ?
+         AND estado_solicitud_idestado_solicitud = ?
+         AND NOT EXISTS (
+           SELECT 1
+           FROM solicitud_rutas
+           WHERE solicitud_recoleccion_idsolicitud_recoleccion = ?
+         )`,
+      [id, contributorId, pendingStateId, id]
     );
     if ((result as { affectedRows: number }).affectedRows === 0) {
       return res.status(409).json({ error: "La solicitud no existe o ya no puede cancelarse" });
