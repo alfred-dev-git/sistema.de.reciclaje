@@ -12,7 +12,7 @@ export const obtenerContactosAdminDB = async (idRecolector: number) => {
       u.municipio_idmunicipio AS municipio
     FROM recolector r
     INNER JOIN usuarios u
-      ON u.idusuario = r.usuarios_idusuario
+      ON u.idusuario = r.usuario_idusuario
     WHERE r.idrecolector = ?
     `,
     [idRecolector]

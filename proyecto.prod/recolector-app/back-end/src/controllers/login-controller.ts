@@ -83,7 +83,7 @@ export const loginUser = async (req: Request, res: Response) => {
       >(
         `SELECT idrecolector
          FROM recolector
-         WHERE usuarios_idusuario = ?`,
+         WHERE usuario_idusuario = ?`,
         [user.idusuario]
       );
 
