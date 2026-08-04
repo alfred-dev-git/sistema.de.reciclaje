@@ -191,7 +191,7 @@ router.post(
       return res.status(401).json({ error: "Credenciales inválidas" });
     }
     if (Number(row.activo) !== 1) {
-      return res.status(403).json({ error: "Tu cuenta está inactiva. Contactá con soporte." });
+      return res.status(403).json({ error: "Tu cuenta está inactiva. Contactá con soporte. recolectapp.soporte@gmail.com" });
     }
     if (String(row.rol).toLowerCase() !== "contribuyente") {
       return res.status(403).json({ error: "Tu rol no tiene permiso para esta app." });
