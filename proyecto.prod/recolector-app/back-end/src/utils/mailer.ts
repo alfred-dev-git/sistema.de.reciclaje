@@ -21,6 +21,9 @@ function getTransporter() {
           user: SMTP_USER,
           pass: SMTP_PASS,
         },
+        tls: {
+          rejectUnauthorized: false,
+        },
       });
     } else {
       transporter = null;
