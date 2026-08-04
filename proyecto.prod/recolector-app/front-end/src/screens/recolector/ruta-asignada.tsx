@@ -1,5 +1,5 @@
 import React, { useState, useRef } from "react";
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, FlatList, Alert, Linking } from "react-native";
 import MapaRutas from "../../components/mapa-rutas";
 import ModalCompletado from "../../components/modal-completado";
 import AlertNoEstuvo from "../../components/alert-ausente";
@@ -17,6 +17,30 @@ export default function RutaAsignada({ route }: any) {
 
   const mapRef = useRef<any>(null);
   const ruta = rutas[rutaSeleccionada];
+
+  const abrirNavegacion = async () => {
+    if (!ruta?.paradas.length) return;
+
+    const [origen, ...resto] = ruta.paradas;
+    const destino = resto[resto.length - 1] ?? origen;
+    const intermedias = ruta.paradas.slice(1, -1);
+    const params = [
+      "api=1",
+      `origin=${encodeURIComponent(`${origen.latitude},${origen.longitude}`)}`,
+      `destination=${encodeURIComponent(`${destino.latitude},${destino.longitude}`)}`,
+      "travelmode=driving",
+      ...(intermedias.length
+        ? [`waypoints=${encodeURIComponent(intermedias.map((p) => `${p.latitude},${p.longitude}`).join("|"))}`]
+        : []),
+    ];
+    const url = `https://www.google.com/maps/dir/?${params.join("&")}`;
+
+    try {
+      await Linking.openURL(url);
+    } catch {
+      Alert.alert("No se pudo abrir Maps", "Verificá que tengas una aplicación de mapas disponible.");
+    }
+  };
 
   // --- BOTÓN COMPLETADO ---
   const handleCompletado = (item: any) => {
@@ -95,6 +119,10 @@ export default function RutaAsignada({ route }: any) {
             // opcional: si quieres hacer algo al tocar el marker
           }}
         />
+        <TouchableOpacity style={styles.navegarButton} onPress={abrirNavegacion}>
+          <Ionicons name="navigate" size={20} color="#fff" />
+          <Text style={styles.navegarText}>Iniciar navegación</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Lista de paradas */}
@@ -152,7 +180,21 @@ export default function RutaAsignada({ route }: any) {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   containerVacio: { flex: 1, alignItems: "center", justifyContent: "center" },
-  mapaContainer: { flex: 1 },
+  mapaContainer: { flex: 1, position: "relative" },
+  navegarButton: {
+    position: "absolute",
+    right: 14,
+    bottom: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    backgroundColor: "#307043",
+    paddingVertical: 11,
+    paddingHorizontal: 16,
+    borderRadius: 24,
+    elevation: 5,
+  },
+  navegarText: { color: "#fff", fontWeight: "700" },
   listaContainer: { flex: 1 },
   lista: { padding: 10, backgroundColor: "#f8faed" },
   item: {

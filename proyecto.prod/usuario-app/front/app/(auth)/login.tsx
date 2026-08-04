@@ -53,6 +53,7 @@ export default function LoginScreen() {
                 />
               </View>
               <View style={styles.formContainer}>
+                <Text style={styles.appLabel}>App Contribuyentes</Text>
                 <Text style={styles.title}>Iniciar Sesión</Text>
                 <Input
                   label="E-mail"
@@ -115,6 +116,15 @@ const styles = StyleSheet.create({
     color: '#005C41',
     marginBottom: 30,
     textAlign: 'center',
+  },
+  appLabel: {
+    color: "#307043",
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textAlign: "center",
+    textTransform: "uppercase",
+    marginBottom: 6,
   },
   input: {
     borderWidth: 1,

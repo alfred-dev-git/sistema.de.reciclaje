@@ -22,6 +22,7 @@ type Row = {
 
 type PM = { anio_mes: string; total: number };
 type PT = { tipo: string; total: number };
+const REGISTROS_POR_PAGINA = 20;
 
 export default function Historial() {
   const [rows, setRows] = useState<Row[]>([]);
@@ -29,6 +30,7 @@ export default function Historial() {
   const [pm, setPm] = useState<PM[]>([]);
   const [pt, setPt] = useState<PT[]>([]);
   const [mes, setMes] = useState('');
+  const [pagina, setPagina] = useState(1);
   // función utilitaria para mostrar el estado
   const getEstadoTexto = (estado: string | number | null) => {
     if (estado === null || estado === undefined) return "-";
@@ -62,6 +64,20 @@ export default function Historial() {
 
     return data;
   }, [q, mes, rows]);
+
+  const totalPaginas = Math.ceil(filtered.length / REGISTROS_POR_PAGINA);
+  const filasVisibles = filtered.slice(
+    (pagina - 1) * REGISTROS_POR_PAGINA,
+    pagina * REGISTROS_POR_PAGINA
+  );
+
+  useEffect(() => {
+    setPagina(1);
+  }, [q, mes]);
+
+  useEffect(() => {
+    if (totalPaginas > 0 && pagina > totalPaginas) setPagina(totalPaginas);
+  }, [pagina, totalPaginas]);
 
   // COLORES DEL PIE CHART (del archivo viejo)
   const colors = ["#4CAF50", "#FF9800", "#b3c1ccff", "#a374acff", "#f77066ff"];
@@ -106,7 +122,7 @@ export default function Historial() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((r, i) => (
+              {filasVisibles.map((r, i) => (
                 <tr key={`${r.idpedidos}-${i}`}>
                   <td>{new Date(r.fecha_emision).toLocaleDateString()}</td>
                   <td>{r.usuario_nombre}</td>
@@ -120,6 +136,39 @@ export default function Historial() {
             </tbody>
           </table>
         </div>
+        {totalPaginas > 1 && (
+          <div style={paginationStyles.container}>
+            <button
+              type="button"
+              disabled={pagina === 1}
+              onClick={() => setPagina(actual => actual - 1)}
+              style={{ ...paginationStyles.button, ...(pagina === 1 ? paginationStyles.disabled : {}) }}
+            >
+              &lt;
+            </button>
+            {Array.from({ length: totalPaginas }, (_, index) => index + 1).map(numero => (
+              <button
+                type="button"
+                key={numero}
+                onClick={() => setPagina(numero)}
+                style={{
+                  ...paginationStyles.button,
+                  ...(pagina === numero ? paginationStyles.active : {}),
+                }}
+              >
+                {numero}
+              </button>
+            ))}
+            <button
+              type="button"
+              disabled={pagina === totalPaginas}
+              onClick={() => setPagina(actual => actual + 1)}
+              style={{ ...paginationStyles.button, ...(pagina === totalPaginas ? paginationStyles.disabled : {}) }}
+            >
+              &gt;
+            </button>
+          </div>
+        )}
       </Card>
 
       <div className="charts">
@@ -180,3 +229,19 @@ export default function Historial() {
     </div>
   );
 }
+
+const paginationStyles: Record<string, React.CSSProperties> = {
+  container: { display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 18 },
+  button: {
+    minWidth: 36,
+    height: 36,
+    borderRadius: 8,
+    border: '1px solid #4f8b5f',
+    background: '#fff',
+    color: '#2f6940',
+    fontWeight: 700,
+    cursor: 'pointer',
+  },
+  active: { background: '#4f8b5f', color: '#fff' },
+  disabled: { opacity: 0.35, cursor: 'default' },
+};

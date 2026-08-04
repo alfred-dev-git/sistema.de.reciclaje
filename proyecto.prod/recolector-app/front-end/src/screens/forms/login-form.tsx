@@ -87,6 +87,7 @@ const LoginForm: React.FC = () => {
               />
             </View>
             <View style={styles.formContainer}>
+              <Text style={styles.appLabel}>App Recolectores</Text>
               <Text style={styles.title}>Iniciar Sesión</Text>
 
               <TextInput
@@ -199,6 +200,15 @@ const styles = StyleSheet.create({
     color: '#005C41',
     marginBottom: 30,
     textAlign: 'center',
+  },
+  appLabel: {
+    color: "#307043",
+    fontSize: 15,
+    fontWeight: "700",
+    letterSpacing: 1.2,
+    textAlign: "center",
+    textTransform: "uppercase",
+    marginBottom: 6,
   },
   input: {
     borderWidth: 1,

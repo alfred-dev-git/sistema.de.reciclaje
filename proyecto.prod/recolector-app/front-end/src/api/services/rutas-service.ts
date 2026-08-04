@@ -109,7 +109,7 @@ export async function obtenerParadasAgrupadas(): Promise<RutaCalculada[]> {
         .join("|");
 
       const url = `https://maps.googleapis.com/maps/api/directions/json?origin=${origin}&destination=${destination}${
-        waypoints ? `&waypoints=${waypoints}` : ""
+        waypoints ? `&waypoints=optimize:true|${waypoints}` : ""
       }&key=${GOOGLE_API_KEY}`;
 
   
@@ -126,6 +126,11 @@ export async function obtenerParadasAgrupadas(): Promise<RutaCalculada[]> {
       }
 
       if (rutaData.routes && rutaData.routes.length > 0) {
+        const ordenIntermedias: number[] = rutaData.routes[0].waypoint_order ?? [];
+        const intermedias = grupo.slice(1, grupo.length - 1);
+        const paradasOptimizadas = ordenIntermedias.length === intermedias.length
+          ? [grupo[0], ...ordenIntermedias.map((indice) => intermedias[indice]), grupo[grupo.length - 1]]
+          : grupo;
         const coords = polyline
           .decode(rutaData.routes[0].overview_polyline.points)
           .map(([lat, lng]) => ({
@@ -133,7 +138,7 @@ export async function obtenerParadasAgrupadas(): Promise<RutaCalculada[]> {
             longitude: lng,
           }));
 
-        rutas.push({ idRuta, coordenadas: coords, paradas: grupo });
+        rutas.push({ idRuta, coordenadas: coords, paradas: paradasOptimizadas });
       } else {
         console.warn("⚠️ No se encontraron rutas para este grupo:", grupo);
         console.log(
