@@ -44,9 +44,12 @@ router.get(
        INNER JOIN solicitud_rutas sr ON sr.rutas_idrutas = ru.idrutas
        INNER JOIN solicitud_recoleccion s
          ON s.idsolicitud_recoleccion = sr.solicitud_recoleccion_idsolicitud_recoleccion
+       INNER JOIN estado_solicitud es
+         ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
        INNER JOIN contribuyente c ON c.idcontribuyente = s.contribuyente_idcontribuyente
        WHERE c.usuarios_idusuario = ?
-         AND n.fecha_envio >= DATE_SUB(NOW(), INTERVAL 7 DAY)
+         AND n.fecha_envio >= DATE_SUB(NOW(), INTERVAL 24 HOUR)
+         AND LOWER(TRIM(es.descripcion)) NOT IN ('completada', 'cancelada', 'ausente')
        ORDER BY n.fecha_envio DESC`,
       [req.user!.uid]
     );

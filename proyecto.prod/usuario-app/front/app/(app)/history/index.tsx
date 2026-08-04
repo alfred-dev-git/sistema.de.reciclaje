@@ -30,6 +30,7 @@ type Item = {
 
 const statusMap: Record<string, { label: string; bg: string; fg: string }> = {
   pendiente: { label: "Pendiente", bg: "#f59e0b", fg: "#000" },
+  "en ruta": { label: "En ruta", bg: "#2563eb", fg: "#fff" },
   completada: { label: "Completada", bg: "#16a34a", fg: "#fff" },
   cancelada: { label: "Cancelada", bg: "#dc2626", fg: "#fff" },
   anulado: { label: "Anulada", bg: "#dc2626", fg: "#fff" },
@@ -50,6 +51,7 @@ export default function HistoryScreen() {
   const [pedidoSeleccionado, setPedidoSeleccionado] = useState<number | null>(null);
   const [selectedMonth, setSelectedMonth] = useState<number | "all">("all");
   const [selectedYear, setSelectedYear] = useState<number | "all">("all");
+  const [selectedStatus, setSelectedStatus] = useState<string | "all">("all");
   const [currentPage, setCurrentPage] = useState(1);
 
   const abrirModal = (id: number) => {
@@ -100,9 +102,11 @@ export default function HistoryScreen() {
     if (!match) return false;
     const year = Number(match[1]);
     const month = Number(match[2]);
+    const estado = String(item.estado ?? "").trim().toLowerCase();
     return (selectedYear === "all" || year === selectedYear)
-      && (selectedMonth === "all" || month === selectedMonth);
-  }), [items, selectedMonth, selectedYear]);
+      && (selectedMonth === "all" || month === selectedMonth)
+      && (selectedStatus === "all" || estado === selectedStatus);
+  }), [items, selectedMonth, selectedYear, selectedStatus]);
 
   const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE);
   const paginatedItems = filteredItems.slice(
@@ -112,7 +116,7 @@ export default function HistoryScreen() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonth, selectedYear, selectedStatus]);
 
   useEffect(() => {
     if (totalPages > 0 && currentPage > totalPages) setCurrentPage(totalPages);
@@ -220,6 +224,19 @@ export default function HistoryScreen() {
             {availableYears.map((year) => (
               <Picker.Item key={year} label={String(year)} value={year} />
             ))}
+          </Picker>
+        </View>
+
+        <View style={styles.pickerWrap}>
+          <Picker
+            selectedValue={selectedStatus}
+            onValueChange={(value) => setSelectedStatus(String(value))}
+          >
+            <Picker.Item label="Todos los estados" value="all" />
+            <Picker.Item label="Pendiente" value="pendiente" />
+            <Picker.Item label="En ruta" value="en ruta" />
+            <Picker.Item label="Completada" value="completada" />
+            <Picker.Item label="Cancelada" value="cancelada" />
           </Picker>
         </View>
       </View>
