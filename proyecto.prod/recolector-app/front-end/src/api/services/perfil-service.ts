@@ -14,7 +14,6 @@ export interface ApiResponse<T = any> {
 }
 
 export interface Perfil {
-  idusuario: number;
   DNI: string;
   nombre: string;
   apellido: string;
@@ -22,11 +21,8 @@ export interface Perfil {
   telefono: string;
   fecha_nacimiento: string;
   municipio: string;
-  municipio_idmunicipio: number;
   foto_perfil: string | null;
-  puntos: number;
 }
-
 
 export interface NewPerfil {
   email: string;

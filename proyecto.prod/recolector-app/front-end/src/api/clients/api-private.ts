@@ -9,9 +9,16 @@ if (!Constants.expoConfig?.extra) {
 
 const { apiUrl } = Constants.expoConfig.extra as { apiUrl: string };
 
+if (!apiUrl) {
+  throw new Error('No está configurada la URL de la API');
+}
+
 const apiPrivate = axios.create({
   baseURL: apiUrl,
+  timeout: 15000,
 });
+
+let sessionCleanupInProgress = false;
 
 // agregar token para envío
 apiPrivate.interceptors.request.use(async (config: InternalAxiosRequestConfig) => {
@@ -26,9 +33,17 @@ apiPrivate.interceptors.request.use(async (config: InternalAxiosRequestConfig) =
 apiPrivate.interceptors.response.use(
   (response: AxiosResponse) => response,
   async (error: AxiosError) => {
-    if (error.response?.status === 403) {
+    if (
+      (error.response?.status === 401 || error.response?.status === 403) &&
+      !sessionCleanupInProgress
+    ) {
+      sessionCleanupInProgress = true;
       console.error('Token expirado o inválido');
-      await LimpiarSesion();
+      try {
+        await LimpiarSesion();
+      } finally {
+        sessionCleanupInProgress = false;
+      }
     }
     return Promise.reject(error);
   }

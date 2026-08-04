@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import { obtenerCronogramaDB } from "../models/cronograma-model.js";
+import { obtenerCronogramaDB } from "../models/frecuencia-model.js";
 
 export const getCronograma = async (req: Request, res: Response): Promise<void> => {
   try {

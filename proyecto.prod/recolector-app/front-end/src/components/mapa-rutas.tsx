@@ -1,7 +1,7 @@
 import React, { useRef } from "react";
 import MapView, { Marker, Polyline } from "react-native-maps";
 import { StyleSheet } from "react-native";
-import { RutaCalculada } from "../api/services/paradas-service";
+import { RutaCalculada } from "../api/services/rutas-service";
 import Constants from "expo-constants";
 
 interface MapaRutasProps {
@@ -67,20 +67,22 @@ export default function MapaRutas({
             confirmarCompletado(parada);
           }}
           pinColor={
-            parada.estado === 1
+            parada.estado?.toLowerCase() === "completada"
               ? "green"
-              : parada.estado === 2
+              : parada.estado?.toLowerCase() === "ausente"
               ? "orange"
               : "red"
           }
         />
       ))}
 
-      <Polyline
-        coordinates={ruta.coordenadas}
-        strokeColor="blue"
-        strokeWidth={4}
-      />
+      {ruta.coordenadas.length > 1 && (
+        <Polyline
+          coordinates={ruta.coordenadas}
+          strokeColor="blue"
+          strokeWidth={4}
+        />
+      )}
     </MapView>
   );
 }

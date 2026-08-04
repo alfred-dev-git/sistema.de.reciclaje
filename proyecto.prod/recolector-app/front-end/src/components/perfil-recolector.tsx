@@ -1,18 +1,20 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ActivityIndicator, ScrollView, StyleSheet, Image, TouchableOpacity, Alert } from "react-native";
-import { getPerfil, updateFotoPerfil, Perfil } from "../api/services/perfil-service";
-import { useImagePicker } from "../utils/imag-picker"
+import { View, Text, ActivityIndicator, ScrollView, StyleSheet, TouchableOpacity } from "react-native";
+import { getPerfil, Perfil } from "../api/services/perfil-service";
 import HeaderRecolector from "./headerComponent";
 import { Ionicons } from "@expo/vector-icons";
-import { navigate } from "../navigation/refglobal-navigation";
+import { useNavigation } from "@react-navigation/native";
 
 export default function PerfilScreen() {
+  const navigation = useNavigation<any>();
   const [perfil, setPerfil] = useState<Perfil | null>(null);
   const [loading, setLoading] = useState(true);
-  const [updatingPhoto, setUpdatingPhoto] = useState(false);
-  const [imageError, setImageError] = useState(false);
 
-  const { pickImageFromLibrary } = useImagePicker();
+  const formatearFecha = (valor: string) => {
+    const soloFecha = String(valor ?? "").split("T")[0];
+    const [anio, mes, dia] = soloFecha.split("-");
+    return anio && mes && dia ? `${dia}-${mes}-${anio}` : soloFecha;
+  };
 
   // Obtener perfil al montar
   useEffect(() => {
@@ -30,25 +32,6 @@ export default function PerfilScreen() {
   }, []);
 
   // Función para actualizar la foto
-  const handleChangePhoto = async () => {
-    const asset = await pickImageFromLibrary();
-    if (!asset) return;
-
-    try {
-      setUpdatingPhoto(true);
-      const result = await updateFotoPerfil(asset);
-      if (result.success && result.data) {
-        setPerfil((prev) => (prev ? { ...prev, foto_perfil: result.data } : null));
-        setImageError(false);
-        Alert.alert("✅ Ruta de imagen guardada correctamente");
-      } else {
-        Alert.alert("❌ Error", result.message);
-      }
-    } finally {
-      setUpdatingPhoto(false);
-    }
-  };
-
   if (loading) {
     return (
       <View style={styles.centered}>
@@ -71,33 +54,17 @@ export default function PerfilScreen() {
       <View style={styles.scrollContainer}>
         <Text style={styles.titulo} >Mi Perfil</Text>
         <View style={styles.profileContainer}>
-          <View style={{ alignItems: "center", justifyContent: "center" }}>
-            <Image
-              source={
-                !imageError && perfil.foto_perfil
-                  ? { uri: perfil.foto_perfil }
-                  : require("../../assets/images/perfildefault.png")
-              }
-              style={styles.profileImage}
-              onError={() => {
-                if (!imageError) {
-                  setImageError(true);
-                  Alert.alert("⚠️ Aviso", "No se pudo cargar la imagen, pruebe cambiarla.");
-                }
-              }}
-            />
+          <View style={styles.profileInitial}>
+            <Text style={styles.profileInitialText}>
+              {(perfil.nombre?.trim()?.[0] ?? "R").toUpperCase()}
+            </Text>
           </View>
           <View>
             <Text style={styles.nombre}>
               {perfil.nombre} {perfil.apellido}
             </Text>
-            <TouchableOpacity onPress={handleChangePhoto} disabled={updatingPhoto}>
-              <Text style={styles.changePhotoText}>
-                {updatingPhoto ? "Actualizando..." : "Cambiar foto"}
-              </Text>
-            </TouchableOpacity>
             <TouchableOpacity
-              onPress={() => navigate("EditarPerfil" as any, { perfil })}
+              onPress={() => navigation.navigate("EditarPerfil", { perfil })}
             >
               <Text style={styles.changePhotoText}>Editar información</Text>
             </TouchableOpacity>
@@ -135,7 +102,7 @@ export default function PerfilScreen() {
           </View>
           <View style={styles.ItemInfo}>
             <Text style={styles.itemTitulo}>Fecha de nacimiento:</Text>
-            <Text style={styles.itemSubtitulo}>{perfil.fecha_nacimiento}</Text>
+            <Text style={styles.itemSubtitulo}>{formatearFecha(perfil.fecha_nacimiento)}</Text>
           </View>
         </View>
         <View style={styles.itemProfile}>
@@ -145,15 +112,6 @@ export default function PerfilScreen() {
           <View style={styles.ItemInfo}>
             <Text style={styles.itemTitulo}>Municipio:</Text>
             <Text style={styles.itemSubtitulo}>{perfil.municipio}</Text>
-          </View>
-        </View>
-        <View style={styles.itemProfile}>
-          <View>
-            <Ionicons name="star-outline" size={30} color="black" />
-          </View>
-          <View style={styles.ItemInfo}>
-            <Text style={styles.itemTitulo}>Puntos:</Text>
-            <Text style={styles.itemSubtitulo}>{perfil.puntos}</Text>
           </View>
         </View>
       </View>
@@ -186,7 +144,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 24,
   },
-  profileImage: {
+  profileInitial: {
     width: 120,
     height: 120,
     marginRight: 18,
@@ -194,8 +152,11 @@ const styles = StyleSheet.create({
     borderRadius: 60,
     alignSelf: "center",
     marginBottom: 8,
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#307043",
+    alignItems: "center",
+    justifyContent: "center",
   },
+  profileInitialText: { color: "#fff", fontSize: 48, fontWeight: "800" },
   changePhotoText: {
     color: "#307043",
     fontSize: 16,

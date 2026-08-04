@@ -8,7 +8,7 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { getCronograma } from "../api/services/cronograma-service";
+import { getFrecuencia } from "../api/services/frecuencia-service";
 import HeaderRecolector from "./headerComponent";
 import { Ionicons } from "@expo/vector-icons";
 import BackgorundContainer from "./layout";
@@ -28,6 +28,7 @@ const CronogramaRecoleccion: React.FC = () => {
 
   //estado de la semana seleccionada
   const [semanaSeleccionada, setSemanaSeleccionada] = useState<number | null>(null);
+  const [tipoSeleccionado, setTipoSeleccionado] = useState<string | null>(null);
 
   const obtenerNombreDia = (dia: number) => {
     const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
@@ -42,7 +43,7 @@ const CronogramaRecoleccion: React.FC = () => {
   useEffect(() => {
     const fetchCronograma = async () => {
       try {
-        const response = await getCronograma();
+        const response = await getFrecuencia();
 
         if (response.success && Array.isArray(response.data)) {
           setCronograma(response.data);
@@ -64,7 +65,7 @@ const CronogramaRecoleccion: React.FC = () => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#00AA88" />
-        <Text>Cargando cronograma...</Text>
+        <Text>Cargando frecuencias...</Text>
       </View>
     );
   }
@@ -77,10 +78,11 @@ const CronogramaRecoleccion: React.FC = () => {
     );
   }
 
-  const datosFiltrados =
-    semanaSeleccionada === null
-      ? cronograma
-      : cronograma.filter((c) => c.semana_mes === semanaSeleccionada);
+  const tiposReciclables = [...new Set(cronograma.map((item) => item.tipo_reciclable))];
+  const datosFiltrados = cronograma.filter((item) =>
+    (semanaSeleccionada === null || item.semana_mes === semanaSeleccionada) &&
+    (tipoSeleccionado === null || item.tipo_reciclable === tipoSeleccionado)
+  );
 
   return (
     <BackgorundContainer>
@@ -127,6 +129,25 @@ const CronogramaRecoleccion: React.FC = () => {
             ))}
           </View>
 
+          <Text style={styles.filterLabel}>Tipo de reciclable</Text>
+          <View style={styles.filterContainer}>
+            <TouchableOpacity
+              style={[styles.filterButton, tipoSeleccionado === null && styles.filterActive]}
+              onPress={() => setTipoSeleccionado(null)}
+            >
+              <Text style={[styles.filterText, tipoSeleccionado === null && styles.filterTextActive]}>Todos</Text>
+            </TouchableOpacity>
+            {tiposReciclables.map((tipo) => (
+              <TouchableOpacity
+                key={tipo}
+                style={[styles.filterButton, tipoSeleccionado === tipo && styles.filterActive]}
+                onPress={() => setTipoSeleccionado(tipo)}
+              >
+                <Text style={[styles.filterText, tipoSeleccionado === tipo && styles.filterTextActive]}>{tipo}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           {/* LISTA FILTRADA */}
           {datosFiltrados.map((item, index) => (
             <TouchableOpacity
@@ -147,7 +168,7 @@ const CronogramaRecoleccion: React.FC = () => {
 
           {datosFiltrados.length === 0 && (
             <Text style={{ marginTop: 20, color: "#666" }}>
-              No hay recolecciones para esta semana.
+              No hay frecuencias para los filtros seleccionados.
             </Text>
           )}
         </View>
@@ -161,6 +182,7 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: "center", alignItems: "center" },
   title: { fontSize: 20, fontWeight: "600", marginBottom: 12 },
   noData: { fontSize: 16, color: "#666" },
+  filterLabel: { color: "#234f31", fontSize: 15, fontWeight: "700", marginBottom: 8 },
 
   /*NUEVO ESTILO PARA FILTRO */
   filterContainer: {

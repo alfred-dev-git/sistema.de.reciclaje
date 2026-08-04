@@ -3,12 +3,12 @@ import cors from 'cors'
 import dotenv from 'dotenv'
 import cookieParser from 'cookie-parser'
 import loginRoutes from './routes/login-routes.js';
-import paradasRoutes from './routes/paradas-routes.js';
+import paradasRoutes from './routes/rutas-routes.js';
 import recoleccionRoutes from './routes/recoleccion-routes.js';
 import historialRoutes from './routes/historial-routes.js';
 import notificacionRoutes from './routes/notificacion-routes.js';
 import perfilRoutes from './routes/perfil-routes.js';
-import cronogramaRoutes from './routes/cronograma-routes.js';
+import frecuenciaRoutes from './routes/frecuencia-routes.js';
 import contactosRoutes from './routes/contactos-routes.js';
 
 dotenv.config()
@@ -47,7 +47,7 @@ app.use('/api/userAusente', recoleccionRoutes)
 app.use('/api/historial', historialRoutes)
 app.use('/api/notificacion', notificacionRoutes)
 app.use('/api/perfil', perfilRoutes)
-app.use('/api/cronograma', cronogramaRoutes)
+app.use('/api/frecuencia', frecuenciaRoutes)
 app.use('/api', contactosRoutes)
 
 

@@ -1,14 +1,14 @@
 import apiPrivate from "../clients/api-private";
 import Constants from "expo-constants";
-import { prepararGruposParaRutas, Punto } from "../../utils/agrupador-rutas";
+import { Punto } from "../../utils/agrupador-rutas";
 import axios from "axios";
 import polyline from "@mapbox/polyline";
 
 /** ---- Tipos del backend ---- */
 export interface PedidoAsignado {
-  idpedidos: number;
+  idsolicitud_recoleccion: number;
   id_ruta: number;
-  estado: number;
+  estado: string;
   nombre: string;
   apellido: string;
   idusuario: number;
@@ -23,10 +23,11 @@ export interface ParadaNormalizada
     Punto {
   latitud: number;
   longitud: number;
-  estado: number; // 0 = pendiente, 1 = completado
+  estado: string;
 }
 
 export interface RutaCalculada {
+  idRuta: number;
   coordenadas: { latitude: number; longitude: number }[];
   paradas: ParadaNormalizada[];
 }
@@ -50,7 +51,6 @@ function normalizarParadas(data: PedidoAsignado[]): ParadaNormalizada[] {
         longitud: lng,
         latitude: lat,
         longitude: lng,
-        estado: 0,
       };
     })
     .filter(
@@ -77,12 +77,26 @@ export async function obtenerParadasAgrupadas(): Promise<RutaCalculada[]> {
   try {
     const { data } = await apiPrivate.get<PedidoAsignado[]>("/paradas");
     const paradasValidas = normalizarParadas(data);
-    const subgrupos = prepararGruposParaRutas(paradasValidas);
+    const rutasMap = new Map<number, ParadaNormalizada[]>();
+    for (const parada of paradasValidas) {
+      const grupo = rutasMap.get(parada.id_ruta) ?? [];
+      grupo.push(parada);
+      rutasMap.set(parada.id_ruta, grupo);
+    }
 
     const rutas: RutaCalculada[] = [];
 
-    for (const grupo of subgrupos) {
+    for (const [idRuta, grupo] of rutasMap.entries()) {
       if (grupo.length === 0) continue;
+
+      if (grupo.length === 1) {
+        rutas.push({
+          idRuta,
+          coordenadas: [{ latitude: grupo[0].latitude, longitude: grupo[0].longitude }],
+          paradas: grupo,
+        });
+        continue;
+      }
 
       const origin = `${grupo[0].latitude},${grupo[0].longitude}`;
       const destination = `${grupo[grupo.length - 1].latitude},${
@@ -119,7 +133,7 @@ export async function obtenerParadasAgrupadas(): Promise<RutaCalculada[]> {
             longitude: lng,
           }));
 
-        rutas.push({ coordenadas: coords, paradas: grupo });
+        rutas.push({ idRuta, coordenadas: coords, paradas: grupo });
       } else {
         console.warn("⚠️ No se encontraron rutas para este grupo:", grupo);
         console.log(

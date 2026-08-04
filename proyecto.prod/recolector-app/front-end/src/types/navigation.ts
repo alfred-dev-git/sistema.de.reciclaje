@@ -6,6 +6,7 @@ export type RootStackParamList = {
   Register: undefined;
   Forgot: undefined;
   Reset: undefined;
+  Drawer: undefined;
   RecolectorNavigation: undefined;
   Perfil: undefined;
   Editar: any | undefined;

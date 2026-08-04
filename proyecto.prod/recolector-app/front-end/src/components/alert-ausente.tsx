@@ -12,9 +12,11 @@ export default async function AlertNoEstuvo(item: any, rutaSeleccionada: number,
         onPress: async () => {
           try {
             const response = await marcarUserAusente({
-              idpedidos: item.idpedidos,
-              estado: 2, // ausente
+              idsolicitud_recoleccion: item.idsolicitud_recoleccion,
             });
+            if (!response.success) {
+              throw new Error(response.message);
+            }
 
             Alert.alert("Éxito", response.message);
 
@@ -25,7 +27,9 @@ export default async function AlertNoEstuvo(item: any, rutaSeleccionada: number,
                   ? {
                       ...ruta,
                       paradas: ruta.paradas.map((p: any) =>
-                        p.idpedidos === item.idpedidos ? { ...p, estado: 2 } : p
+                        p.idsolicitud_recoleccion === item.idsolicitud_recoleccion
+                          ? { ...p, estado: "Ausente" }
+                          : p
                       ),
                     }
                   : ruta

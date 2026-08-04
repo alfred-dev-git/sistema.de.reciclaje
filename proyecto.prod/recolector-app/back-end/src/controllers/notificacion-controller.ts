@@ -4,7 +4,7 @@ import { getNotificacion } from "../models/notificacion-model.js";
 export const notificacionRes = async (req: Request, res: Response): Promise<void> => {
   try {
 
-    const notificacion = await getNotificacion();
+    const notificacion = await getNotificacion(req.user!.id);
 
     res.json(notificacion);
   } catch (error: any) {

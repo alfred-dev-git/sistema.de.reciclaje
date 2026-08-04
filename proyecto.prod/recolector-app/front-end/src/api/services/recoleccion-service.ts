@@ -9,15 +9,13 @@ interface ApiResponse<T = any> {
 }
 
 interface CompletadoPayload {
-  idpedidos: number;
-  estado: number;       // ej: 1 = completado
-  cant_bolson: number;
-  id_tipo_reciclable: number;
+  idsolicitud_recoleccion:number;
+  cant_bolson:number;
+  observaciones?:string;
 }
 
 interface UserAusentePayload {
-  idpedidos: number;
-  estado: number;       // ej: 2 = ausente
+    idsolicitud_recoleccion:number;
 }
 
 export const marcarCompletado = async (payload: CompletadoPayload): Promise<ApiResponse> => {

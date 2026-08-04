@@ -1,19 +1,24 @@
 import { RowDataPacket } from "mysql2";
 import { pool } from "../db.js";
 
-export const getNotificacion = async () => {
-  const [rows] = await pool.query<RowDataPacket[]>(`
-    SELECT 
-      n.titulo,
-      n.mensaje
+export const getNotificacion = async (idRecolector: number) => {
+  const [rows] = await pool.query<RowDataPacket[]>(
+    `
+    SELECT
+      n.idnotificaciones AS id,
+      titulo,
+      mensaje,
+      fecha_envio,
+      n.rutas_idrutas AS id_ruta
     FROM notificaciones n
-    INNER JOIN cronograma_recoleccion c 
-      ON n.cronograma_recoleccion_idcronograma_recoleccion = c.idcronograma_recoleccion
-    WHERE 
-      c.activo = 1
+    INNER JOIN rutas r ON r.idrutas = n.rutas_idrutas
+    WHERE r.recolector_idrecolector = ?
       AND n.fecha_envio >= (CURDATE() - INTERVAL 1 DAY)
-    ORDER BY n.fecha_envio DESC;
-  `);
+    ORDER BY n.fecha_envio DESC, n.idnotificaciones DESC
+    LIMIT 1;
+    `,
+    [idRecolector]
+  );
 
   return rows;
 };

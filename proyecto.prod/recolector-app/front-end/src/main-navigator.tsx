@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, View } from "react-native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 
 // Screens
@@ -10,13 +11,37 @@ import ResetScreen from "./screens/forms/reset";
 
 // App Navigation
 import DrawerNavigation from "./navigation/drawer-navigation";
+import { deleteToken, deleteUser, getToken, getUser } from "./auth/auth";
 
 const Stack = createNativeStackNavigator();
 
 const MainNavigator: React.FC = () => {
+  const [loadingSession, setLoadingSession] = useState(true);
+  const [hasSession, setHasSession] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      const [token, user] = await Promise.all([getToken(), getUser()]);
+      const valid = Boolean(token && user?.rol === 4);
+      setHasSession(valid);
+      if (!valid && (token || user)) {
+        await Promise.all([deleteToken(), deleteUser()]);
+      }
+      setLoadingSession(false);
+    })();
+  }, []);
+
+  if (loadingSession) {
+    return (
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <ActivityIndicator size="large" color="#307043" />
+      </View>
+    );
+  }
+
   return (
     <Stack.Navigator
-      initialRouteName="Home"
+      initialRouteName={hasSession ? "Drawer" : "Home"}
       screenOptions={{ headerShown: false }}
     >
       {/* ================================
