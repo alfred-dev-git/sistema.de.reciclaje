@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useHeaderHeight } from "@react-navigation/elements";
-import { getCurrentUser } from "@/services/api/auth";
+import { getCurrentUser, listMunicipios } from "@/services/api/auth";
 import { api } from "@/services/api/http";
 import { Button } from "@/components/Button";
 import { router } from "expo-router";
@@ -60,6 +60,11 @@ export default function NewAddressScreen() {
         return;
       }
       setUserId(uid);
+
+      const municipios = await listMunicipios();
+      const municipioId = Number(u?.municipio_idmunicipio);
+      const municipio = municipios.find((item) => item.id === municipioId);
+      setCiudad(municipio?.descripcion ?? "");
     })();
   }, []);
 
@@ -80,8 +85,8 @@ export default function NewAddressScreen() {
       return;
     }
 
-    if (ciudad && !validateText(ciudad)) {
-      Alert.alert("Ciudad inválida", "Ingrese una ciudad válida.");
+    if (!ciudad) {
+      Alert.alert("Municipio no disponible", "No se pudo obtener el municipio de tu perfil.");
       return;
     }
 
@@ -133,6 +138,7 @@ export default function NewAddressScreen() {
         calle,
         numero,
         barrio,
+        ciudad,
         referencias: referencias || null,
         latitud: coords.lat,
         longitud: coords.lng,
@@ -167,15 +173,6 @@ export default function NewAddressScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <Text style={styles.title}>Agregar dirección</Text>
-
-          <Text style={styles.label}>Ciudad (opcional)</Text>
-          <TextInput
-            style={styles.input}
-            value={ciudad}
-            onChangeText={(t) => setCiudad(cleanLetters(t))}
-            placeholder="Ciudad"
-            maxLength={50}
-          />
 
           <Text style={styles.label}>Provincia</Text>
           <TextInput

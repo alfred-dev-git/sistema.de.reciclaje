@@ -11,6 +11,7 @@ import {
 } from "react-native";
 import { listCronograma } from "@/services/api/requests";
 import { Ionicons } from "@expo/vector-icons";
+import { Picker } from "@react-native-picker/picker";
 
 
 interface CronogramaItem {
@@ -26,6 +27,7 @@ const CronogramaRecoleccion: React.FC = () => {
   const [cronograma, setCronograma] = useState<CronogramaItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [semanaSeleccionada, setSemanaSeleccionada] = useState<number | null>(null);
+  const [tipoSeleccionado, setTipoSeleccionado] = useState<string>("todos");
 
   const obtenerNombreDia = (dia: number) => {
     const dias = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
@@ -66,20 +68,23 @@ const CronogramaRecoleccion: React.FC = () => {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#00AA88" />
-        <Text>Cargando cronograma...</Text>
+        <Text>Cargando frecuencias...</Text>
       </View>
     );
   }
 
-  const datosFiltrados =
-    semanaSeleccionada === null
-      ? cronograma
-      : cronograma.filter((item) => item.semana_mes === semanaSeleccionada);
+  const tiposReciclables = [...new Set(cronograma.map((item) => item.tipo_reciclable))]
+    .sort((a, b) => a.localeCompare(b));
+
+  const datosFiltrados = cronograma.filter((item) =>
+    (semanaSeleccionada === null || item.semana_mes === semanaSeleccionada)
+    && (tipoSeleccionado === "todos" || item.tipo_reciclable === tipoSeleccionado)
+  );
 
   if (cronograma.length === 0) {
     return (
       <View style={styles.center}>
-        <Text style={styles.noData}>No hay días de recolección disponibles.</Text>
+        <Text style={styles.noData}>No hay frecuencias de recolección disponibles.</Text>
       </View>
     );
   }
@@ -91,7 +96,19 @@ const CronogramaRecoleccion: React.FC = () => {
       style={styles.background}
       resizeMode="cover">
       <View style={styles.container}>
-        <Text style={styles.title}>🗓 Cronograma de Recolección</Text>
+        <Text style={styles.title}>🗓 Frecuencia de Recolección</Text>
+
+        <View style={styles.typePickerWrap}>
+          <Picker
+            selectedValue={tipoSeleccionado}
+            onValueChange={(value) => setTipoSeleccionado(String(value))}
+          >
+            <Picker.Item label="Todos los reciclables" value="todos" />
+            {tiposReciclables.map((tipo) => (
+              <Picker.Item key={tipo} label={tipo} value={tipo} />
+            ))}
+          </Picker>
+        </View>
 
         {/* Filtro por semana */}
         <View style={styles.filterContainer}>
@@ -144,7 +161,7 @@ const CronogramaRecoleccion: React.FC = () => {
 
         {datosFiltrados.length === 0 && (
           <Text style={{ color: "#555", marginTop: 20 }}>
-            No hay recolecciones para esta semana.
+            No hay frecuencias para los filtros seleccionados.
           </Text>
         )}
       </View>
@@ -181,6 +198,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     marginBottom: 16,
     gap: 8,
+  },
+  typePickerWrap: {
+    width: "90%",
+    borderWidth: 1,
+    borderColor: "#d1d5db",
+    borderRadius: 10,
+    backgroundColor: "#fff",
+    overflow: "hidden",
+    marginBottom: 12,
   },
   filterButton: {
     backgroundColor: "#eee",

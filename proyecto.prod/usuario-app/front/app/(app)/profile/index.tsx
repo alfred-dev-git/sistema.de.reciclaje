@@ -9,6 +9,12 @@ function initialsFrom(name?: string, last?: string) {
   return first || "U";
 }
 
+function formatBirthDate(value?: string | null) {
+  const date = String(value ?? "").slice(0, 10);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : "-";
+}
+
 export default function ProfileScreen() {
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
@@ -75,7 +81,7 @@ export default function ProfileScreen() {
         <View style={styles.ItemInfo}>
           <Text style={styles.itemTitulo}>Fecha de nacimiento:</Text>
           <Text style={styles.itemSubtitulo}>
-            {user?.fecha_nacimiento ?? "-"}
+            {formatBirthDate(user?.fecha_nacimiento)}
           </Text>
         </View>
       </View>

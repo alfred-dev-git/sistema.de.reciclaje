@@ -24,6 +24,17 @@ import { Picker } from "@react-native-picker/picker";
 
 type Sex = "M" | "F" | "O";
 
+function formatBirthDate(value?: string | null) {
+  const date = String(value ?? "").slice(0, 10);
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : "";
+}
+
+function birthDateToApi(value: string) {
+  const match = /^(\d{2})-(\d{2})-(\d{4})$/.exec(value);
+  return match ? `${match[3]}-${match[2]}-${match[1]}` : null;
+}
+
 export default function EditProfileScreen() {
   const insets = useSafeAreaInsets();
   const headerHeight = useHeaderHeight();
@@ -65,7 +76,7 @@ export default function EditProfileScreen() {
         setNombre(me.nombre ?? "");
         setApellido(me.apellido ?? "");
         setTelefono(me.telefono ? String(me.telefono) : "");
-        setFechaNacimiento(me.fecha_nacimiento ?? "");
+        setFechaNacimiento(formatBirthDate(me.fecha_nacimiento));
         setMunicipioId(
           Number.isFinite(Number(me.municipio_idmunicipio))
             ? String(me.municipio_idmunicipio)
@@ -88,8 +99,9 @@ export default function EditProfileScreen() {
       setErrorMsg("Nombre y apellido son requeridos.");
       return;
     }
-    if (fechaNacimiento && !/^\d{4}-\d{2}-\d{2}$/.test(fechaNacimiento)) {
-      setErrorMsg("Fecha de nacimiento debe ser YYYY-MM-DD.");
+    const fechaNacimientoApi = fechaNacimiento ? birthDateToApi(fechaNacimiento) : null;
+    if (fechaNacimiento && !fechaNacimientoApi) {
+      setErrorMsg("Fecha de nacimiento debe ser DD-MM-AAAA.");
       return;
     }
 
@@ -100,7 +112,7 @@ export default function EditProfileScreen() {
         nombre: nombre || undefined,
         apellido: apellido || undefined,
         telefono: telefono || undefined,
-        fecha_nacimiento: fechaNacimiento || undefined,
+        fecha_nacimiento: fechaNacimientoApi || undefined,
         municipio_idmunicipio: municipioId ? Number(municipioId) : undefined,
         sexo: sexo || undefined,
       };
@@ -180,10 +192,10 @@ export default function EditProfileScreen() {
                 keyboardType="phone-pad"
               />
               <Input
-                label="Fecha de nacimiento (YYYY-MM-DD)"
+                label="Fecha de nacimiento (DD-MM-AAAA)"
                 value={fechaNacimiento}
                 onChangeText={setFechaNacimiento}
-                placeholder="1990-05-10"
+                placeholder="10-05-1990"
               />
               <Text style={styles.label}>Municipio</Text>
 
