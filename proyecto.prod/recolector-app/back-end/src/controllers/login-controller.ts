@@ -74,23 +74,30 @@ export const loginUser = async (req: Request, res: Response) => {
       return res.status(401).json({ message: "Contraseña incorrecta" });
     }
 
+    if (user.rol_idrol !== 4) {
+      return res.status(403).json({
+        message: "Tu usuario no tiene acceso a la aplicación de recolectores.",
+      });
+    }
+
     // Si es recolector, obtener su id
     let idRecolector: number | null = null;
 
-    if (user.rol_idrol === 4) {
-      const [recolectorRows] = await pool.query<
-        (RowDataPacket & Recolector)[]
-      >(
-        `SELECT idrecolector
-         FROM recolector
-         WHERE usuario_idusuario = ?`,
-        [user.idusuario]
-      );
+    const [recolectorRows] = await pool.query<
+      (RowDataPacket & Recolector)[]
+    >(
+      `SELECT idrecolector
+       FROM recolector
+       WHERE usuario_idusuario = ?`,
+      [user.idusuario]
+    );
 
-      if (recolectorRows.length > 0) {
-        idRecolector = recolectorRows[0].idrecolector;
-      }
+    if (recolectorRows.length === 0) {
+      return res.status(403).json({
+        message: "El usuario no tiene un perfil de recolector asociado.",
+      });
     }
+    idRecolector = recolectorRows[0].idrecolector;
 
     // Configuración JWT
     if (!process.env.JWT_SECRET || !process.env.JWT_EXPIRE) {

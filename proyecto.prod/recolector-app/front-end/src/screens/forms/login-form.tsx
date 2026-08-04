@@ -37,10 +37,9 @@ const LoginForm: React.FC = () => {
       const response = await loginUsuario(email, password);
 
       if (response.ok) {
-        await saveToken(response.token);
-        await saveUser(response.user);
-
         if (verificarRol(response.user)) {
+          await saveToken(response.token);
+          await saveUser(response.user);
           navigate("Drawer" as any);
         } else {
           Alert.alert("Acceso denegado", "No tienes permisos para acceder.");

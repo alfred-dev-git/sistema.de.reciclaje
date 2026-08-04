@@ -6,10 +6,15 @@ export const LimpiarSesion = async () => {
   await deleteToken();
   await deleteUser();
 
-  Alert.alert('Sesión expirada', 'Por favor vuelva a ingresar.', [
-    {
-      text: 'OK',
-      onPress: () => resetToLogin(),
-    },
-  ]);
+  await new Promise((resolve) => {
+    Alert.alert('Sesión expirada', 'Por favor vuelva a ingresar.', [
+      {
+        text: 'OK',
+        onPress: () => {
+          resetToLogin();
+          resolve();
+        },
+      },
+    ]);
+  });
 };

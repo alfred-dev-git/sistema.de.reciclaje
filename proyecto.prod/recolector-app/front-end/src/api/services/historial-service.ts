@@ -22,3 +22,26 @@ export const getHistorial = async (): Promise<ApiResponse> => {
     };
   }
 };
+
+export type FiltrosHistorial = {
+  pagina: number;
+  mes?: number;
+  anio?: number;
+  tipo?: string;
+};
+
+export const getHistorialCompleto = async (
+  filtros: FiltrosHistorial
+): Promise<ApiResponse> => {
+  try {
+    const response = await apiPrivate.get("/historial", {
+      params: { completo: 1, limite: 8, ...filtros },
+    });
+    return { success: true, message: "Historial obtenido", data: response.data };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.response?.data?.message || "No se pudo cargar el historial",
+    };
+  }
+};

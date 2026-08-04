@@ -13,7 +13,6 @@ export default async function AlertNoEstuvo(item: any, rutaSeleccionada: number,
           try {
             const response = await marcarUserAusente({
               idsolicitud_recoleccion: item.idsolicitud_recoleccion,
-              estado: 2, // ausente
             });
             if (!response.success) {
               throw new Error(response.message);
@@ -29,7 +28,7 @@ export default async function AlertNoEstuvo(item: any, rutaSeleccionada: number,
                       ...ruta,
                       paradas: ruta.paradas.map((p: any) =>
                         p.idsolicitud_recoleccion === item.idsolicitud_recoleccion
-                          ? { ...p, estado: 2 }
+                          ? { ...p, estado: "Ausente" }
                           : p
                       ),
                     }

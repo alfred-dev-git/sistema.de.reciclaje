@@ -67,20 +67,22 @@ export default function MapaRutas({
             confirmarCompletado(parada);
           }}
           pinColor={
-            parada.estado === 1
+            parada.estado?.toLowerCase() === "completada"
               ? "green"
-              : parada.estado === 2
+              : parada.estado?.toLowerCase() === "ausente"
               ? "orange"
               : "red"
           }
         />
       ))}
 
-      <Polyline
-        coordinates={ruta.coordenadas}
-        strokeColor="blue"
-        strokeWidth={4}
-      />
+      {ruta.coordenadas.length > 1 && (
+        <Polyline
+          coordinates={ruta.coordenadas}
+          strokeColor="blue"
+          strokeWidth={4}
+        />
+      )}
     </MapView>
   );
 }

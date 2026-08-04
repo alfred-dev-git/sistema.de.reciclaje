@@ -5,6 +5,7 @@ import CronogramaScreen from "../components/frecuencia-recoleccion";
 import ContactosAdministradores from "../components/contacto-info";
 import PerfilScreen from "../components/perfil-recolector";
 import EditarPerfilScreen from "../screens/forms/edit-perfil";
+import HistorialRecoleccionesScreen from "../screens/recolector/historial-recolecciones";
 
 const Drawer = createDrawerNavigator();
 
@@ -12,6 +13,7 @@ const DrawerNavigation = () => (
   <Drawer.Navigator initialRouteName="Inicio" screenOptions={{ headerShown: false }}>
     <Drawer.Screen name="Inicio" component={RecolectorStack} />
     <Drawer.Screen name="Mi perfil" component={PerfilScreen} />
+    <Drawer.Screen name="Historial de recolecciones" component={HistorialRecoleccionesScreen} />
 
     <Drawer.Screen name="EditarPerfil" component={EditarPerfilScreen}
       options={{
@@ -19,7 +21,7 @@ const DrawerNavigation = () => (
       }}
     />
 
-    <Drawer.Screen name="Cronograma" component={CronogramaScreen} />
+    <Drawer.Screen name="Frecuencias" component={CronogramaScreen} />
     <Drawer.Screen name="Contactos" component={ContactosAdministradores} />
   </Drawer.Navigator>
 );

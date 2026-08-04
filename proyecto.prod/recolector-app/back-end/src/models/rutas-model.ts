@@ -51,7 +51,7 @@ export const obtenerPedidosAsignadosDB = async (
       ON sru.rutas_idrutas = r.idrutas
 
     WHERE
-      es.descripcion = 'Pendiente'
+      LOWER(TRIM(es.descripcion)) = 'en ruta'
       AND r.recolector_idrecolector = ?
     `,
     [idRecolector]

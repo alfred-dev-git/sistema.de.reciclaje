@@ -29,7 +29,6 @@ export default function RutaAsignada({ route }: any) {
     try {
       const response = await marcarCompletado({
         idsolicitud_recoleccion: paradaSeleccionada.idsolicitud_recoleccion,
-        estado: 1,
         cant_bolson: cantidad,
       });
       if (!response.success) {
@@ -43,7 +42,7 @@ export default function RutaAsignada({ route }: any) {
             ...rutaItem,
             paradas: rutaItem.paradas.map((p) =>
               p.idsolicitud_recoleccion === paradaSeleccionada.idsolicitud_recoleccion
-                ? { ...p, estado: 1 }
+                ? { ...p, estado: "Completada" }
                 : p
             ),
           }
@@ -77,6 +76,14 @@ export default function RutaAsignada({ route }: any) {
     AlertNoEstuvo(item, rutaSeleccionada, setRutas);
   };
 
+  if (!ruta) {
+    return (
+      <View style={styles.containerVacio}>
+        <Text>La ruta ya no está disponible.</Text>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       {/* Mapa */}
@@ -102,14 +109,14 @@ export default function RutaAsignada({ route }: any) {
                 {item.calle} {item.numero}
               </Text>
               {/* Icono de check si la parada está completada */}
-              {item.estado === 1 && (
+              {item.estado?.toLowerCase() === "completada" && (
                 <Ionicons name="checkmark-circle" size={24} color="green" style={{ marginLeft: 8 }} />
               )}
-              {item.estado === 2 && (
+              {item.estado?.toLowerCase() === "ausente" && (
                 <Ionicons name="close-circle" size={24} color="red" style={{ marginLeft: 8 }} />
               )}
               {/* Mostrar botones solo si la parada está pendiente */}
-              {item.estado === 0 && (
+              {item.estado?.toLowerCase() === "en ruta" && (
                 <>
                   <TouchableOpacity
                     style={[styles.boton, styles.noEstuvo]}
@@ -144,6 +151,7 @@ export default function RutaAsignada({ route }: any) {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  containerVacio: { flex: 1, alignItems: "center", justifyContent: "center" },
   mapaContainer: { flex: 1 },
   listaContainer: { flex: 1 },
   lista: { padding: 10, backgroundColor: "#f8faed" },

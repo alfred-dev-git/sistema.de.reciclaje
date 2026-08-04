@@ -7,8 +7,13 @@ if (!Constants.expoConfig?.extra) {
 
 const { apiUrl } = Constants.expoConfig.extra as { apiUrl: string };
 
+if (!apiUrl) {
+  throw new Error('No está configurada la URL de la API');
+}
+
 const apiPublic = axios.create({
   baseURL: apiUrl,
+  timeout: 15000,
 });
 
 export default apiPublic;

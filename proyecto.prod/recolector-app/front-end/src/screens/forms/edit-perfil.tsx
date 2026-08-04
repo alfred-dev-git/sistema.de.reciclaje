@@ -10,8 +10,7 @@ import {
   Platform,
   Alert,
 } from "react-native";
-import { useRoute } from "@react-navigation/native";
-import { navigate } from "../../navigation/refglobal-navigation";
+import { useNavigation, useRoute } from "@react-navigation/native";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { updatePerfil } from "../../api/services/perfil-service";
@@ -20,15 +19,19 @@ import { Municipio, getMunicipios } from "../../api/services/perfil-service";
 
 const EditarPerfilScreen: React.FC = () => {
   const route = useRoute<any>();
+  const navigation = useNavigation<any>();
   const { perfil } = route.params || {};
 
   const [nombre, setNombre] = useState(perfil?.nombre || "");
   const [apellido, setApellido] = useState(perfil?.apellido || "");
   const [email, setEmail] = useState(perfil?.email || "");
   const [telefono, setTelefono] = useState(perfil?.telefono || "");
-  const [fecha, setFecha] = useState(
-    perfil?.fecha_nacimiento ? new Date(perfil.fecha_nacimiento) : new Date()
-  );
+  const crearFechaLocal = (valor?: string) => {
+    if (!valor) return new Date();
+    const [anio, mes, dia] = valor.split("T")[0].split("-").map(Number);
+    return anio && mes && dia ? new Date(anio, mes - 1, dia) : new Date(valor);
+  };
+  const [fecha, setFecha] = useState(crearFechaLocal(perfil?.fecha_nacimiento));
 
   const [municipioId, setMunicipioId] = useState(
     perfil?.municipio_idmunicipio ?? null
@@ -71,7 +74,7 @@ const EditarPerfilScreen: React.FC = () => {
       apellido,
       email,
       telefono,
-      fecha_nacimiento: fecha.toISOString().split("T")[0],
+      fecha_nacimiento: `${fecha.getFullYear()}-${String(fecha.getMonth() + 1).padStart(2, "0")}-${String(fecha.getDate()).padStart(2, "0")}`,
       municipio_idmunicipio: municipioId,
     };
 
@@ -86,7 +89,7 @@ const EditarPerfilScreen: React.FC = () => {
       }
 
       Alert.alert("Éxito", "Perfil actualizado correctamente", [
-        { text: "OK", onPress: () => navigate("Mi perfil" as any) },
+        { text: "OK", onPress: () => navigation.navigate("Mi perfil") },
       ]);
     } catch (e) {
       setLoading(false);
@@ -231,7 +234,7 @@ const EditarPerfilScreen: React.FC = () => {
             </TouchableOpacity>
 
             {/* Volver */}
-            <TouchableOpacity style={styles.boton} onPress={() => navigate("Mi perfil" as any)}>
+            <TouchableOpacity style={styles.boton} onPress={() => navigation.navigate("Mi perfil")}>
               <Text style={styles.botonTexto}>Cancelar</Text>
             </TouchableOpacity>
           </View>

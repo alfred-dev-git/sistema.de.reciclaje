@@ -10,12 +10,13 @@ import {
   ScrollView,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useNavigation, useRoute, useFocusEffect } from "@react-navigation/native";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
 import BackgorundContainer from "../../components/layout";
 import HeaderRecolector from "../../components/headerComponent";
 import { obtenerParadasAgrupadas, RutaCalculada } from "../../api/services/rutas-service";
 import { getHistorial } from "../../api/services/historial-service";
 import { getNotificacion } from "../../api/services/notificacion-service";
+import Paginacion from "../../components/paginacion";
 
 type Notificacion = {
   titulo: string;
@@ -27,28 +28,35 @@ const HomeRecolector: React.FC = () => {
   const [historial, setHistorial] = useState<any[]>([]);
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [paginaHistorial, setPaginaHistorial] = useState(1);
 
   const navigation = useNavigation<any>();
-  const route = useRoute<any>();
 
   const cargarDatos = async () => {
     try {
       setRefreshing(true);
+      setErrorMessage(null);
 
-      if (route.params?.rutasActualizadas) {
-        setRutas(route.params.rutasActualizadas);
-        navigation.setParams({ rutasActualizadas: undefined });
-      } else {
+      try {
         const rutasObtenidas = await obtenerParadasAgrupadas();
         setRutas(rutasObtenidas);
+      } catch {
+        setRutas([]);
+        setErrorMessage("No se pudieron cargar las rutas. Deslizá para reintentar.");
       }
 
-      const historialRes = await getHistorial();
-      if (historialRes.success) setHistorial(historialRes.data);
+      const [historialRes, notificacionRes] = await Promise.all([
+        getHistorial(),
+        getNotificacion(),
+      ]);
+      if (historialRes.success) {
+        setHistorial(Array.isArray(historialRes.data) ? historialRes.data : []);
+        setPaginaHistorial(1);
+      }
 
-      const notificacionRes = await getNotificacion();
       if (notificacionRes.success && Array.isArray(notificacionRes.data)) {
-        setNotificaciones(notificacionRes.data);
+        setNotificaciones(notificacionRes.data.slice(0, 1));
       }
     } catch (error) {
       console.warn("Error al cargar rutas/historial/notificación:", error);
@@ -60,20 +68,14 @@ const HomeRecolector: React.FC = () => {
   useFocusEffect(
     React.useCallback(() => {
       cargarDatos();
-    }, [route.params?.rutasActualizadas])
+    }, [])
   );
 
-  const getEstadoInfo = (estado: number) => {
-    switch (estado) {
-      case 1:
-        return { label: "Completado", color: "green" };
-      case 2:
-        return { label: "No estuvo", color: "red" };
-      case 3:
-        return { label: "Cancelado", color: "red" };
-      default:
-        return { label: "Desconocido", color: "gray" };
-    }
+  const getEstadoInfo = (estado: string) => {
+    const normalizado = String(estado ?? "").toLowerCase();
+    if (normalizado === "completada") return { label: "Completada", color: "green" };
+    if (normalizado === "ausente") return { label: "Ausente", color: "red" };
+    return { label: estado || "Desconocido", color: "gray" };
   };
 
   const renderHistorialItem = ({ item }: any) => {
@@ -94,20 +96,22 @@ const HomeRecolector: React.FC = () => {
             </Text>
           </View>
           <View>
-            <Text
-              style={[
-                styles.puntos,
-                { color: item.total_puntos > 0 ? "green" : "black" },
-              ]}
-            >
-              {item.total_puntos} puntos
-            </Text>
+            <Text style={styles.puntos}>{item.cant_bolson} bolsones</Text>
+            {!!item.observaciones && (
+              <Text style={styles.observaciones}>{item.observaciones}</Text>
+            )}
             <Text style={[styles.estado, { color }]}>{label}</Text>
           </View>
         </View>
       </View>
     );
   };
+
+  const totalPaginasHistorial = Math.max(1, Math.ceil(historial.length / 3));
+  const historialVisible = historial.slice(
+    (paginaHistorial - 1) * 3,
+    paginaHistorial * 3
+  );
 
   return (
     <BackgorundContainer>
@@ -118,6 +122,8 @@ const HomeRecolector: React.FC = () => {
         }
       >
         <HeaderRecolector />
+
+        {!!errorMessage && <Text style={styles.errorText}>{errorMessage}</Text>}
 
         {/* Bienvenida */}
         <View style={styles.bienvenidaContainer}>
@@ -140,6 +146,9 @@ const HomeRecolector: React.FC = () => {
         {/* Rutas */}
         <View style={styles.card}>
           <Text style={styles.sectionTitle}>Rutas Asignadas</Text>
+          {rutas.length === 0 && (
+            <Text style={styles.emptyText}>No tenés rutas En ruta asignadas.</Text>
+          )}
           {rutas.map((ruta, index) => (
             <View key={index} style={styles.item}>
               <View style={{ flexDirection: "row" }}>
@@ -147,7 +156,7 @@ const HomeRecolector: React.FC = () => {
                   <Ionicons name="leaf" size={24} color="#307043" />
                 </View>
                 <View style={{ marginLeft: 15 }}>
-                  <Text style={styles.infoTitle}>Recorrido {index + 1}</Text>
+                  <Text style={styles.infoTitle}>Ruta #{ruta.idRuta}</Text>
                   <Text style={styles.infoSubtitle}>
                     {ruta.paradas.length} Paradas asignadas
                   </Text>
@@ -156,7 +165,7 @@ const HomeRecolector: React.FC = () => {
 
               <TouchableOpacity
                 style={styles.botonVer}
-                onPress={() =>
+              onPress={() =>
                   navigation.navigate("RutaAsignada", {
                     rutaSeleccionada: index,
                     rutas,
@@ -176,12 +185,26 @@ const HomeRecolector: React.FC = () => {
         </Text>
 
         <FlatList
-          data={historial}
+          data={historialVisible}
           keyExtractor={(item) => item.idsolicitud_recoleccion.toString()}
           renderItem={renderHistorialItem}
           contentContainerStyle={{ paddingBottom: 20 }}
           showsVerticalScrollIndicator
           scrollEnabled={false} // importante para que funcione bien dentro del ScrollView
+          ListEmptyComponent={
+            <View style={styles.emptyCard}>
+              <Ionicons name="calendar-outline" size={30} color="#307043" />
+              <Text style={styles.emptyCardTitle}>Sin recolecciones este mes</Text>
+              <Text style={styles.emptyCardText}>
+                Cuando completes una recolección, aparecerá en este espacio.
+              </Text>
+            </View>
+          }
+        />
+        <Paginacion
+          pagina={paginaHistorial}
+          totalPaginas={totalPaginasHistorial}
+          onChange={setPaginaHistorial}
         />
       </ScrollView>
     </BackgorundContainer>
@@ -316,6 +339,21 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "green"
   },
+  emptyText: { color: "#555", textAlign: "center", marginVertical: 12 },
+  emptyCard: {
+    backgroundColor: "#f4f8f1",
+    borderWidth: 1,
+    borderColor: "#d7e7d5",
+    borderRadius: 16,
+    marginHorizontal: 15,
+    marginVertical: 8,
+    padding: 20,
+    alignItems: "center",
+  },
+  emptyCardTitle: { color: "#234f31", fontSize: 16, fontWeight: "700", marginTop: 8 },
+  emptyCardText: { color: "#52645a", textAlign: "center", marginTop: 4 },
+  errorText: { color: "#b91c1c", textAlign: "center", marginHorizontal: 20 },
+  observaciones: { fontSize: 11, color: "#555", maxWidth: 130 },
   estado: {
     fontSize: 12,
     fontWeight: "bold"
