@@ -98,14 +98,11 @@ export const getHomeKpis = async (_req, res) => {
 
     // 2️⃣ Recolectores activos (que tienen pedidos activos y con ruta asignada)
     const [recolectoresActivos] = await pool.query(`
-      SELECT COUNT(DISTINCT ru.recolector_idrecolector) AS n
-      FROM rutas ru
-      INNER JOIN solicitud_rutas sr ON sr.rutas_idrutas = ru.idrutas
-      INNER JOIN solicitud_recoleccion s
-        ON s.idsolicitud_recoleccion = sr.solicitud_recoleccion_idsolicitud_recoleccion
-      INNER JOIN estado_solicitud es
-        ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
-      WHERE LOWER(es.descripcion) = 'pendiente';
+      SELECT COUNT(*) AS n
+      FROM usuarios u
+      INNER JOIN rol r ON r.idrol = u.rol_idrol
+      WHERE u.activo = 1
+        AND LOWER(TRIM(r.descripcion)) = 'recolector';
     `);
 
     const [fechasActivas] = await pool.query(`

@@ -6,6 +6,7 @@ export interface RutasPendientesItem {
   recolector: string;
   telefono: string;
   rutas_pendientes: number;
+  rutas_en_ruta: number;
 }
 
 interface ModalRecolectorProps {
@@ -73,7 +74,7 @@ export default function ModalRecolector({
                     <span>
                       {r.recolector} ({r.telefono || "Sin teléfono"}){" "}
                       <span className="text-blue-600 text-sm">
-                        {r.rutas_pendientes} rutas pendientes
+                        {r.rutas_pendientes} rutas pendientes · {r.rutas_en_ruta} en ruta
                       </span>
                     </span>
                   </label>

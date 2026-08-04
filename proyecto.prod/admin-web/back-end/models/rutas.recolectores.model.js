@@ -16,11 +16,22 @@ export const obtenerCantRutasPorRecolector = async () => {
           ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
         WHERE ru.recolector_idrecolector = r.idrecolector
           AND LOWER(es.descripcion) = 'pendiente'
-      ) AS rutas_pendientes
+      ) AS rutas_pendientes,
+      (
+        SELECT COUNT(DISTINCT ru.idrutas)
+        FROM rutas ru
+        INNER JOIN solicitud_rutas sr ON sr.rutas_idrutas = ru.idrutas
+        INNER JOIN solicitud_recoleccion s
+          ON s.idsolicitud_recoleccion = sr.solicitud_recoleccion_idsolicitud_recoleccion
+        INNER JOIN estado_solicitud es
+          ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
+        WHERE ru.recolector_idrecolector = r.idrecolector
+          AND LOWER(TRIM(es.descripcion)) = 'en ruta'
+      ) AS rutas_en_ruta
     FROM recolector r
     INNER JOIN usuarios u ON r.usuario_idusuario = u.idusuario
     WHERE u.activo = 1
-    ORDER BY rutas_pendientes DESC;
+    ORDER BY (rutas_pendientes + rutas_en_ruta) DESC;
   `);
 
   return rows;
@@ -130,16 +141,56 @@ export const cambiarRecolectorRuta = async (idRuta, idRecolector) => {
 };
 
 export const crearNotificacionRutaDB = async (idRuta, mensaje, titulo) => {
-  const [ruta] = await pool.query(`SELECT idrutas FROM rutas WHERE idrutas = ?`, [idRuta]);
-  if (ruta.length === 0) {
-    return { success: false, message: "No se encontró la ruta especificada" };
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [ruta] = await connection.query(
+      `SELECT idrutas FROM rutas WHERE idrutas = ? FOR UPDATE`,
+      [idRuta]
+    );
+    if (ruta.length === 0) {
+      await connection.rollback();
+      return { success: false, message: "No se encontró la ruta especificada" };
+    }
+
+    const [estadoEnRuta] = await connection.query(
+      `SELECT idestado_solicitud FROM estado_solicitud
+       WHERE LOWER(TRIM(descripcion)) = 'en ruta' LIMIT 1`
+    );
+    if (estadoEnRuta.length === 0) {
+      await connection.rollback();
+      return { success: false, message: "No existe el estado En ruta" };
+    }
+
+    const [actualizacion] = await connection.query(
+      `UPDATE solicitud_recoleccion s
+       INNER JOIN solicitud_rutas sr
+         ON sr.solicitud_recoleccion_idsolicitud_recoleccion = s.idsolicitud_recoleccion
+       INNER JOIN estado_solicitud es
+         ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
+       SET s.estado_solicitud_idestado_solicitud = ?
+       WHERE sr.rutas_idrutas = ?
+         AND LOWER(TRIM(es.descripcion)) = 'pendiente'`,
+      [estadoEnRuta[0].idestado_solicitud, idRuta]
+    );
+
+    const [result] = await connection.query(
+      `INSERT INTO notificaciones (titulo, mensaje, fecha_envio, rutas_idrutas)
+       VALUES (?, ?, NOW(), ?)`,
+      [titulo || "Aviso de recolección", mensaje, idRuta]
+    );
+
+    await connection.commit();
+    return {
+      success: true,
+      insertId: result.insertId,
+      pedidosActualizados: actualizacion.affectedRows,
+    };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
   }
-
-  const [result] = await pool.query(
-    `INSERT INTO notificaciones (titulo, mensaje, fecha_envio, rutas_idrutas)
-     VALUES (?, ?, NOW(), ?)`,
-    [titulo || "Aviso de recolección", mensaje, idRuta]
-  );
-
-  return { success: true, insertId: result.insertId };
 };

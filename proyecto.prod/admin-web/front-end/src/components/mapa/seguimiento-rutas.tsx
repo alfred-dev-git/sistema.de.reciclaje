@@ -118,7 +118,7 @@ export default function SeguimientoRutas() {
                   className={`button button-ruta ${rutaActiva === r.id ? "button-activa" : ""
                     }`}
                 >
-                  Ruta {r.id}
+                  Ruta #{r.id}
                 </button>
 
                 <div className="acciones-ruta">
@@ -126,7 +126,7 @@ export default function SeguimientoRutas() {
                     onClick={() => notificarRutaExistente(r.id)}
                     className="button button-ruta"
                   >
-                    Notificar usuarios
+                    Notificar contribuyentes
                   </button>
                   <button
                     onClick={() => {

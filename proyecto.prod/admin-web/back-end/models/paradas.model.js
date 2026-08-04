@@ -91,7 +91,7 @@ export const obtenerPedidosPorRecolector = async (idRecolector) => {
     INNER JOIN direcciones d 
       ON s.direcciones_iddirecciones = d.iddirecciones
     WHERE 
-      LOWER(es.descripcion) = 'pendiente'
+      LOWER(TRIM(es.descripcion)) IN ('pendiente', 'en ruta')
       AND ru.recolector_idrecolector = ?
       AND YEAR(s.fecha_emision) = YEAR(CURDATE())
     `,
