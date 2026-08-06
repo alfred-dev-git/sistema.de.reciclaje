@@ -74,6 +74,10 @@ export const obtenerPedidosPorRecolector = async (idRecolector) => {
       d.latitud,
       d.longitud,
       ru.idrutas AS id_ruta,
+      ru.fecha_creacion AS fecha_programada,
+      EXISTS(
+        SELECT 1 FROM notificaciones n WHERE n.rutas_idrutas = ru.idrutas
+      ) AS fue_notificada,
       
       s.tipo_reciclable_idtipo_reciclable
       

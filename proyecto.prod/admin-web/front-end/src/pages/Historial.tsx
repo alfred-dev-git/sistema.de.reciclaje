@@ -22,6 +22,7 @@ type Row = {
 
 type PM = { anio_mes: string; total: number };
 type PT = { tipo: string; total: number };
+type RutaRow = { idrutas: number; fecha_programada: string; recolector: string; tipo_reciclable: string; total_solicitudes: number; estados: string };
 const REGISTROS_POR_PAGINA = 20;
 
 export default function Historial() {
@@ -31,6 +32,9 @@ export default function Historial() {
   const [pt, setPt] = useState<PT[]>([]);
   const [mes, setMes] = useState('');
   const [pagina, setPagina] = useState(1);
+  const [vista, setVista] = useState<'solicitudes' | 'rutas'>('solicitudes');
+  const [rutas, setRutas] = useState<RutaRow[]>([]);
+  const [paginaRutas, setPaginaRutas] = useState(1);
   // función utilitaria para mostrar el estado
   const getEstadoTexto = (estado: string | number | null) => {
     if (estado === null || estado === undefined) return "-";
@@ -42,6 +46,7 @@ export default function Historial() {
     http.get('/historial').then(r => setRows(r.data));
     http.get('/stats/por-mes').then(r => setPm(r.data));
     http.get('/stats/por-tipo').then(r => setPt(r.data));
+    http.get('/rutas/historial').then(r => setRutas(r.data));
   }, []);
 
   const filtered = useMemo(() => {
@@ -70,6 +75,8 @@ export default function Historial() {
     (pagina - 1) * REGISTROS_POR_PAGINA,
     pagina * REGISTROS_POR_PAGINA
   );
+  const totalPaginasRutas = Math.ceil(rutas.length / REGISTROS_POR_PAGINA);
+  const rutasVisibles = rutas.slice((paginaRutas - 1) * REGISTROS_POR_PAGINA, paginaRutas * REGISTROS_POR_PAGINA);
 
   useEffect(() => {
     setPagina(1);
@@ -85,7 +92,10 @@ export default function Historial() {
   return (
     <div className="historial">
       <Card title="Estadísticas de recolecciones">
-        <div className="filter">
+        <button className="button button-ruta" onClick={() => setVista(vista === 'solicitudes' ? 'rutas' : 'solicitudes')}>
+          {vista === 'solicitudes' ? 'Ver rutas asignadas por recolector' : 'Ver historial de solicitudes'}
+        </button>
+        <div className="filter" style={{ display: vista === 'solicitudes' ? undefined : 'none' }}>
           <input
             placeholder='Filtrar por nombre de usuario... (ej: "A")'
             value={q}
@@ -108,7 +118,15 @@ export default function Historial() {
           </select>
         </div>
 
-        <div className="table-wrap">
+        {vista === 'rutas' && <div className="table-wrap"><table><thead><tr><th>Ruta</th><th>Fecha programada</th><th>Recolector</th><th>Tipo</th><th>Solicitudes</th><th>Estados</th></tr></thead><tbody>
+          {rutasVisibles.map(r => <tr key={r.idrutas}><td>#{r.idrutas}</td><td>{new Date(r.fecha_programada).toLocaleString('es-AR')}</td><td>{r.recolector}</td><td>{r.tipo_reciclable}</td><td>{r.total_solicitudes}</td><td>{r.estados || '-'}</td></tr>)}
+        </tbody></table></div>}
+        {vista === 'rutas' && totalPaginasRutas > 1 && <div style={paginationStyles.container}>
+          <button disabled={paginaRutas === 1} onClick={() => setPaginaRutas(p => p - 1)} style={paginationStyles.button}>&lt;</button>
+          {Array.from({length: totalPaginasRutas}, (_, i) => i + 1).map(n => <button key={n} onClick={() => setPaginaRutas(n)} style={{...paginationStyles.button, ...(n === paginaRutas ? paginationStyles.active : {})}}>{n}</button>)}
+          <button disabled={paginaRutas === totalPaginasRutas} onClick={() => setPaginaRutas(p => p + 1)} style={paginationStyles.button}>&gt;</button>
+        </div>}
+        <div className="table-wrap" style={{ display: vista === 'solicitudes' ? undefined : 'none' }}>
           <table>
             <thead>
               <tr>
@@ -136,7 +154,7 @@ export default function Historial() {
             </tbody>
           </table>
         </div>
-        {totalPaginas > 1 && (
+        {vista === 'solicitudes' && totalPaginas > 1 && (
           <div style={paginationStyles.container}>
             <button
               type="button"
@@ -173,7 +191,7 @@ export default function Historial() {
 
       <div className="charts">
         {/* ---- BARCHART (con estilos del viejo) ---- */}
-        <Card title="Pedidos por mes (últimos 12)">
+        <Card title="Solicitudes por mes (últimos 12)">
           <div style={{ width: '100%', height: 300 }}>
             <ResponsiveContainer>
               <BarChart data={pm}>
@@ -189,7 +207,7 @@ export default function Historial() {
                 <Legend />
                 <Bar
                   dataKey="total"
-                  name="Total pedidos"
+                  name="Total solicitudes"
                   fill="#abc337"
                 />
               </BarChart>

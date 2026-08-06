@@ -3,6 +3,8 @@ import {
   cambiarRecolectorRuta,
   crearNotificacionRutaDB,
   obtenerCantRutasPorRecolector,
+  cambiarFechaRuta,
+  obtenerHistorialRutas,
 } from "../models/rutas.recolectores.model.js";
 import { pool } from "../config/db.js";
 
@@ -17,24 +19,49 @@ export const getCantRutas = async (_req, res) => {
 
 export const asignarRuta = async (req, res) => {
   try {
-    const { idrecolector, pedidos } = req.body;
-    if (!idrecolector || !Array.isArray(pedidos) || pedidos.length === 0) {
+    const { idrecolector, pedidos, fecha_programada } = req.body;
+    const fechaValida = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(fecha_programada || "");
+    if (!idrecolector || !Array.isArray(pedidos) || pedidos.length === 0 || !fechaValida) {
       return res.status(400).json({
         success: false,
-        message: "Datos incompletos: se requiere idrecolector y lista de solicitudes",
+        message: "Se requiere recolector, al menos una solicitud y una fecha válida",
       });
     }
 
     const resultado = await asignarRutaARecolector(
       idrecolector,
       pedidos,
-      req.user.idusuario
+      req.user.idusuario,
+      fecha_programada
     );
     if (!resultado.success) return res.status(409).json(resultado);
     res.json(resultado);
   } catch (error) {
     console.error("Error al asignar ruta:", error);
     res.status(500).json({ success: false, message: "Error interno al asignar la ruta" });
+  }
+};
+
+export const actualizarFechaRuta = async (req, res) => {
+  try {
+    const { id_ruta, fecha_programada } = req.body;
+    if (!id_ruta || !/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(fecha_programada || "")) {
+      return res.status(400).json({ success: false, message: "Ruta o fecha inválida" });
+    }
+    const resultado = await cambiarFechaRuta(id_ruta, fecha_programada);
+    res.status(resultado.success ? 200 : 404).json(resultado);
+  } catch (error) {
+    console.error("Error al cambiar la fecha de ruta:", error);
+    res.status(500).json({ success: false, message: "Error interno al cambiar la fecha" });
+  }
+};
+
+export const historialRutas = async (_req, res) => {
+  try {
+    res.json(await obtenerHistorialRutas());
+  } catch (error) {
+    console.error("Error al obtener historial de rutas:", error);
+    res.status(500).json({ message: "Error al obtener el historial de rutas" });
   }
 };
 

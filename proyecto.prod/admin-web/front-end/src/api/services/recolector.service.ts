@@ -73,5 +73,17 @@ export const notificarRuta = async (idRuta: number, mensaje: string) => {
   }
 };
 
+export const actualizarFechaRuta = async (idRuta: number, fechaProgramada: string) => {
+  try {
+    const response = await https.post("/rutas/updatefecha", {
+      id_ruta: idRuta,
+      fecha_programada: fechaProgramada,
+    });
+    return response.data;
+  } catch (error: any) {
+    return { success: false, message: error.response?.data?.message || "Error al actualizar la fecha" };
+  }
+};
+
 
 

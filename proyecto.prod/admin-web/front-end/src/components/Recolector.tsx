@@ -72,7 +72,7 @@ export default function ModalRecolector({
                       onChange={() => setRecolectorElegido(r)}
                     />
                     <span>
-                      {r.recolector} ({r.telefono || "Sin teléfono"}){" "}
+                      {r.recolector}{" "}
                       <span className="text-blue-600 text-sm">
                         {r.rutas_pendientes} rutas pendientes · {r.rutas_en_ruta} en ruta
                       </span>

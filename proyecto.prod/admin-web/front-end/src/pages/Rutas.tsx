@@ -6,7 +6,7 @@ export default function Rutas() {
       <div className="rutas-page">
         <h2 className="titulo">Rutas sin asignar</h2>
         <p>
-          Visualizá las rutas pendientes y dividilas por cantidad de paradas.
+          Elegí el tipo de reciclable, seleccioná las solicitudes y creá la ruta.
         </p>
       </div>
       <RutasViewer />

@@ -97,7 +97,7 @@ if (rutaActiva) {
       }
 
       <GoogleMap
-        key={rutaActiva ?? 0}
+        key={`${rutaActiva ?? 0}-${rutas.flatMap((ruta) => ruta.paradas.map((p) => p.idpedidos)).join("-")}`}
         mapContainerStyle={containerStyle}
         center={center}
         zoom={12}
@@ -129,17 +129,11 @@ if (rutaActiva) {
                   lng += offset * Math.sin(angle);
                 }
 
-                const color = colores[(ruta.id - 1) % colores.length];
-
                 return (
                   <Marker
                     key={p.idpedidos}
                     position={{ lat, lng }}
                     onClick={() => setPuntoSeleccionado(p)}
-                    icon={{
-                      url: `http://maps.google.com/mapfiles/ms/icons/${color}-dot.png`,
-                      scaledSize: new google.maps.Size(40, 40),
-                    }}
                   />
                 );
               })

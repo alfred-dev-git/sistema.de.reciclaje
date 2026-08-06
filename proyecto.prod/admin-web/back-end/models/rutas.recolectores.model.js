@@ -37,7 +37,7 @@ export const obtenerCantRutasPorRecolector = async () => {
   return rows;
 };
 
-export const asignarRutaARecolector = async (idrecolector, solicitudes, idAdmin) => {
+export const asignarRutaARecolector = async (idrecolector, solicitudes, idAdmin, fechaProgramada) => {
   const connection = await pool.getConnection();
   try {
     await connection.beginTransaction();
@@ -83,8 +83,8 @@ export const asignarRutaARecolector = async (idrecolector, solicitudes, idAdmin)
     const [resultRuta] = await connection.query(
       `INSERT INTO rutas
         (fecha_creacion, recolector_idrecolector, tipo_reciclable_idtipo_reciclable, usuarios_idusuario)
-       VALUES (CURDATE(), ?, ?, ?)`,
-      [idrecolector, tipoReciclable, idAdmin]
+       VALUES (?, ?, ?, ?)`,
+      [fechaProgramada, idrecolector, tipoReciclable, idAdmin]
     );
 
     const idrutas = resultRuta.insertId;
@@ -100,7 +100,7 @@ export const asignarRutaARecolector = async (idrecolector, solicitudes, idAdmin)
     return {
       success: true,
       message: "Ruta asignada correctamente",
-      data: { idrutas, idrecolector, solicitudes },
+      data: { idrutas, idrecolector, solicitudes, fecha_programada: fechaProgramada },
     };
   } catch (error) {
     await connection.rollback();
@@ -109,6 +109,36 @@ export const asignarRutaARecolector = async (idrecolector, solicitudes, idAdmin)
   } finally {
     connection.release();
   }
+};
+
+export const cambiarFechaRuta = async (idRuta, fechaProgramada) => {
+  const [result] = await pool.query(
+    `UPDATE rutas SET fecha_creacion = ? WHERE idrutas = ?`,
+    [fechaProgramada, idRuta]
+  );
+  return result.affectedRows > 0
+    ? { success: true, message: "Fecha de la ruta actualizada correctamente" }
+    : { success: false, message: "No se encontró la ruta especificada" };
+};
+
+export const obtenerHistorialRutas = async () => {
+  const [rows] = await pool.query(`
+    SELECT r.idrutas, r.fecha_creacion AS fecha_programada,
+      CONCAT(u.nombre, ' ', u.apellido) AS recolector,
+      tr.descripcion AS tipo_reciclable,
+      COUNT(DISTINCT sr.solicitud_recoleccion_idsolicitud_recoleccion) AS total_solicitudes,
+      GROUP_CONCAT(DISTINCT es.descripcion ORDER BY es.descripcion SEPARATOR ', ') AS estados
+    FROM rutas r
+    INNER JOIN recolector rec ON rec.idrecolector = r.recolector_idrecolector
+    INNER JOIN usuarios u ON u.idusuario = rec.usuario_idusuario
+    INNER JOIN tipo_reciclable tr ON tr.idtipo_reciclable = r.tipo_reciclable_idtipo_reciclable
+    LEFT JOIN solicitud_rutas sr ON sr.rutas_idrutas = r.idrutas
+    LEFT JOIN solicitud_recoleccion s ON s.idsolicitud_recoleccion = sr.solicitud_recoleccion_idsolicitud_recoleccion
+    LEFT JOIN estado_solicitud es ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
+    GROUP BY r.idrutas, r.fecha_creacion, recolector, tipo_reciclable
+    ORDER BY r.fecha_creacion DESC, r.idrutas DESC
+  `);
+  return rows;
 };
 
 export const cambiarRecolectorRuta = async (idRuta, idRecolector) => {

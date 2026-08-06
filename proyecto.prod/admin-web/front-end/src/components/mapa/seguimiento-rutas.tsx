@@ -4,6 +4,7 @@ import RutasMap from "./rutas-map";
 import { RutasPendientesItem } from "../Recolector";
 import { useRutas } from "./use-rutas";
 import { getTiposReciclable, TipoReciclable } from "../../api/services/reciclables.service";
+import FechaRutaModal from "../FechaRutaModal";
 
 export default function SeguimientoRutas() {
   const [tiposReciclable, setTiposReciclable] = useState<TipoReciclable[]>([]);
@@ -33,9 +34,11 @@ export default function SeguimientoRutas() {
     actualizarRecolectorRuta,
     anularRutaExistente,
     notificarRutaExistente,
+    modificarFechaRuta,
   } = useRutas("seguimiento");
 
   const [loading, setLoading] = useState(false);
+  const [rutaFecha, setRutaFecha] = useState<number | null>(null);
 
   // 📦 cargar rutas cuando cambia el recolector
   useEffect(() => {
@@ -88,6 +91,12 @@ export default function SeguimientoRutas() {
             </button>
           ) : (
             <>
+              <button
+                onClick={() => setMostrarModal(true)}
+                className="button button-ruta"
+              >
+                Seleccionar otro recolector
+              </button>
               <div className="info-recolector">
                 <p>
                   Recolector: {recolectorSeleccionado.recolector}
@@ -96,13 +105,6 @@ export default function SeguimientoRutas() {
                   Teléfono: {recolectorSeleccionado.telefono}
                 </p>
               </div>
-
-              <button
-                onClick={() => setMostrarModal(true)}
-                className="button button-crear"
-              >
-                Seleccionar otro recolector
-              </button>
             </>
           )}
         </div>
@@ -120,13 +122,19 @@ export default function SeguimientoRutas() {
                 >
                   Ruta #{r.id}
                 </button>
+                <p className="tipo-ruta">
+                  Tipo de reciclable: {tiposReciclable.find(
+                    (tipo) => tipo.idtipo_reciclable === r.paradas[0]?.tipo_reciclable_idtipo_reciclable
+                  )?.descripcion ?? "Sin especificar"}
+                </p>
+                <p className="fecha-ruta">Programada: {r.paradas[0]?.fecha_programada ? new Date(r.paradas[0].fecha_programada).toLocaleString("es-AR") : "Sin fecha"}</p>
 
                 <div className="acciones-ruta">
                   <button
                     onClick={() => notificarRutaExistente(r.id)}
-                    className="button button-ruta"
+                    className={`button ${r.paradas[0]?.fue_notificada ? "button-notificado" : "button-ruta"}`}
                   >
-                    Notificar contribuyentes
+                    Notificar contribuyentes {r.paradas[0]?.fue_notificada ? "✓" : ""}
                   </button>
                   <button
                     onClick={() => {
@@ -137,6 +145,7 @@ export default function SeguimientoRutas() {
                   >
                     Modificar recolector
                   </button>
+                  <button onClick={() => setRutaFecha(r.id)} className="button button-fecha">Modificar fecha</button>
                   <button
                     onClick={() => {
                       if (
@@ -181,6 +190,14 @@ export default function SeguimientoRutas() {
           setRutaParaCambio(null);
         }}
         onConfirmar={handleConfirmarRecolector}
+      />
+      <FechaRutaModal
+        mostrar={rutaFecha !== null}
+        titulo="Modificar fecha de la ruta"
+        onCerrar={() => setRutaFecha(null)}
+        onConfirmar={async (fecha) => {
+          if (rutaFecha !== null && await modificarFechaRuta(rutaFecha, fecha)) setRutaFecha(null);
+        }}
       />
     </div>
   );

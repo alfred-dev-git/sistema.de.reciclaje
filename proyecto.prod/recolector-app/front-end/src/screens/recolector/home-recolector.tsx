@@ -117,6 +117,7 @@ const HomeRecolector: React.FC = () => {
     <BackgorundContainer>
       <ScrollView
         style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         refreshControl={
           <RefreshControl refreshing={refreshing} onRefresh={cargarDatos} />
         }

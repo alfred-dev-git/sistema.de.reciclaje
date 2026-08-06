@@ -26,7 +26,7 @@ export default function Home() {
 
       <div className="Container-Cards">
         <Card title="Asignar Rutas" isHome={true}>
-          <p>Hay {kpis?.rutasSinAsignar ?? '...'} pedidos sin asignar</p>
+          <p>Hay {kpis?.rutasSinAsignar ?? '...'} solicitudes sin asignar</p>
           <button
             onClick={() => navigate("/rutas")}
           >
@@ -43,14 +43,14 @@ export default function Home() {
           </button>
         </Card>
         <Card title="Ver estadísticas" isHome={true}>
-          <p>Revisar el historial de pedidos</p>
+          <p>Revisar el historial de solicitudes</p>
           <button
             onClick={() => navigate("/historial")}
           >
             🢂
           </button>
         </Card>
-        <Card title="Movimientos del recolector" isHome={true}>
+        <Card title="Seguimiento de rutas" isHome={true}>
           <p>Hay {kpis?.recolectoresActivos ?? '...'} recolectores activos</p>
           <button
             onClick={() => navigate("/seguimiento")}

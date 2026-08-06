@@ -5,17 +5,18 @@ export const getNotificacion = async (idRecolector: number) => {
   const [rows] = await pool.query<RowDataPacket[]>(
     `
     SELECT
-      n.idnotificaciones AS id,
-      titulo,
-      mensaje,
-      fecha_envio,
-      n.rutas_idrutas AS id_ruta
-    FROM notificaciones n
-    INNER JOIN rutas r ON r.idrutas = n.rutas_idrutas
+      0 AS id,
+      'Rutas asignadas' AS titulo,
+      CONCAT('Tenés ', GROUP_CONCAT(DISTINCT CONCAT('la ruta #', r.idrutas, ' para el ', DATE_FORMAT(r.fecha_creacion, '%d/%m/%Y a las %H:%i')) ORDER BY r.fecha_creacion SEPARATOR '; ')) AS mensaje,
+      MAX(r.fecha_creacion) AS fecha_envio,
+      NULL AS id_ruta
+    FROM rutas r
+    INNER JOIN solicitud_rutas sr ON sr.rutas_idrutas = r.idrutas
+    INNER JOIN solicitud_recoleccion s ON s.idsolicitud_recoleccion = sr.solicitud_recoleccion_idsolicitud_recoleccion
+    INNER JOIN estado_solicitud es ON es.idestado_solicitud = s.estado_solicitud_idestado_solicitud
     WHERE r.recolector_idrecolector = ?
-      AND n.fecha_envio >= (CURDATE() - INTERVAL 1 DAY)
-    ORDER BY n.fecha_envio DESC, n.idnotificaciones DESC
-    LIMIT 1;
+      AND LOWER(TRIM(es.descripcion)) IN ('pendiente', 'en ruta')
+    HAVING COUNT(DISTINCT r.idrutas) > 0;
     `,
     [idRecolector]
   );

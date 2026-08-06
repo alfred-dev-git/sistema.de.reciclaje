@@ -181,16 +181,37 @@ select {
 }
 
 .button.button-modificar {
-    background-color: rgb(193, 235, 97);
-    color: #000000d8;
+    background-color: #1769d2;
+    color: #fff;
 
 }
 
 .container-ruta-detalles {
-    border-bottom: 4px solid #b4b4b4c0;
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 12px;
+    border: 1px solid #c9dfcf;
+    border-left: 6px solid #2e703e;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 4px 12px rgba(24, 65, 36, .12);
 }
+
+.button.button-fecha { background: #e5a323; color: #172018; }
+.button.button-notificado { background: #dff3e4; color: #176b31; border-color: #43a35f; }
+.fecha-ruta { margin: 6px 0; font-weight: 600; color: #315d3c; }
+.tipo-ruta { margin: 8px 0 2px; font-weight: 700; color: #234f31; }
+.lista-solicitudes-ruta { display: grid; gap: 8px; margin: 12px 0; }
+.solicitud-ruta-item { display: flex; gap: 10px; align-items: center; padding: 10px; border: 1px solid #d8e6dc; border-radius: 10px; background: #fff; cursor: pointer; }
+.solicitud-ruta-item span { display: flex; flex-direction: column; }
+.solicitud-ruta-item small { color: #587060; margin-top: 3px; }
+.paginacion-rutas { display: flex; flex-wrap: wrap; justify-content: center; gap: 5px; margin: 12px 0; }
+.paginacion-rutas button { border: 1px solid #2e703e; background: #fff; color: #2e703e; border-radius: 7px; padding: 6px 9px; }
+.paginacion-rutas button.activa { background: #2e703e; color: #fff; }
+.crear-ruta-seleccion { width: 100%; }
+.modal-fecha-ruta { display: grid; gap: 12px; min-width: 300px; padding: 12px; }
+.modal-fecha-ruta label { display: grid; gap: 5px; }
+.modal-fecha-ruta input { padding: 9px; border: 0; border-radius: 7px; }
 
 .area-mapa {
     flex: 1;

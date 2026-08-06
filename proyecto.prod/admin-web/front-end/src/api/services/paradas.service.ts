@@ -13,6 +13,8 @@ export interface PedidoAsignado {
   latitud: number | string | null;
   longitud: number | string | null;
   tipo_reciclable_idtipo_reciclable: number;
+  fecha_programada?: string;
+  fue_notificada?: number | boolean;
 }
 
 /** Obtiene paradas desde el backend */
