@@ -2,7 +2,10 @@ import {
   obtenerTiposReciclableDB,
   crearTipoReciclableDB,
   modificarTipoReciclableDB,
+  existeTipoReciclablePorNombreDB,
 } from "../models/reciclables.model.js";
+
+const obtenerNombre = (descripcion) => descripcion.split(" - (")[0].trim();
 
 export const getTiposReciclable = async (req, res) => {
   try {
@@ -24,6 +27,13 @@ export const createTipoReciclable = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "La descripción es obligatoria",
+      });
+    }
+
+    if (await existeTipoReciclablePorNombreDB(obtenerNombre(descripcion))) {
+      return res.status(409).json({
+        success: false,
+        message: "Ya existe un tipo de reciclable con ese nombre",
       });
     }
 
@@ -53,6 +63,13 @@ export const updateTipoReciclable = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "La descripción es obligatoria",
+      });
+    }
+
+    if (await existeTipoReciclablePorNombreDB(obtenerNombre(descripcion), Number(id))) {
+      return res.status(409).json({
+        success: false,
+        message: "Ya existe un tipo de reciclable con ese nombre",
       });
     }
 

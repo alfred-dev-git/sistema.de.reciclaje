@@ -32,3 +32,24 @@ export const modificarTipoReciclableDB = async (id, { descripcion }) => {
   );
   return { idtipo_reciclable: id, descripcion };
 };
+
+export const existeTipoReciclablePorNombreDB = async (nombre, excluirId = null) => {
+  const parametros = [nombre.trim().toLowerCase()];
+  let exclusion = "";
+
+  if (excluirId !== null) {
+    exclusion = "AND idtipo_reciclable <> ?";
+    parametros.push(excluirId);
+  }
+
+  const [rows] = await pool.query(
+    `SELECT idtipo_reciclable
+     FROM tipo_reciclable
+     WHERE LOWER(TRIM(SUBSTRING_INDEX(descripcion, ' - (', 1))) = ?
+     ${exclusion}
+     LIMIT 1`,
+    parametros
+  );
+
+  return rows.length > 0;
+};

@@ -30,8 +30,7 @@ export const EditTipoModal: React.FC<Props> = ({
 
   if (!visible || !tipo) return null;
 
-  const camposCompletos =
-    nombreGeneral.trim() !== "" && detalle.trim() !== "";
+  const camposCompletos = nombreGeneral.trim() !== "";
 
   const handleTrySave = () => {
     if (!camposCompletos) return;
@@ -39,7 +38,9 @@ export const EditTipoModal: React.FC<Props> = ({
   };
 
   const handleConfirmSave = () => {
-    const descripcionFinal = `${nombreGeneral.trim()} - (${detalle.trim()})`;
+    const descripcionFinal = detalle.trim()
+      ? `${nombreGeneral.trim()} - (${detalle.trim()})`
+      : nombreGeneral.trim();
     onGuardar(tipo.idtipo_reciclable, { descripcion: descripcionFinal });
     setShowConfirm(false);
     onCerrar();
@@ -61,7 +62,7 @@ export const EditTipoModal: React.FC<Props> = ({
               maxLength={30}
             />
 
-            <label style={label}>Descripción:</label>
+            <label style={label}>Descripción (opcional):</label>
             <input
               style={input}
               type="text"
@@ -74,8 +75,9 @@ export const EditTipoModal: React.FC<Props> = ({
               Ejemplo final guardado:
               <br />
               <b>
-                {nombreGeneral || "Reciclados"} - (
-                {detalle || "papel, cartón, plástico"})
+                {detalle.trim()
+                  ? `${nombreGeneral || "Reciclados"} - (${detalle})`
+                  : nombreGeneral || "Reciclados"}
               </b>
             </small>
 

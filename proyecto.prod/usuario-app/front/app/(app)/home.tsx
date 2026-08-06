@@ -1,25 +1,30 @@
-import { useEffect, useState } from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, Image } from "react-native";
+import { useCallback, useEffect, useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, Image, ScrollView, RefreshControl } from "react-native";
 import { router } from "expo-router";
 import { listNotificaciones, NotificacionItem } from "@/services/api/requests";
 
 export default function HomeScreen() {
   const [notificacion, setNotificacion] = useState<NotificacionItem | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchNotificacion = useCallback(async () => {
+    try {
+      const items = await listNotificaciones();
+      setNotificacion(items[0] ?? null);
+    } catch (error) {
+      console.log("Error cargando notificaciones", error);
+    }
+  }, []);
 
   useEffect(() => {
-    const fetchNotificacion = async () => {
-      try {
-        const items = await listNotificaciones();
-        if (items.length > 0) {
-          setNotificacion(items[0]);
-        }
-      } catch (error) {
-        console.log("Error cargando notificaciones", error);
-      }
-    };
-
     fetchNotificacion();
-  }, []);
+  }, [fetchNotificacion]);
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await fetchNotificacion();
+    setRefreshing(false);
+  }, [fetchNotificacion]);
 
   return (
     <ImageBackground
@@ -27,6 +32,10 @@ export default function HomeScreen() {
       style={{ flex: 1 }}
       resizeMode="cover"
     >
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
 
       {/*CONTENEDOR SUPERIOR (bienvenida + notificación) */}
       <View style={styles.topContainer}>
@@ -58,6 +67,7 @@ export default function HomeScreen() {
           <Text style={styles.ctaText}>Solicitar recolección</Text>
         </TouchableOpacity>
       </View>
+      </ScrollView>
     </ImageBackground>
   );
 }

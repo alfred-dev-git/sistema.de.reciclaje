@@ -44,10 +44,10 @@ export default function App() {
 
           <div className="user">
             <button
-              style={{ background: "transparent", border: "none", cursor: "pointer" }}
               onClick={() => setShowPerfil(true)}
+              title="Ver y editar perfil"
             >
-              {user?.nombre}
+              ✏️ {user?.nombre}
             </button>
 
             <button onClick={logout}>Salir</button>

@@ -7,6 +7,7 @@ import { RutaCalculada } from "../../api/services/rutas-service";
 import { marcarCompletado } from "../../api/services/recoleccion-service";
 import { Ionicons } from "@expo/vector-icons";
 import { useNavigation } from '@react-navigation/native';
+import * as Location from "expo-location";
 
 export default function RutaAsignada({ route }: any) {
   const { rutas: rutasProp = [], rutaSeleccionada = 0 } = route.params ?? {};
@@ -21,12 +22,32 @@ export default function RutaAsignada({ route }: any) {
   const abrirNavegacion = async () => {
     if (!ruta?.paradas.length) return;
 
-    const [origen, ...resto] = ruta.paradas;
-    const destino = resto[resto.length - 1] ?? origen;
+    const [primeraParada, ...resto] = ruta.paradas;
+    const destino = resto[resto.length - 1] ?? primeraParada;
     const intermedias = ruta.paradas.slice(1, -1);
+    let origen = `${primeraParada.latitude},${primeraParada.longitude}`;
+
+    if (ruta.paradas.length === 1) {
+      try {
+        const permiso = await Location.requestForegroundPermissionsAsync();
+        if (permiso.status !== "granted") {
+          Alert.alert(
+            "Ubicación necesaria",
+            "Permití el acceso a tu ubicación para navegar hasta esta dirección."
+          );
+          return;
+        }
+
+        const ubicacion = await Location.getCurrentPositionAsync({});
+        origen = `${ubicacion.coords.latitude},${ubicacion.coords.longitude}`;
+      } catch {
+        Alert.alert("No se pudo obtener la ubicación", "Activá la ubicación del teléfono e intentá nuevamente.");
+        return;
+      }
+    }
     const params = [
       "api=1",
-      `origin=${encodeURIComponent(`${origen.latitude},${origen.longitude}`)}`,
+      `origin=${encodeURIComponent(origen)}`,
       `destination=${encodeURIComponent(`${destino.latitude},${destino.longitude}`)}`,
       "travelmode=driving",
       ...(intermedias.length

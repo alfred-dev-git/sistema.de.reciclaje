@@ -58,7 +58,7 @@ export default function Home() {
             🢂
           </button>
         </Card>
-                <Card title="Lista de usuarios" isHome={true}>
+        <Card title="Gestión de usuarios" isHome={true}>
           <p>Total de usuarios en el sistema</p>
           <button
             onClick={() => navigate("/usuarios")}
@@ -66,7 +66,7 @@ export default function Home() {
             🢂
           </button>
         </Card>
-                <Card title="Administrar tipo de reciclables" isHome={true}>
+        <Card title="Gestionar tipos de reciclable" isHome={true}>
           <p>Ver residuos disponibles</p>
           <button
             onClick={() => navigate("/reciclables")}

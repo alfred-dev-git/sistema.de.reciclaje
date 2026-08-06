@@ -182,7 +182,7 @@ const HomeRecolector: React.FC = () => {
 
         {/* Historial */}
         <Text style={[styles.sectionTitle, { marginLeft: 15 }]}>
-          Recolecciones del Mes
+          Historial de recolecciones
         </Text>
 
         <FlatList

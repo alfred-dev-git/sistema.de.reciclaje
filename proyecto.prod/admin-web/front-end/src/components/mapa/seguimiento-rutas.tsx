@@ -130,12 +130,15 @@ export default function SeguimientoRutas() {
                 <p className="fecha-ruta">Programada: {r.paradas[0]?.fecha_programada ? new Date(r.paradas[0].fecha_programada).toLocaleString("es-AR") : "Sin fecha"}</p>
 
                 <div className="acciones-ruta">
-                  <button
-                    onClick={() => notificarRutaExistente(r.id)}
-                    className={`button ${r.paradas[0]?.fue_notificada ? "button-notificado" : "button-ruta"}`}
-                  >
-                    Notificar contribuyentes {r.paradas[0]?.fue_notificada ? "✓" : ""}
-                  </button>
+                  <div className="notificacion-ruta-accion">
+                    <span>Notificar inicio de recolección</span>
+                    <button
+                      onClick={() => notificarRutaExistente(r.id)}
+                      className={`button ${r.paradas[0]?.fue_notificada ? "button-notificado" : "button-ruta"}`}
+                    >
+                      Notificar {r.paradas[0]?.fue_notificada ? "✓" : ""}
+                    </button>
+                  </div>
                   <button
                     onClick={() => {
                       setRutaParaCambio(r.id);

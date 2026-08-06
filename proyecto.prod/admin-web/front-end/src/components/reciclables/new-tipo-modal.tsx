@@ -9,14 +9,15 @@ export const NewTipoModal: React.FC<Props> = ({ onGuardar, onCerrar }) => {
   const [nombreGeneral, setNombreGeneral] = useState("");
   const [detalle, setDetalle] = useState("");
 
-  const camposCompletos =
-    nombreGeneral.trim() !== "" && detalle.trim() !== "";
+  const camposCompletos = nombreGeneral.trim() !== "";
 
   const handleSave = () => {
     if (!camposCompletos) return;
 
     // Construir DESCRIPCIÓN FINAL sin tocar la BD
-    const descripcionFinal = `${nombreGeneral.trim()} - (${detalle.trim()})`;
+    const descripcionFinal = detalle.trim()
+      ? `${nombreGeneral.trim()} - (${detalle.trim()})`
+      : nombreGeneral.trim();
 
     onGuardar({ descripcion: descripcionFinal });
     onCerrar();
@@ -36,7 +37,7 @@ export const NewTipoModal: React.FC<Props> = ({ onGuardar, onCerrar }) => {
           maxLength={30}
         />
 
-        <label style={{ marginTop: "0.5rem" }}>Descripción:</label>
+        <label style={{ marginTop: "0.5rem" }}>Descripción (opcional):</label>
         <input
           type="text"
           placeholder="Ej: papel, cartón, plástico"
@@ -48,8 +49,9 @@ export const NewTipoModal: React.FC<Props> = ({ onGuardar, onCerrar }) => {
         <small style={{ display: "block", marginTop: "0.5rem", opacity: 0.7 }}>
           Ejemplo final guardado: <br />
           <b>
-            {nombreGeneral || "Reciclados"} - (
-            {detalle || "papel, cartón, plástico"})
+            {detalle.trim()
+              ? `${nombreGeneral || "Reciclados"} - (${detalle})`
+              : nombreGeneral || "Reciclados"}
           </b>
         </small>
 

@@ -11,7 +11,6 @@ const CronogramaViewer: React.FC = () => {
     obtenerNombreDia,
     obtenerNombreSemana,
     handleCrear,
-    handleNotificar,
     handleModificar,
     handleAnular,
     handleActivar,
@@ -46,7 +45,7 @@ const CronogramaViewer: React.FC = () => {
       {/* Barra de acciones */}
       <div style={styles.actions}>
         <button onClick={() => setMostrarModal(true)} style={btn("green")}>
-          Cargar nueva fecha
+          Cargar nueva frecuencia
         </button>
         <button onClick={toggleInactivas} style={btn("orange")}>
           {modoInactivo ? " Ver activas" : " Ver inactivas"}
@@ -124,12 +123,6 @@ const CronogramaViewer: React.FC = () => {
                     style={btn("red")}
                   >
                     Anular
-                  </button>
-                  <button
-                    onClick={() => handleNotificar(item.idcronograma_recoleccion)}
-                    style={btn("violet")}
-                  >
-                    Lanzar notificación
                   </button>
                 </>
               )}

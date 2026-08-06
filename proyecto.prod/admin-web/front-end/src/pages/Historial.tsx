@@ -35,6 +35,7 @@ export default function Historial() {
   const [vista, setVista] = useState<'solicitudes' | 'rutas'>('solicitudes');
   const [rutas, setRutas] = useState<RutaRow[]>([]);
   const [paginaRutas, setPaginaRutas] = useState(1);
+  const [qRutas, setQRutas] = useState('');
   // función utilitaria para mostrar el estado
   const getEstadoTexto = (estado: string | number | null) => {
     if (estado === null || estado === undefined) return "-";
@@ -75,12 +76,21 @@ export default function Historial() {
     (pagina - 1) * REGISTROS_POR_PAGINA,
     pagina * REGISTROS_POR_PAGINA
   );
-  const totalPaginasRutas = Math.ceil(rutas.length / REGISTROS_POR_PAGINA);
-  const rutasVisibles = rutas.slice((paginaRutas - 1) * REGISTROS_POR_PAGINA, paginaRutas * REGISTROS_POR_PAGINA);
+  const rutasFiltradas = useMemo(() => {
+    const busqueda = qRutas.trim().toLowerCase();
+    if (!busqueda) return rutas;
+    return rutas.filter(r => r.recolector?.toLowerCase().includes(busqueda));
+  }, [qRutas, rutas]);
+  const totalPaginasRutas = Math.ceil(rutasFiltradas.length / REGISTROS_POR_PAGINA);
+  const rutasVisibles = rutasFiltradas.slice((paginaRutas - 1) * REGISTROS_POR_PAGINA, paginaRutas * REGISTROS_POR_PAGINA);
 
   useEffect(() => {
     setPagina(1);
   }, [q, mes]);
+
+  useEffect(() => {
+    setPaginaRutas(1);
+  }, [qRutas]);
 
   useEffect(() => {
     if (totalPaginas > 0 && pagina > totalPaginas) setPagina(totalPaginas);
@@ -118,6 +128,13 @@ export default function Historial() {
           </select>
         </div>
 
+        {vista === 'rutas' && <div className="filter">
+          <input
+            placeholder="Filtrar por nombre de recolector..."
+            value={qRutas}
+            onChange={e => setQRutas(e.target.value)}
+          />
+        </div>}
         {vista === 'rutas' && <div className="table-wrap"><table><thead><tr><th>Ruta</th><th>Fecha programada</th><th>Recolector</th><th>Tipo</th><th>Solicitudes</th><th>Estados</th></tr></thead><tbody>
           {rutasVisibles.map(r => <tr key={r.idrutas}><td>#{r.idrutas}</td><td>{new Date(r.fecha_programada).toLocaleString('es-AR')}</td><td>{r.recolector}</td><td>{r.tipo_reciclable}</td><td>{r.total_solicitudes}</td><td>{r.estados || '-'}</td></tr>)}
         </tbody></table></div>}
@@ -136,7 +153,6 @@ export default function Historial() {
                 <th>Cant. bolsón</th>
                 <th>Estado</th>
                 <th>Recolector asignado</th>
-                <th>Obs.</th>
               </tr>
             </thead>
             <tbody>
@@ -148,7 +164,6 @@ export default function Historial() {
                   <td>{r.cant_bolson ?? '-'}</td>
                   <td>{getEstadoTexto(r.estado)}</td>
                   <td>{r.recolector_nombre ?? '-'}</td>
-                  <td>{r.observaciones ?? '-'}</td>
                 </tr>
               ))}
             </tbody>
